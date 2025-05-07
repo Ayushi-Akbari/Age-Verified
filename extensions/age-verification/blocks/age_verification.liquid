@@ -1,0 +1,49 @@
+{% render 'ageVerification' %}
+
+{% schema %}
+
+{
+  "name": "Age Verification Section",
+  "target": "body",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Popup Title",
+      "default": "Age Verification"
+    },
+    {
+      "type": "text",
+      "id": "age_limit",
+      "label": "Minimum Age",
+      "default": "18"
+    },
+    {
+      "type": "textarea",
+      "id": "message",
+      "label": "Verification Message",
+      "default": "You must be [ age ] years old to access this website. Please verify your age."
+    },
+    {
+      "type": "text",
+      "id": "accept_message",
+      "label": "Accept Button Text",
+      "default": "Yes, I'm Over [ age ]"
+    },
+    {
+      "type": "text",
+      "id": "reject_message",
+      "label": "Reject Button Text",
+      "default": "No, I'm Under [ age ]"
+    },
+    {
+    "type": "image_picker",
+    "id": "popup_image",
+    "label": "Popup Image"
+  }
+  ]
+}
+
+
+
+{% endschema %}

@@ -1,0 +1,18 @@
+{
+  "ratings": {
+    "stars": {
+      "label": "Ratings"
+    },
+    "home": {
+      "recommendationText": "Recommended Product!"
+    }
+  },
+  "Age_verification": {
+    "stars": {
+      "label": "Age Verification"
+    },
+    "home": {
+      "recommendationText": "Recommended Product!"
+    }
+  }
+}
