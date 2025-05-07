@@ -3,7 +3,7 @@
 client_id = "6473332dff158d7aab8327543871590a"
 name = "age-verification"
 handle = "age-verification-58"
-application_url = "https://sunny-cyprus-preferred-bought.trycloudflare.com"
+application_url = "https://cross-creator-trigger-external.trycloudflare.com"
 embedded = true
 
 [build]
@@ -27,9 +27,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://sunny-cyprus-preferred-bought.trycloudflare.com/auth/callback",
-  "https://sunny-cyprus-preferred-bought.trycloudflare.com/auth/shopify/callback",
-  "https://sunny-cyprus-preferred-bought.trycloudflare.com/api/auth/callback"
+  "https://cross-creator-trigger-external.trycloudflare.com/auth/callback",
+  "https://cross-creator-trigger-external.trycloudflare.com/auth/shopify/callback",
+  "https://cross-creator-trigger-external.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
