@@ -10,6 +10,9 @@ import {
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
+// Add age verification extenxtion to store
+// learn to embedded app
+
 export default function AdditionalPage() {
   return (
     <Page>
