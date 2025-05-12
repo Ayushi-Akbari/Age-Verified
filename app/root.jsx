@@ -12,6 +12,9 @@ export const links = () => [
   { rel: "stylesheet", href: stylesheet },
 ];
 
+// import './tailwind.css';
+
+
 
 export default function App() {
   return (
