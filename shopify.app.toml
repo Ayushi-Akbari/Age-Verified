@@ -3,7 +3,7 @@
 client_id = "6473332dff158d7aab8327543871590a"
 name = "age-verification"
 handle = "age-verification-58"
-application_url = "https://anderson-magnetic-stylus-outdoor.trycloudflare.com"
+application_url = "https://purple-thinking-ethiopia-armstrong.trycloudflare.com"
 embedded = true
 
 [build]
@@ -27,9 +27,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://anderson-magnetic-stylus-outdoor.trycloudflare.com/auth/callback",
-  "https://anderson-magnetic-stylus-outdoor.trycloudflare.com/auth/shopify/callback",
-  "https://anderson-magnetic-stylus-outdoor.trycloudflare.com/api/auth/callback"
+  "https://purple-thinking-ethiopia-armstrong.trycloudflare.com/auth/callback",
+  "https://purple-thinking-ethiopia-armstrong.trycloudflare.com/auth/shopify/callback",
+  "https://purple-thinking-ethiopia-armstrong.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

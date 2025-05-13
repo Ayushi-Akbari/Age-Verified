@@ -15,7 +15,7 @@ const addSetting = async (req,res) => {
     
     console.log("req.file : " , req.file);
     if(req?.file){
-        setting.image = req.file.path
+        setting.image = `/uploads/${req.file.filename}`
     }
 
     console.log("setting : " ,setting);

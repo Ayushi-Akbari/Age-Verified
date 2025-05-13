@@ -1,1067 +1,1075 @@
-import { useState, useEffect } from "react";
-import { Card } from "@shopify/polaris";
-import VerificationCard from "./app.verificationCard";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import {
+  Page,
+  Layout,
+  Text,
+  TextField,
+  Select,
+  ColorPicker,
+  Card,
+  FormLayout,
+  Box,
+  Button,
+  Thumbnail,
+} from "@shopify/polaris";
+import { useEffect, useState } from "react";
 
-export default function VerificationPage() {
-  const navigate = useNavigate();
-
-  const [image, setImage] = useState(null);
-  const [age, setAge] = useState(18);
+export default function SettingsPolaris() {
+  const [age, setAge] = useState("18");
+  const [image, setImage] = useState("/path/to/image.png"); // Replace with actual image URL
   const [title, setTitle] = useState({
     text: "Welcome!",
-    text_weight: "font-light",
-    fonts: "font-sans",
-    text_size: 26,
-    text_color: "#000000",
+    text_weight: "bold",
+    fonts: "",
+    text_size: 20,
+    text_color: "#505050",
   });
-
   const [description, setDescription] = useState({
     text: `Please verify that you are ${age} years of age or older to enter this site.`,
-    text_weight: "font-light",
-    fonts: "font-sans",
+    text_weight: "normal",
+    fonts: "",
     text_size: 14,
-    text_color: "#000000",
+    text_color: "#505050",
   });
-
-  const [descriptionText, setDescriptionText] = useState("Please verify that you are {{minimum_age}} years of age or older to enter this site.")
-
-  const [acceptButton, setAcceptButton] = useState({
-    text: `Yes, I’m over ${age}`,
-    border_radius: 5,
-    border_width: 1,
-    text_weight: "font-light",
-    fonts: "font-sans",
-    text_size: 16,
-    text_color: "#000000",
-    background_color: "#ffffff",
-    border_color: "#c8c8c8"
-  });
-
-  const [acceptButtonText, setAcceptButtonText] = useState("Yes, I’m over {{minimum_age}}")
-
   const [rejectButton, setRejectButton] = useState({
     text: `No, I’m under ${age}`,
-    border_radius: 5,
-    border_width: 1,
-    text_weight: "font-light",
-    fonts: "font-sans",
-    text_size: 16,
+    fonts: "sans-serif",
+    text_weight: "100",
+    text_size: 14,
     text_color: "#000000",
     background_color: "#ffffff",
-    border_color: "#c8c8c8",
-    redirect_url: "https://google.com/",
+    border_color: "#cccccc",
+    border_width: 1,
+    border_radius: 6,
+    redirect_url: ""
+  });
+  const [acceptButton, setAcceptButton] = useState({
+    text: `Yes, I’m over ${age}`,
+    fonts: "sans-serif",
+    text_weight: "100",
+    text_size: 14,
+    text_color: "#000000",
+    background_color: "#ffffff" ,
+    border_color: "#000000",
+    border_width: 1,
+    border_radius: 6,
   });
 
-  const [rejectButtonText, setRejectButtonText] = useState("No, I’m under {{minimum_age}}")
-
-
-  let isCancelled = false;
+  const [descriptionText, setDescriptionText] = useState(
+    "Please verify that you are {{minimum_age}} years of age or older to enter this site.",
+  );
+  const [acceptButtonText, setAcceptButtonText] = useState(
+    "Yes, I’m over {{minimum_age}}",
+  );
+  const [rejectButtonText, setRejectButtonText] = useState(
+    "No, I’m under {{minimum_age}}",
+  );
 
   useEffect(() => {
-    // if (!isCancelled) {
-      fetchData();
-    // }
-    
-    return () => {
-      isCancelled = true;
-    };
+    console.log("title : ", title);
+  });
+
+  const weightOptions = [
+    { label: "Thin", value: "100" },
+    { label: "Extra Light", value: "200" },
+    { label: "Light", value: "300" },
+    { label: "Normal", value: "400" },
+    { label: "Medium", value: "500" },
+    { label: "Semi Bold", value: "600" },
+    { label: "Bold", value: "700" },
+    { label: "Extra Bold", value: "800" },
+    { label: "Black", value: "900" },
+  ];
+
+  const fontOptions = [
+    { label: "Sans", value: "sans-serif" },
+    { label: "Serif", value: "serif" },
+    { label: "Monospace", value: "monospace" },
+    { label: "Inter", value: "'Inter', sans-serif" },
+    { label: "Poppins", value: "'Poppins', sans-serif" },
+    { label: "Roboto", value: "'Roboto', sans-serif" },
+  ];
+
+  useEffect(() => {
+    const saveButton = document.getElementById('save-button');
+    const discardButton = document.getElementById('discard-button');
+    const saveBar = document.getElementById('my-save-bar');
+
+    if (saveButton && discardButton && saveBar) {
+      saveButton.addEventListener('click', () => {
+        console.log('Saving');
+        saveBar.hide();
+      });
+
+      discardButton.addEventListener('click', () => {
+        console.log('Discarding');
+        saveBar.hide();
+      });
+    }
   }, []);
 
-  const fetchData = async () => {
-    const data = await axios.get(`http://localhost:8001/user/get-setting`)
-    if(data){
-      const settingData = data.data.data.settings
-      const parsedSetting = {
-        ...settingData,
-        title: settingData.title ? JSON.parse(settingData.title) : null,
-        description: settingData.description ? JSON.parse(settingData.description) : null,
-        acceptButton: settingData.acceptButton ? JSON.parse(settingData.acceptButton) : null,
-        rejectButton: settingData.rejectButton ? JSON.parse(settingData.rejectButton) : null,
-      };
-      
-      // Set state values if present
-      setAge(parsedSetting.age || "");
-      
-      if (parsedSetting.image) {
-        const path = parsedSetting.image;
-        const relativePath = parsedSetting.image.replace(/\\/g, "/").split("age-verification/")[1];
-        console.log("app : " + relativePath);
-// setImage("http://localhost:8001/")
-
-        console.log("path:", path);
-      }
-      
-      parsedSetting.title && setTitle(parsedSetting.title);
-      parsedSetting.description && setDescription(parsedSetting.description);
-      parsedSetting.acceptButton && setAcceptButton(parsedSetting.acceptButton);
-      parsedSetting.rejectButton && setRejectButton(parsedSetting.rejectButton);
-
-      console.log("title : :  " ,title);
-      console.log("description : :  " ,description);
-      console.log("acceptButton : " ,acceptButton);
-      console.log("rejectButton : " ,rejectButton);
-      
-    }
-
+  const showSaveBar = () => {
+    const saveBar = document.getElementById('my-save-bar');
+    if (saveBar) saveBar.show();
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(URL.createObjectURL(file));
-    }
-  };
-
-  const addSetting = async () => {
-    const fileInput = document.getElementById("imageUpload");
-    const file = fileInput?.files?.[0];
-    const formData = new FormData();
- 
-    formData.append("age", age);
-    formData.append("image", file)
-    formData.append("title", JSON.stringify(title));
-    formData.append("description", JSON.stringify(description));
-    formData.append("acceptButton", JSON.stringify(acceptButton));
-    formData.append("rejectButton", JSON.stringify(rejectButton));
-
-    for (const [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
-        
-    const response = await axios.post(
-      `http://localhost:8001/user/add-setting`,
-      formData,
-    );
-
-    console.log("response : ", response.status);
-    if(response.status === 200){
-      fetchData()
-    }
-
-    
-  };
-
-  const removeSetting = async () =>{
-    window.location.reload();
-  }
-  
   return (
-    <div className="flex flex-col ml-6">
-      <div className="w-[35%] overflow-y-scroll h-full ml-6 pr-2 scrollbar-hide">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 justify-start mt-10 mb-8">
-            Settings
-          </h1>
-          <div className="text-m text-gray-800 mb-2">Customizations</div>
-          <Card>
-            <div className="text-sm text-gray-800 mt-1 mb-5">
-              Verifications Settings
-            </div>
+    <Page fullWidth>
+      <Layout>
+        <Layout.Section>
+          <div className="flex w-full h-full mx-0">
+            {/* Left Section */}
+            <div className="w-[35%] p-4 space-y-8 overflow-y-scroll scrollbar-hide">
+              <Text variant="headingXl" as="h1">
+                Settings
+              </Text>
 
-            <div className="text-[13px] text-gray-600 mb-1">Age</div>
-
-            <div className="flex items-center border border-gray-500 rounded-md px-3 py-2 w-[50%]">
-              <input
-                type="number"
-                value={age}
-                onChange={(e) => {
-                  setAge(e.target.value);
-                  
-                  setRejectButton((prev) => ({
-                    ...prev,
-                    text: prev.text.replace(age, e.target.value), 
-                  }));
-                  
-                  setAcceptButton((prev) => ({
-                    ...prev,
-                    text: prev.text.replace(age, e.target.value), 
-                  }));
-                  
-                  setDescription((prev) => ({
-                    ...prev,
-                    text: prev.text.replace(age, e.target.value), 
-                  }));
-                }}
-                className="w-full outline-none text-sm"
-              />
-              <span className="ml-2 text-gray-600 text-sm">Year(s)</span>
-            </div>
-          </Card>
-        </div>
-
-        <div className="mt-8">
-          <div className="text-m text-gray-800 mb-2">Text Customizations</div>
-          <Card>
-            <div className="text-sm text-gray-800 mt-1 mb-3">Title</div>
-            <div className="flex gap-3">
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text</div>
-                <input
-                  type="text"
-                  name="text"
-                  placeholder="Enter text"
-                  value={title.text}
-                  onChange={(e) =>
-                    setTitle({ ...title, [e.target.name]: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">
-                  Text Weight
-                </div>
-                <select
-                  name="text_weight"
-                  value={title.text_weight}
-                  onChange={(e) =>
-                    setTitle({ ...title, [e.target.name]: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="font-thin">Thin</option>
-                  <option value="font-extralight">Extra Light</option>
-                  <option value="font-light">Light</option>
-                  <option value="font-normal">Normal</option>
-                  <option value="font-medium">Medium</option>
-                  <option value="font-semibold">Semi Bold</option>
-                  <option value="font-bold">Bold</option>
-                  <option value="font-extrabold">Extra Bold</option>
-                  <option value="font-black">Black</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Fonts</div>
-                <select
-                  name="fonts"
-                  value={title.fonts}
-                  onChange={(e) =>
-                    setTitle({ ...title, [e.target.name]: e.target.value })
-                  }
-                  className="w-full px-3 py-[8px] border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="font-sans">Sans</option>
-                  <option value="font-serif">Serif</option>
-                  <option value="font-mono">Monospace</option>
-                  <option value="font-inter">Inter</option>
-                  <option value="font-poppins">Poppins</option>
-                  <option value="font-roboto">Roboto</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex mt-3 gap-3">
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text Size</div>
-                <input
-                  type="text"
-                  placeholder="Enter text"
-                  name="text_size"
-                  value={title.text_size}
-                  onChange={(e) =>
-                    setTitle({ ...title, [e.target.name]: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="flex flex-col mr-3 w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text Color</div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-[6px]">
-                  <input
-                    type="text"
-                    name="text_color"
-                    value={title.text_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setTitle({
-                          ...title,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-full text-sm focus:outline-none"
-                  />
-                  <input
-                    type="color"
-                    name="text_color"
-                    value={title.text_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setTitle({
-                          ...title,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-7 h-6 ml-7 p-0 border-black bg-transparent cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <hr className="mt-7 mx-0 border-gray-300" />
-
-            <div className="text-sm text-gray-800 mt-1 mb-5">Description</div>
-            <div>
-              <div className="text-[13px] text-gray-600 mb-1">Text</div>
-              <input
-                type="text"
-                placeholder="Enter text"
-                name="text"
-                value={descriptionText}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setDescription({
-                    ...description,
-                    [e.target.name]: value.replace("{{minimum_age}}", age),
-                  });
-                  setDescriptionText(value);
-                }}
-                className="w-full px-3 py-2 border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <div className="text-xs text-gray-400 mt-1">
-                Note: Please use {"{{minimum_age}}"} for the liquid variable to
-                specify the age in the popup message.
-              </div>
-            </div>
-            <div className="flex mt-3 gap-3">
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">
-                  Text Weight
-                </div>
-                <select
-                  name="text_weight"
-                  value={title.text_weight}
-                  onChange={(e) =>
-                    setDescription({
-                      ...description,
-                      [e.target.name]: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-[8px] border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="font-thin">Thin</option>
-                  <option value="font-extralight">Extra Light</option>
-                  <option value="font-light">Light</option>
-                  <option value="font-normal">Normal</option>
-                  <option value="font-medium">Medium</option>
-                  <option value="font-semibold">Semi Bold</option>
-                  <option value="font-bold">Bold</option>
-                  <option value="font-extrabold">Extra Bold</option>
-                  <option value="font-black">Black</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Fonts</div>
-                <select
-                  name="fonts"
-                  value={description.fonts}
-                  onChange={(e) =>
-                    setDescription({
-                      ...description,
-                      [e.target.name]: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-[8px] border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="font-sans">Sans</option>
-                  <option value="font-serif">Serif</option>
-                  <option value="font-mono">Monospace</option>
-                  <option value="font-inter">Inter</option>
-                  <option value="font-poppins">Poppins</option>
-                  <option value="font-roboto">Roboto</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col mr-2 w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text Size</div>
-                <input
-                  type="text"
-                  placeholder="Enter text"
-                  name="text_size"
-                  value={description.text_size}
-                  onChange={(e) =>
-                    setDescription({
-                      ...description,
-                      [e.target.name]: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <div className="flex mt-3 gap-3">
-              <div className="flex flex-col mr-3 w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text Color</div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-[6px]">
-                  <input
-                    type="text"
-                    name="text_color"
-                    value={description.text_color}
-                    onChange={(e) =>
-                      setDescription({
-                        ...description,
-                        [e.target.name]: e.target.value,
-                      })
-                    }
-                    className="w-full text-sm focus:outline-none"
-                  />
-                  <input
-                    type="color"
-                    name="text_color"
-                    value={description.text_color}
-                    onChange={(e) =>
-                      setDescription({
-                        ...description,
-                        [e.target.name]: e.target.value,
-                      })
-                    }
-                    className="w-7 h-6 ml-7 p-0 border-black bg-transparent cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        <div className="mt-8 mb-5">
-          <div className="text-m text-gray-800 mb-2">Button Settings</div>
-          <Card>
-            <div className="text-sm text-gray-800 mt-1 mb-3">Accept Button</div>
-            <div className="flex gap-3 ">
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text</div>
-                <input
-                  type="text"
-                  placeholder="Enter text"
-                  name="text"
-                  value={acceptButtonText}
-                  onChange={(e) =>{
-                    const value = e.target.value;
-                    setAcceptButton({
-                      ...acceptButton,
-                      [e.target.name]: value.replace("{{minimum_age}}", age),
-                    });
-                    setAcceptButtonText(value)
-                  }}
-                  className="w-full px-3 py-2 border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">
-                  Border Radius
-                </div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-2">
-                  <input
+              <Text Text variant="headingMd" as="h3">
+                Customizations
+              </Text>
+              <Card>
+                <Text variant="semibold">Verification Settings</Text>
+                <div className="w-[200px] mt-2">
+                  <TextField
+                    label="Age"
                     type="number"
-                    name="border_radius"
-                    value={acceptButton.border_radius}
-                    onChange={(e) =>
-                      setAcceptButton({
-                        ...acceptButton,
-                        [e.target.name]: e.target.value,
-                      })
-                    }
-                    className="w-full outline-none text-sm"
+                    value={age}
+                    onChange={(value) => {
+                      {
+                        setAge(value);
+                        
+                        setRejectButton((prev) => ({
+                          ...prev,
+                          text: prev.text.replace(age, value), 
+                        }));
+                        
+                        setAcceptButton((prev) => ({
+                          ...prev,
+                          text: prev.text.replace(age, value), 
+                        }));
+                        
+                        setDescription((prev) => ({
+                          ...prev,
+                          text: prev.text.replace(age, value), 
+                        }));
+                      }
+                    }}
+                    suffix="Year(s)"
                   />
-                  <span className="ml-2 text-gray-400 text-sm">Px</span>
                 </div>
-              </div>
+              </Card>
 
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">
-                  Border Width
-                </div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-2">
-                  <input
-                    type="number"
-                    name="border_width"
-                    value={acceptButton.border_width}
-                    onChange={(e) =>
-                      setAcceptButton({
-                        ...acceptButton,
-                        [e.target.name]: e.target.value,
-                      })
-                    }
-                    className="w-full outline-none text-sm"
-                  />
-                  <span className="ml-2 text-gray-400 text-sm">Px</span>
-                </div>
-              </div>
+              <Box paddingBlockStart="8">
+                <Text variant="headingMd" as="h3">
+                  Text Customizations
+                </Text>
+
+                {/* Title  */}
+                <Card>
+                  <Box padding="4">
+                    <Text variant="headingMd">Title</Text>
+
+                    {/* Part 1 - Title Text */}
+                    <div className="mb-4 mt-3">
+                      <TextField
+                        label="Text"
+                        value={title.text}
+                        onChange={(value) =>
+                          setTitle({ ...title, text: value })
+                        }
+                      />
+                    </div>
+
+                    {/* Part 2 - Font & Weight */}
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <Select
+                          label="Font"
+                          options={fontOptions}
+                          value={title.fonts}
+                          onChange={(value) =>
+                            setTitle({ ...title, fonts: value })
+                          }
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Select
+                          label="Text Weight"
+                          options={weightOptions}
+                          value={title.text_weight}
+                          onChange={(value) => {
+                            console.log("vaulr : ", value);
+
+                            setTitle({ ...title, text_weight: value });
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <TextField
+                          label="Text Size"
+                          value={title.text_size}
+                          onChange={(value) =>
+                            setTitle({ ...title, text_size: value })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Part 3 - Size & Color */}
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <TextField
+                            label="Text Color"
+                            value={title.text_color}
+                            onChange={(value) => {
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setTitle({ ...title, text_color: value });
+                              }
+                            }}
+                          />
+                          <input
+                            type="color"
+                            value={title.text_color}
+                            onChange={(e) =>
+                              setTitle({ ...title, text_color: e.target.value })
+                            }
+                            style={{
+                              width: 30,
+                              height: 30,
+                              border: "none",
+                              background: "transparent",
+                              marginTop: "22px",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </Box>
+
+                  <hr className="mt-7 mx-0 border-gray-300 mb-5" />
+
+                  {/* description */}
+                  <Box padding="4">
+                    <Text variant="headingMd">Description</Text>
+
+                    {/* Part 1 - Title Text */}
+                    <div className="mb-4 mt-3">
+                      <TextField
+                        label="Text"
+                        value={descriptionText}
+                        onChange={(value) =>{
+                          setDescription({
+                            ...description,
+                            text: value.replace("{{minimum_age}}", age),
+                          });
+                          setDescriptionText(value);
+                        }
+                        }
+                      />
+                    </div>
+
+                    {/* Part 2 - Font & Weight */}
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <Select
+                          label="Font"
+                          options={fontOptions}
+                          value={description.fonts}
+                          onChange={(value) =>
+                            setDescription({ ...description, fonts: value })
+                          }
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Select
+                          label="Text Weight"
+                          options={weightOptions}
+                          value={description.text_weight}
+                          onChange={(value) =>
+                            setDescription({
+                              ...description,
+                              text_weight: value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <TextField
+                          label="Text Size"
+                          value={description.text_size}
+                          onChange={(value) =>
+                            setDescription({ ...description, text_size: value })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Part 3 - Size & Color */}
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <TextField
+                            label="Text Color"
+                            value={description.text_color}
+                            onChange={(value) => {
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setDescription({
+                                  ...description,
+                                  text_color: value,
+                                });
+                              }
+                            }}
+                          />
+                          <input
+                            type="color"
+                            value={description.text_color}
+                            onChange={(e) =>
+                              setDescription({
+                                ...description,
+                                text_color: e.target.value,
+                              })
+                            }
+                            style={{
+                              width: 30,
+                              height: 30,
+                              border: "none",
+                              background: "transparent",
+                              marginTop: "22px",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </Box>
+                </Card>
+              </Box>
+
+              <Box paddingBlockStart="8">
+                <Text variant="headingMd" as="h3">
+                  Button Settings
+                </Text>
+
+                {/* Accept Button  */}
+                <Card>
+                  <Box padding="4">
+                    <Text variant="headingMd">Accept Button</Text>
+
+                    <div className="mb-4 mt-3">
+                      <TextField
+                        label="Text"
+                        value={acceptButtonText}
+                        onChange={(value) =>{
+                          console.log("value : " , value);
+                          
+                          setAcceptButton({
+                            ...acceptButton,
+                            text: value.replace("{{minimum_age}}", age),
+                          });
+
+                          console.log("accept button : ", acceptButton);
+                          
+                          setAcceptButtonText(value)
+
+                          console.log("button text : " , );
+                          
+                        }
+                        }
+                      />
+                    </div>
+
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <TextField
+                          label="Border Radius"
+                          value={acceptButton.border_radius}
+                          onChange={(value) =>
+                            setAcceptButton({
+                              ...acceptButton,
+                              border_radius: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <TextField
+                          label="Border Width"
+                          value={acceptButton.border_width}
+                          onChange={(value) =>
+                            setAcceptButton({
+                              ...acceptButton,
+                              border_width: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <Select
+                          label="Text Weight"
+                          options={weightOptions}
+                          value={acceptButton.text_weight}
+                          onChange={(value) =>
+                            setAcceptButton({
+                              ...acceptButton,
+                              text_weight: value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <Select
+                          label="Font"
+                          options={fontOptions}
+                          value={acceptButton.fonts}
+                          onChange={(value) =>
+                            setAcceptButton({ ...acceptButton, fonts: value })
+                          }
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <TextField
+                          label="Text Size"
+                          value={acceptButton.text_size}
+                          onChange={(value) =>
+                            setAcceptButton({
+                              ...acceptButton,
+                              text_size: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                        <TextField
+                            label="Text Color"
+                            value={acceptButton.text_color}
+                            onChange={(value) => {
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setAcceptButton({
+                                  ...acceptButton,
+                                  text_color: value,
+                                });
+                              }
+                            }}
+                          />
+                          <input
+                            type="color"
+                            value={acceptButton.text_color}
+                            onChange={(e) =>
+                              setAcceptButton({
+                                ...acceptButton,
+                                text_color: e.target.value,
+                              })
+                            }
+                            style={{
+                              width: 50,
+                              height: 30,
+                              border: "none",
+                              background: "transparent",
+                              marginTop: "22px",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1">
+                          <TextField
+                            label="Background Color"
+                            value={acceptButton.background_color}
+                            onChange={(value) => {
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setAcceptButton({
+                                  ...acceptButton,
+                                  background_color: value,
+                                });
+                              }
+                            }}
+                          />
+                          <input
+                            type="color"
+                            value={acceptButton.background_color}
+                            onChange={(e) =>
+                              setAcceptButton({
+                                ...acceptButton,
+                                background_color: e.target.value,
+                              })
+                            }
+                            style={{
+                              width: 50,
+                              height: 30,
+                              border: "none",
+                              background: "transparent",
+                              marginTop: "22px",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1">
+                          <TextField
+                            label="Border Color"
+                            value={acceptButton.border_color}
+                            onChange={(value) => {
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setAcceptButton({
+                                  ...acceptButton,
+                                  border_color: value,
+                                });
+                              }
+                            }}
+                          />
+                          <input
+                            type="color"
+                            value={acceptButton.border_color}
+                            onChange={(e) =>
+                              setAcceptButton({
+                                ...acceptButton,
+                                border_color: e.target.value,
+                              })
+                            }
+                            style={{
+                              width: 50,
+                              height: 30,
+                              border: "none",
+                              background: "transparent",
+                              marginTop: "22px",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </Box>
+
+                  <hr className="mt-7 mx-0 border-gray-300 mb-5" />
+
+                  {/* Reject Button */}
+                  <Box padding="4">
+                    <Text variant="headingMd">Reject Button</Text>
+
+                    <div className="mb-4 mt-3">
+                      <TextField
+                        label="Text"
+                        value={rejectButtonText}
+                        onChange={(value) =>{
+                          setRejectButton({
+                            ...rejectButton,
+                            text: value.replace("{{minimum_age}}", age),
+                          });
+                          setAcceptButtonText(value)
+                        }
+                        }
+                      />
+                    </div>
+
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <TextField
+                          label="Border Radius"
+                          value={rejectButton.border_radius}
+                          onChange={(value) =>
+                            setRejectButton({
+                              ...rejectButton,
+                              border_radius: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <TextField
+                          label="Border Width"
+                          value={rejectButton.border_width}
+                          onChange={(value) =>
+                            setRejectButton({
+                              ...rejectButton,
+                              border_width: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <Select
+                          label="Text Weight"
+                          options={weightOptions}
+                          value={rejectButton.text_weight}
+                          onChange={(value) =>
+                            setRejectButton({
+                              ...rejectButton,
+                              text_weight: value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <Select
+                          label="Font"
+                          options={fontOptions}
+                          value={rejectButton.fonts}
+                          onChange={(value) =>
+                            setRejectButton({ ...rejectButton, fonts: value })
+                          }
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <TextField
+                          label="Text Size"
+                          value={rejectButton.text_size}
+                          onChange={(value) =>
+                            setRejectButton({
+                              ...rejectButton,
+                              text_size: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <TextField
+                            label="Text Color"
+                            value={rejectButton.text_color}
+                            onChange={(value) => {
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setRejectButton({
+                                  ...rejectButton,
+                                  text_color: value,
+                                });
+                              }
+                            }}
+                          />
+                          <input
+                            type="color"
+                            value={rejectButton.text_color}
+                            onChange={(e) =>
+                              setRejectButton({
+                                ...rejectButton,
+                                text_color: e.target.value,
+                              })
+                            }
+                            style={{
+                              width: 50,
+                              height: 30,
+                              border: "none",
+                              background: "transparent",
+                              marginTop: "22px",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1">
+                          <TextField
+                            label="Background Color"
+                            value={rejectButton.background_color}
+                            onChange={(value) => {
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setRejectButton({
+                                  ...rejectButton,
+                                  background_color: value,
+                                });
+                              }
+                            }}
+                          />
+                          <input
+                            type="color"
+                            value={rejectButton.background_color}
+                            onChange={(e) =>
+                              setRejectButton({
+                                ...rejectButton,
+                                background_color: e.target.value,
+                              })
+                            }
+                            style={{
+                              width: 50,
+                              height: 30,
+                              border: "none",
+                              background: "transparent",
+                              marginTop: "22px",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1">
+                          <TextField
+                            label="Border Color"
+                            value={rejectButton.border_color}
+                            onChange={(value) => {
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setRejectButton({
+                                  ...rejectButton,
+                                  border_color: value,
+                                });
+                              }
+                            }}
+                          />
+                          <input
+                            type="color"
+                            value={rejectButton.border_color}
+                            onChange={(e) =>
+                              setRejectButton({
+                                ...rejectButton,
+                                border_color: e.target.value,
+                              })
+                            }
+                            style={{
+                              width: 50,
+                              height: 30,
+                              border: "none",
+                              background: "transparent",
+                              marginTop: "22px",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className=" mt-2">
+                      <TextField
+                        label="Redirect Url"
+                        type="number"
+                        value={rejectButton.redirect_url}
+                        onChange={(value) =>
+                          setRejectButton({
+                            ...rejectButton,
+                            redirect_url: value,
+                          })
+                        }
+                      />
+                    </div>
+                  </Box>
+                </Card>
+              </Box>
             </div>
 
-            <div className="flex mt-3 gap-3">
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">
-                  Text Weight
-                </div>
-                <select
-                  name="text_weight"
-                  value={acceptButton.text_weight}
-                  onChange={(e) =>
-                    setAcceptButton({
-                      ...acceptButton,
-                      [e.target.name]: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-[8px] border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="font-thin">Thin</option>
-                  <option value="font-extralight">Extra Light</option>
-                  <option value="font-light">Light</option>
-                  <option value="font-normal">Normal</option>
-                  <option value="font-medium">Medium</option>
-                  <option value="font-semibold">Semi Bold</option>
-                  <option value="font-bold">Bold</option>
-                  <option value="font-extrabold">Extra Bold</option>
-                  <option value="font-black">Black</option>
-                </select>
+            {/* Right Section */}
+            <div className="flex flex-col w-[65%] h-screen fixed right-0 top-0 p-4">
+            <ui-save-bar id="my-save-bar">
+              <button variant="primary" id="save-button"></button>
+              <button id="discard-button"></button>
+            </ui-save-bar>
+              <div className="absolute top-4 right-4 flex justify-end z-10 space-x-4">
+              <Button variant="primary">Save</Button>
+              <Button variant="primary">Discard</Button>
               </div>
 
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Fonts</div>
-                <select
-                  name="fonts"
-                  value={acceptButton.fonts}
-                  onChange={(e) =>
-                    setAcceptButton({
-                      ...acceptButton,
-                      [e.target.name]: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-[8px] border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="font-sans">Sans</option>
-                  <option value="font-serif">Serif</option>
-                  <option value="font-mono">Monospace</option>
-                  <option value="font-inter">Inter</option>
-                  <option value="font-poppins">Poppins</option>
-                  <option value="font-roboto">Roboto</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text Size</div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-2">
-                  <input
-                    type="number"
-                    name="text_size"
-                    value={acceptButton.text_size}
-                    onChange={(e) =>
-                      setAcceptButton({
-                        ...acceptButton,
-                        [e.target.name]: e.target.value,
-                      })
-                    }
-                    className="w-full outline-none text-sm"
-                  />
-                  <span className="ml-2 text-gray-400 text-sm">Px</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex mt-3 gap-3">
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text Color</div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-[6px]">
-                  <input
-                    type="text"
-                    name="text_color"
-                    value={acceptButton.text_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setAcceptButton({
-                          ...acceptButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-full text-sm focus:outline-none"
-                  />
-                  <input
-                    type="color"
-                    name="text_color"
-                    value={acceptButton.text_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setAcceptButton({
-                          ...acceptButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-7 h-6 ml-7 p-0 border-black bg-transparent cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">
-                  Background Color
-                </div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-[6px]">
-                  <input
-                    type="text"
-                    name="background_color"
-                    value={acceptButton.background_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setAcceptButton({
-                          ...acceptButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-full text-sm focus:outline-none"
-                  />
-                  <input
-                    type="color"
-                    name="background_color"
-                    value={acceptButton.background_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setAcceptButton({
-                          ...acceptButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-7 h-6 ml-7 p-0 border-black bg-transparent cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Border Color</div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-[6px]">
-                  <input
-                    type="text"
-                    name="border_color"
-                    value={acceptButton.border_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setAcceptButton({
-                          ...acceptButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-full text-sm focus:outline-none"
-                  />
-                  <input
-                    type="color"
-                    name="border_color"
-                    value={acceptButton.border_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setAcceptButton({
-                          ...acceptButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-7 h-6 ml-7 p-0 border-black bg-transparent cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <hr className="mt-7 mx-0 border-gray-300" />
-
-            <div className="text-sm text-gray-800 mt-4 mb-3">Reject Button</div>
-            <div className="flex gap-3">
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text</div>
-                <input
-                  type="text"
-                  placeholder="Enter text"
-                  name="text"
-                  value={rejectButtonText}
-                  onChange={(e) =>{
-                    const value = e.target.value;
-                    setRejectButton({
-                      ...rejectButton,
-                      [e.target.name]: value.replace("{{minimum_age}}", age),
-                    });
-                    setAcceptButtonText(value)
-                  }}
-                  className="w-full px-3 py-2 border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">
-                  Border Radius
-                </div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-2">
-                  <input
-                    type="number"
-                    name="border_radius"
-                    value={rejectButton.border_radius}
-                    onChange={(e) =>
-                      setRejectButton({
-                        ...rejectButton,
-                        [e.target.name]: e.target.value,
-                      })
-                    }
-                    className="w-full outline-none text-sm"
-                  />
-                  <span className="ml-2 text-gray-400 text-sm">Px</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">
-                  Border Width
-                </div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-2">
-                  <input
-                    type="number"
-                    name="border_width"
-                    value={rejectButton.border_width}
-                    onChange={(e) =>
-                      setRejectButton({
-                        ...rejectButton,
-                        [e.target.name]: e.target.value,
-                      })
-                    }
-                    className="w-full outline-none text-sm"
-                  />
-                  <span className="ml-2 text-gray-400 text-sm">Px</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex mt-3 gap-3">
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">
-                  Text Weight
-                </div>
-                <select
-                  name="text_weight"
-                  value={rejectButton.text_weight}
-                  onChange={(e) =>
-                    setRejectButton({
-                      ...rejectButton,
-                      [e.target.name]: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-[8px] border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="font-thin">Thin</option>
-                  <option value="font-extralight">Extra Light</option>
-                  <option value="font-light">Light</option>
-                  <option value="font-normal">Normal</option>
-                  <option value="font-medium">Medium</option>
-                  <option value="font-semibold">Semi Bold</option>
-                  <option value="font-bold">Bold</option>
-                  <option value="font-extrabold">Extra Bold</option>
-                  <option value="font-black">Black</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Fonts</div>
-                <select
-                  name="fonts"
-                  value={rejectButton.fonts}
-                  onChange={(e) =>
-                    setRejectButton({
-                      ...rejectButton,
-                      [e.target.name]: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-[8px] border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="font-sans">Sans</option>
-                  <option value="font-serif">Serif</option>
-                  <option value="font-mono">Monospace</option>
-                  <option value="font-inter">Inter</option>
-                  <option value="font-poppins">Poppins</option>
-                  <option value="font-roboto">Roboto</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text Size</div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-2">
-                  <input
-                    type="number"
-                    name="text_size"
-                    value={rejectButton.text_size}
-                    onChange={(e) =>
-                      setRejectButton({
-                        ...rejectButton,
-                        [e.target.name]: e.target.value,
-                      })
-                    }
-                    className="w-full outline-none text-sm"
-                  />
-                  <span className="ml-2 text-gray-400 text-sm">Px</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex mt-3 gap-3">
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Text Color</div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-[6px]">
-                  <input
-                    type="text"
-                    name="text_color"
-                    value={rejectButton.text_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setRejectButton({
-                          ...rejectButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-full text-sm focus:outline-none"
-                  />
-                  <input
-                    type="color"
-                    name="text_color"
-                    value={rejectButton.text_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setRejectButton({
-                          ...rejectButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-7 h-6 ml-7 p-0 border-black bg-transparent cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">
-                  Background Color
-                </div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-[6px]">
-                  <input
-                    type="text"
-                    name="background_color"
-                    value={rejectButton.background_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setRejectButton({
-                          ...rejectButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-full text-sm focus:outline-none"
-                  />
-                  <input
-                    type="color"
-                    name="background_color"
-                    value={rejectButton.background_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setRejectButton({
-                          ...rejectButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-7 h-6 ml-7 p-0 border-black bg-transparent cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col w-1/3">
-                <div className="text-[13px] text-gray-600 mb-1">Border Color</div>
-                <div className="flex items-center border border-gray-500 rounded-md px-2 py-[6px]">
-                  <input
-                    type="text"
-                    name="border_color"
-                    value={rejectButton.border_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setRejectButton({
-                          ...rejectButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-full text-sm focus:outline-none"
-                  />
-                  <input
-                    type="color"
-                    name="border_color"
-                    value={rejectButton.border_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                        setRejectButton({
-                          ...rejectButton,
-                          [e.target.name]: val,
-                        });
-                      }
-                    }}
-                    className="w-7 h-6 ml-7 p-0 border-black bg-transparent cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div className="text-[13px] text-gray-600 mt-3 mb-1">
-                Redirect URL
-              </div>
-              <input
-                type="text"
-                placeholder="Enter text"
-                name="redirect_url"
-                value={rejectButton.redirect_url}
-                onChange={(e) =>
-                  setRejectButton({
-                    ...rejectButton,
-                    [e.target.name]: e.target.value,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-500 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </Card>
-        </div>
-
-        <div className="mb-8">
-  <div className="text-m text-gray-800 mb-2">Image</div>
-  <Card>
-    <div className="w-full max-w-md mx-auto">
-      <div className="w-full h-48 bg-gray-200 border border-dashed border-gray-400 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-300 relative overflow-hidden">
-        {image && (
-          <img
-            src={image}
-            alt="Preview"
-            className="absolute w-[200px] h-[200px] object-cover rounded-lg left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-          />
-        )}
-        <label
-          htmlFor="imageUpload"
-          className="z-10 text-gray-700 text-sm px-4 py-2 bg-white border border-gray-300 rounded shadow"
-        >
-          Upload File
-        </label>
-        <input
-          id="imageUpload"
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          className="hidden"
-        />
-      </div>
-    </div>
-  </Card>
-</div>
-      </div>
-      <div className="flex flex-col w-[65%] h-screen fixed right-0 top-0 p-4">
-        <div className="self-end">
-        <button
-          className="text-md font-bold text-white bg-slate-800 px-6 py-2 rounded-lg mt-4 mb-8 mr-3 active:scale-95"
-          onClick={addSetting}
-        >
-          Save
-        </button>
-        <button
-          className="text-md font-bold text-white bg-slate-800 px-6 py-2 rounded-lg mt-4 mb-8 active:scale-95"
-          onClick={removeSetting}
-        >
-          Discard
-        </button>
-        </div>
-
-        <div className="flex-1 flex justify-center items-center">
-          <Card>
-            <div className="bg-gray-400 p-10">
-              <div className="bg-yellow-100 rounded-2xl shadow-2xl border-4 border-white sm:h-[300px] h-[400px] xs:w-[350px] sm:w-[400px] md:w-[450px] lg:w-[500px] xl:w-[500px] p-4 flex flex-col sm:flex-row relative">
-                <div className="sm:w-2/5 w-full flex justify-center items-center p-4">
-                  <img
-                    src={image}
-                    alt="Popup Image"
-                    width={300}
-                    height={300}
-                    className="object-contain rounded-lg w-full max-w-[300px]"
-                  />
-                </div>
-
-                <div className="sm:w-3/5 w-full flex flex-col justify-center p-4 text-center sm:text-left">
-                  <h1
-                    className={`${title.text_weight} ${title.fonts} mb-4`}
-                    style={{
-                      fontSize: `${title.text_size}px`,
-                      color: title.text_color,
-                    }}
-                  >
-                    {title.text}
-                  </h1>
-                  <p
-                    className={`${description.text_weight} ${description.fonts} mb-6`}
-                    style={{
-                      fontSize: `${description.text_size}px`,
-                      color: description.text_color,
-                    }}
-                  >
-                    {description.text}
-                  </p>
-                  <div className="flex flex-col space-y-3">
-                    <button
-                      // onClick={handleNo}
-                      className={`border ${rejectButton.fonts} ${rejectButton.text_weight} py-2 rounded-lg active:scale-95`}
-                      style={{
-                        fontSize: `${rejectButton.text_size}px`,
-                        color: rejectButton.text_color,
-                        backgroundColor: rejectButton.background_color,
-                        borderWidth: `${rejectButton.border_width}px`,
-                        borderColor: rejectButton.border_color,
-                        borderRadius: `${rejectButton.border_radius}px`,
-                      }}
-                    >
-                      {rejectButton.text}
-                    </button>
-                    <button
-                      // onClick={handleYes}
-                      className={`${acceptButton.fonts} ${acceptButton.text_weight} py-2 rounded-lg active:scale-95`}
-                      style={{
-                        fontSize: `${acceptButton.text_size}px`,
-                        color: acceptButton.text_color,
-                        backgroundColor: acceptButton.background_color,
-                        borderWidth: `${acceptButton.border_width}px`,
-                        borderColor: acceptButton.border_color,
-                        borderRadius: `${acceptButton.border_radius}px`,
-                      }}
-                    >
-                      {acceptButton.text}
-                    </button>
+              <div className="flex justify-center items-center h-full">
+                <Card className="w-full">
+                  <div className="bg-gray-100 p-4">
+                    <div className="bg-yellow-100 w-[450px] h-[250px] rounded-lg shadow-md border-2 border-white flex flex-row p-4">
+                      <div className="w-2/5 flex justify-center items-center p-4">
+                        <Thumbnail source={image} alt="Popup" size="large" />
+                      </div>
+                      <div className="w-3/5 p-4 flex flex-col justify-center">
+                        <Text>
+                          <span
+                            style={{
+                              display: 'block',
+                              fontWeight: Number(title.text_weight),
+                              fontSize: `${title.text_size}px`,
+                              fontFamily: title.fonts,
+                              color: title.text_color,
+                              marginBottom: "10px"
+                            }}
+                          >
+                            {title.text}
+                          </span>
+                        </Text>
+                        <Text>
+                          <span
+                            style={{
+                              fontWeight: Number(description.text_weight),
+                              fontSize: `${description.text_size}px`,
+                              fontFamily: description.fonts,
+                              color: description.text_color,
+                            }}
+                          >
+                            {description.text}
+                          </span>
+                        </Text>
+                        <div className="mt-4">
+                          <div className="flex flex-col space-y-4">
+                            <button
+                              // onClick={handleNo}
+                              className={`border py-1.5 rounded-lg active:scale-95`}
+                              style={{
+                                fontSize: `${rejectButton.text_size}px`,
+                                color: rejectButton.text_color,
+                                backgroundColor: rejectButton.background_color,
+                                borderWidth: `${rejectButton.border_width}px`,
+                                borderColor: rejectButton.border_color,
+                                borderRadius: `${rejectButton.border_radius}px`,
+                                fontWeight: Number(rejectButton.text_weight),
+                                fontFamily: rejectButton.fonts,
+                              }}
+                            >
+                              {rejectButton.text}
+                            </button>
+                            <button
+                              // onClick={handleYes}
+                              className={`border py-1.5 rounded-lg active:scale-95`}
+                              style={{
+                                fontSize: `${acceptButton.text_size}px`,
+                                color: acceptButton.text_color,
+                                backgroundColor: acceptButton.background_color,
+                                borderWidth: `${acceptButton.border_width}px`,
+                                borderColor: acceptButton.border_color,
+                                borderRadius: `${acceptButton.border_radius}px`,
+                                fontWeight: Number(acceptButton.text_weight),
+                                fontFamily: acceptButton.fonts,
+                                
+                              }}
+                            >
+                              {acceptButton.text}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </Card>
               </div>
             </div>
-          </Card>
-        </div>
-      </div>
-    </div>
+          </div>
+        </Layout.Section>
+      </Layout>
+    </Page>
   );
 }
+
+// <div className="w-full h-screen m-0 p-0 ">
+//   <Layout>
+//     <Layout.Section>
+//       <div className="flex w-full h-full mx-0">
+//         {/* Left Section - 1/3 of width */}
+//         <div className="w-1/3 p-4">
+//           <div className="space-y-4">
+//             <Text
+//               variant="headingXl"
+//               as="h1"
+//               tone="default"
+//               alignment="start"
+//             >
+//               Settings
+//             </Text>
+//             <div className="mt-4">
+//               <Text variant="bodyMd">Customizations</Text>
+//             </div>
+
+//             <div className="mt-4">
+//               <Card>
+//                 <Text variant="semibold">Verification Settings</Text>
+//                 <div className="mt-4">
+//                   <div className="mb-2">
+//                     <Text variant="bodysm">Age</Text>
+//                   </div>
+
+//                   <div className="w-[200px]">
+//                     <TextField
+//                       type="number"
+//                       value={age}
+//                       onChange={handleAgeChange}
+//                       suffix="Year(s)"
+//                       // autoComplete="off"
+//                     />
+//                   </div>
+//                 </div>
+//               </Card>
+//             </div>
+//           </div>
+
+//           <Box paddingBlockStart="8">
+//             <Text variant="headingMd" as="h3">
+//               Text Customizations
+//             </Text>
+
+//             <Card>
+//               <Box padding="4">
+//                 <Text variant="headingSm">Title</Text>
+
+//                 <Layout>
+//                 <Layout.Section variant="oneThird">
+//       <div style={{marginTop: 'var(--p-space-500)'}}>
+//         <TextContainer>
+//           <Text id="storeDetails" variant="headingMd" as="h2">
+//             Store details
+//           </Text>
+//           <Text tone="subdued" as="p">
+//             Shopify and your customers will use this information to contact
+//             you.
+//           </Text>
+//         </TextContainer>
+//       </div>
+//     </Layout.Section>
+//     <Layout.Section>
+//       <LegacyCard sectioned>
+//         <FormLayout>
+//           <TextField
+//             label="Store name"
+//             onChange={() => {}}
+//             autoComplete="off"
+//           />
+//           <TextField
+//             type="email"
+//             label="Account email"
+//             onChange={() => {}}
+//             autoComplete="email"
+//           />
+//         </FormLayout>
+//       </LegacyCard>
+//     </Layout.Section>
+
+//                   {/* <Layout.Section variant='oneThird'>
+//                     <Text variant="bodySm">Text Weight</Text>
+//                     <Select
+//                       options={weightOptions}
+//                       value={title.text_weight}
+//                       onChange={(value) =>
+//                         setTitle({ ...title, text_weight: value })
+//                       }
+//                     />
+//                   </Layout.Section>
+
+//                   <Layout.Section variant='oneThird'>
+//                     <Text variant="bodySm">Fonts</Text>
+//                     <Select
+//                       options={fontOptions}
+//                       value={title.fonts}
+//                       onChange={(value) =>
+//                         setTitle({ ...title, fonts: value })
+//                       }
+//                     />
+//                   </Layout.Section> */}
+//                 </Layout>
+
+//                 <Layout>
+//                   <Layout.Section variant='oneThird'>
+//                     <Text variant="bodySm">Text Size</Text>
+//                     <TextField
+//                       name="text_size"
+//                       value={title.text_size}
+//                       placeholder="Enter text size"
+//                       onChange={(value) =>
+//                         setTitle({ ...title, text_size: value })
+//                       }
+//                     />
+//                   </Layout.Section>
+
+//                   <Layout.Section variant='oneThird'>
+//                     <Text variant="bodySm">Text Color</Text>
+//                     <InlineStack gap="200" wrap={false} align="center">
+//                       <TextField
+//                         name="text_color"
+//                         value={title.text_color}
+//                         onChange={(value) => {
+//                           if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+//                             setTitle({ ...title, text_color: value });
+//                           }
+//                         }}
+//                       />
+//                       <input
+//                         type="color"
+//                         value={title.text_color}
+//                         onChange={(e) =>
+//                           setTitle({ ...title, text_color: e.target.value })
+//                         }
+//                         style={{
+//                           width: 30,
+//                           height: 30,
+//                           border: "none",
+//                           background: "transparent",
+//                         }}
+//                       />
+//                     </InlineStack>
+//                   </Layout.Section>
+//                 </Layout>
+
+//               </Box>
+//             </Card>
+//           </Box>
+//         </div>
+
+//         <div className="w-2/3 p-4 relative">
+//           <div className="absolute top-4 right-4 flex justify-end z-10 space-x-4">
+//             <Button primary onClick={addSetting}>
+//               Save
+//             </Button>
+//             <Button onClick={removeSetting}>Discard</Button>
+//           </div>
+
+//           <div className="flex justify-center items-center h-full">
+//             <Card className="w-full max-w-2xl">
+//               <div className="bg-gray-100 p-4">
+//                 <div className="bg-yellow-100 rounded-lg shadow-md border-2 border-white flex flex-row p-4">
+//                   <div className="w-2/5 flex justify-center items-center p-4">
+//                     <Thumbnail source={image} alt="Popup" size="large" />
+//                   </div>
+
+//                   <div className="w-3/5 p-4 flex flex-col justify-center">
+//                     <Text
+//                       variant="headingLg"
+//                       style={{ fontWeight: "bold", fontSize: "20px" }}
+//                     >
+//                       Your Title
+//                     </Text>
+//                     <Text
+//                       variant="bodyMd"
+//                       style={{ fontWeight: "normal", fontSize: "16px" }}
+//                     >
+//                       Your description goes here.
+//                     </Text>
+
+//                     <div className="mt-4">
+//                       <div className="flex flex-col space-y-4">
+//                         <Button fullWidth style={{ fontSize: "14px" }}>
+//                           Reject
+//                         </Button>
+//                         <Button fullWidth style={{ fontSize: "14px" }}>
+//                           Accept
+//                         </Button>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+//             </Card>
+//           </div>
+//         </div>
+//       </div>
+//     </Layout.Section>
+//   </Layout>
+// </div>

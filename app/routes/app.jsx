@@ -30,6 +30,8 @@ export default function App() {
       <Outlet />
     </AppProvider>
      </StrictMode>
+
+     
   );
 }
 

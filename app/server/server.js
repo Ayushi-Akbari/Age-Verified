@@ -30,21 +30,11 @@ db.sequelize.sync()
   });
 
   app.get("/", (req, res) => {
-      // const { shop } = req.params;
-      // if (!shop) {
-      //   return res.status(400).send('Shop parameter is required');
-      // }
-    
-      const state = crypto.randomBytes(16).toString('hex');
-      console.log("state : ", state);
+      console.log("server");
+
+      res.send("server")
       
-      req.session.state = state;
     
-      const scopes = 'read_products,write_products';
-    
-      const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${SHOPIFY_REDIRECT_URI}&state=${state}`;
-    
-      res.redirect(authUrl);
     })
   app.use('/user', userRoutes); 
 //   app.use('/info', infoRoutes);

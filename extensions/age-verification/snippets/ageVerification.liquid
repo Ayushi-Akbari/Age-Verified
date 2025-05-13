@@ -1,9 +1,4 @@
-
 {{ 'output.css' | asset_url | stylesheet_tag }}
-
-{% comment %}
-  Age Verification Modal - Injected directly in theme.liquid
-{% endcomment %}
 
 {% assign age_limit = block.settings.age_limit %}
 {% assign title = block.settings.title %}
@@ -12,58 +7,80 @@
 {% assign reject_message = block.settings.reject_message | replace: '[ age ]', age_limit %}
 {% assign popup_image = block.settings.popup_image %}
 
-
 <style>
+  html, body {
+    height: 100%;
+  }
+
   body.modal-open {
     overflow: hidden !important;
     height: 100vh;
   }
 
   .custom-size {
-  font-size: 25px;
+    font-size: 25px;
+  }
+
+  .custom {
+  padding: 20px;
 }
+
 </style>
+
+{% if true %} <!-- Always True to indicate app is enabled -->
+  <div data-my-app-embed data-store="{{ shop.permanent_domain }}"></div>
+{% endif %}
 
 <!-- Age Verification Modal -->
 <div id="popup-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-  <div class="bg-yellow-100 rounded-2xl shadow-2xl border-4 border-white-700 w-[40%] h-[300px] max-w-3xl p-4 flex relative">
-    
-    <!-- Left: Image -->
-    <div class="md:w-2/5 w-full flex justify-center items-center p-4">
+  <div class="bg-yellow-100 rounded-2xl shadow-2xl border-4 border-white-700 flex gap-6"
+    style="padding: 25px; height: 250px; width:550px;"
+  >
+    <!-- Empty content still takes up space -->
+    <div class="flex-1 rounded-lg flex items-center justify-center text-gray-400">
+        <!-- Left: Image -->
+    <div class="w-1/2 flex justify-center items-center p-4 "
+      style="margin-right: 12px;"
+    >
        
       {% if popup_image == blank %}
       <img 
         src="{{ 'lock.png' | asset_url }}" 
         alt="Default Popup Image" 
-        width="300" 
-        height="300" 
-        class="justify-center object-contain rounded-lg" 
+        width="250" 
+        height="250" 
+        class="justify-center object-contain rounded-lg " 
       />
     {% else %}
       <img 
         src="{{ popup_image | image_url: width: 300 }}" 
         alt="Popup Image" 
-        width="300" 
-        height="300" 
-        class="justify-center object-contain rounded-lg" 
+        width="250" 
+        height="250" 
+        class="justify-center object-contain rounded-lg " 
       />
     {% endif %}
 
     </div>
 
     <!-- Right: Text and Buttons -->
-    <div class="md:w-3/5 w-full flex flex-col justify-center p-4 text-center md:text-left">
+    <div class="w-1/2 flex flex-col justify-center p-6 m-6 text-center md:text-left gap-6">
       <!-- Close Button -->
       
 
-      <h1 class="custom-size font-bold text-gray-800 mb-4">{{ title }}</h1>
+      <h1 class="custom-size font-bold text-gray-800 mb-5"
+        style="margin-bottom: 6px;" 
+      >{{ title }}</h1>
 
       <p class="text-m text-gray-600 mb-6">{{ message }}</p>
 
       <div class="flex flex-col space-y-3">
-        <button onclick="window.location.href="" class="border border-yellow-600 text-yellow-800 font-medium py-2 rounded-lg hover:bg-yellow-200 transition">{{ reject_message }}</button>
-        <button onclick="handleYes()" class="bg-blue-700 text-white font-medium py-2 rounded-lg hover:bg-blue-800 transition">{{ accept_message }}</button>
+        <button onclick="window.location.href="" class="border border-yellow-600 text-yellow-800 font-mediumrounded-lg py-2 rounded-lg active:scale-95"
+          style="margin-bottom: 5px; margin-top: 10px; " 
+        >{{ reject_message }}</button>
+        <button onclick="handleYes()" class="bg-blue-700 text-white font-medium rounded-lg py-2 rounded-lg active:scale-95">{{ accept_message }}</button>
       </div>
+    </div>
     </div>
   </div>
 </div>
