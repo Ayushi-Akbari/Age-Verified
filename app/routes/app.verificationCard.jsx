@@ -15,7 +15,7 @@ import {
   Thumbnail,
 } from "@shopify/polaris";
 
-export default function VerificationPage({age,image, description, acceptButton, rejectButton, title, hasChanges, setHasChanges}) {
+export default function VerificationPage({age,image, description, acceptButton, rejectButton, title, hasChanges, setHasChanges, addSetting}) {
   useEffect(() => {
     if (hasChanges) {
       document.getElementById('my-save-bar')?.show();
@@ -59,6 +59,7 @@ export default function VerificationPage({age,image, description, acceptButton, 
           onClick={() => {
             console.log("Saving...");
             document.getElementById("save-button").click();
+            addSetting()
           }}
         >
           Save

@@ -4,18 +4,66 @@ import {
   Text,
   TextField,
   Select,
+
   Card,
   Box,
   DropZone,
   Thumbnail,
 } from "@shopify/polaris";
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from 'react-router-dom';
 import VerificationCard from "./app.verificationCard";
 
+import { authenticate } from "../shopify.server";
+// import { json } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
+
+// import { redirect } from "@remix-run/node";
+import axios from 'axios';
+
+// import {loader} from "./settingServer"
+
+export async function loader({ request }) {
+  // const navigate = useNavigate();
+  const shopParam = new URL(request.url).searchParams.get("shop");
+
+  try {
+    const { admin } = await authenticate.admin(request);
+
+    const response = await admin.graphql(`
+      query {
+        shop {
+          name
+          contactEmail
+          createdAt
+          currencyCode
+        }
+      }
+    `);
+
+    const data = await response.json();
+    if(!data){
+      return null
+    }
+    const shop = data.data.shop;
+    return {shop};
+  } catch (error) {
+    console.error("Auth failed:", error);
+    if (shopParam) {
+      // navigate(`/auth?shop=${shopParam}`);
+      throw new Response("Shop parameter missing", { status: 400 });
+    } else {
+      throw new Response("Shop parameter missing", { status: 400 });
+    }
+  }
+}
+
 export default function SettingsPolaris() {
+  // const navigate = useNavigate();
   const [age, setAge] = useState("18");
   const [hasChanges, setHasChanges] = useState(false);
   const [image, setImage] = useState(null);
+  const [imageFile, setImageFile] = useState(null)
   const [title, setTitle] = useState({
     text: "Welcome!",
     text_weight: "bold",
@@ -54,9 +102,29 @@ export default function SettingsPolaris() {
     border_radius: 6,
   });
 
+  const { shop } = useLoaderData(); 
+
   const [descriptionText, setDescriptionText] = useState("Please verify that you are {{minimum_age}} years of age or older to enter this site.",);
-  const [acceptButtonText, setAcceptButtonText] = useState("Yes, I’m over {{minimum_age}}",);
-  const [rejectButtonText, setRejectButtonText] = useState("No, I’m under {{minimum_age}}",);
+  const [acceptButtonText, setAcceptButtonText] = useState("Yes, I’m over {{minimum_age}}");
+  const [rejectButtonText, setRejectButtonText] = useState("No, I’m under {{minimum_age}}");
+
+  // const [shops, setShops] = useState(shop);
+
+  useEffect(() => {
+    console.log("hello");
+    
+    console.log("Loaded shop data: ", shop);
+    let isCancelled = false
+
+    if (!isCancelled) {
+      fetchData();
+    }
+    
+    return () => {
+      isCancelled = true;
+    };
+  }, [shop]);
+
 
   const weightOptions = [
     { label: "Thin", value: "100" },
@@ -69,7 +137,6 @@ export default function SettingsPolaris() {
     { label: "Extra Bold", value: "800" },
     { label: "Black", value: "900" },
   ];
-
   const fontOptions = [
     { label: "Sans", value: "sans-serif" },
     { label: "Serif", value: "serif" },
@@ -79,24 +146,19 @@ export default function SettingsPolaris() {
     { label: "Roboto", value: "'Roboto', sans-serif" },
   ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const id_token_new = await shopify.idToken();
-        console.log("id_token_new : ", id_token_new);
-      } catch (error) {
-        console.error("Error fetching ID token:", error);
-      }
-    };
-  
-    fetchData();
-  }, []);
-
   const handleDropZoneDrop = useCallback((_dropFiles, acceptedFiles) => {
+    const uploadedFile = acceptedFiles[0];
+    console.log("upload file : ", uploadedFile);
+    
+    setImageFile(acceptedFiles[0])
+
+    console.log("image file : ", imageFile);
+    
     const reader = new FileReader();
     reader.onload = () => setImage(reader.result);
     reader.readAsDataURL(uploadedFile);
   }, []);
+  
 
   const handleSectionChange = (section, key, value) => {
     if (section === 'title') {
@@ -110,6 +172,89 @@ export default function SettingsPolaris() {
     }
     setHasChanges(true);
   };
+
+  const fetchData = async () => {
+    const data = await axios.get(`http://localhost:8001/user/get-setting?name=${shop.name}`)
+    if(data){
+      const settingData = data.data.data.settings
+      const parsedSetting = {
+        ...settingData,
+        title: settingData.title ? JSON.parse(settingData.title) : null,
+        description: settingData.description ? JSON.parse(settingData.description) : null,
+        acceptButton: settingData.acceptButton ? JSON.parse(settingData.acceptButton) : null,
+        rejectButton: settingData.rejectButton ? JSON.parse(settingData.rejectButton) : null,
+      };
+      
+      // Set state values if present
+      setAge(parsedSetting.age || "");
+      
+      if (parsedSetting.image) {
+        const path = parsedSetting.image;
+        // const relativePath = parsedSetting.image.replace(/\\/g, "/").split("age-verification/")[1];
+        // console.log("app : " + relativePath);
+        console.log("image : " , image);
+        
+        setImage(`http://localhost:8001${path}`)
+        console.log("image : " , image);
+        console.log("path:", path);
+      }
+      
+      parsedSetting.title && setTitle(parsedSetting.title);
+      parsedSetting.description && setDescription(parsedSetting.description);
+      parsedSetting.acceptButton && setAcceptButton(parsedSetting.acceptButton);
+      parsedSetting.rejectButton && setRejectButton(parsedSetting.rejectButton);
+
+      console.log("title : :  " ,title);
+      console.log("description : :  " ,description);
+      console.log("acceptButton : " ,acceptButton);
+      console.log("rejectButton : " ,rejectButton);
+      
+    }
+
+  };
+
+  const addSetting = async () => {
+
+    if( !shop || !shop.name){
+      // navigate(
+      //   `/auth?shop=${new URL(request.url).searchParams.get("shop")}`,
+      // );
+      console.log("login first");
+      return null;
+      
+    }
+
+    console.log("file : ", imageFile);
+    
+    const formData = new FormData();
+ 
+    formData.append("age", age);
+    formData.append("image", imageFile)
+    formData.append("title", JSON.stringify(title));
+    formData.append("description", JSON.stringify(description));
+    formData.append("acceptButton", JSON.stringify(acceptButton));
+    formData.append("rejectButton", JSON.stringify(rejectButton));
+
+    for (const [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
+        
+    const response = await axios.post(
+      `http://localhost:8001/user/add-setting?name=${shop.name}`,
+      formData,
+    );
+
+    console.log("response : ", response.status);
+    if(response.status === 200){
+      fetchData()
+    }
+
+    
+  };
+
+  const removeSetting = async () =>{
+    window.location.reload();
+  }
 
   return (
     <Page fullWidth>
@@ -810,6 +955,7 @@ export default function SettingsPolaris() {
                 rejectButton={rejectButton}
                 hasChanges={hasChanges}
                 setHasChanges={setHasChanges}
+                addSetting={addSetting}
               />
             </div>
           </div>
@@ -818,206 +964,3 @@ export default function SettingsPolaris() {
     </Page>
   );
 }
-
-// <div className="w-full h-screen m-0 p-0 ">
-//   <Layout>
-//     <Layout.Section>
-//       <div className="flex w-full h-full mx-0">
-//         {/* Left Section - 1/3 of width */}
-//         <div className="w-1/3 p-4">
-//           <div className="space-y-4">
-//             <Text
-//               variant="headingXl"
-//               as="h1"
-//               tone="default"
-//               alignment="start"
-//             >
-//               Settings
-//             </Text>
-//             <div className="mt-4">
-//               <Text variant="bodyMd">Customizations</Text>
-//             </div>
-
-//             <div className="mt-4">
-//               <Card>
-//                 <Text variant="semibold">Verification Settings</Text>
-//                 <div className="mt-4">
-//                   <div className="mb-2">
-//                     <Text variant="bodysm">Age</Text>
-//                   </div>
-
-//                   <div className="w-[200px]">
-//                     <TextField
-//                       type="number"
-//                       value={age}
-//                       onChange={handleAgeChange}
-//                       suffix="Year(s)"
-//                       // autoComplete="off"
-//                     />
-//                   </div>
-//                 </div>
-//               </Card>
-//             </div>
-//           </div>
-
-//           <Box paddingBlockStart="8">
-//             <Text variant="headingMd" as="h3">
-//               Text Customizations
-//             </Text>
-
-//             <Card>
-//               <Box padding="4">
-//                 <Text variant="headingSm">Title</Text>
-
-//                 <Layout>
-//                 <Layout.Section variant="oneThird">
-//       <div style={{marginTop: 'var(--p-space-500)'}}>
-//         <TextContainer>
-//           <Text id="storeDetails" variant="headingMd" as="h2">
-//             Store details
-//           </Text>
-//           <Text tone="subdued" as="p">
-//             Shopify and your customers will use this information to contact
-//             you.
-//           </Text>
-//         </TextContainer>
-//       </div>
-//     </Layout.Section>
-//     <Layout.Section>
-//       <LegacyCard sectioned>
-//         <FormLayout>
-//           <TextField
-//             label="Store name"
-//             onChange={() => {}}
-//             autoComplete="off"
-//           />
-//           <TextField
-//             type="email"
-//             label="Account email"
-//             onChange={() => {}}
-//             autoComplete="email"
-//           />
-//         </FormLayout>
-//       </LegacyCard>
-//     </Layout.Section>
-
-//                   {/* <Layout.Section variant='oneThird'>
-//                     <Text variant="bodySm">Text Weight</Text>
-//                     <Select
-//                       options={weightOptions}
-//                       value={title.text_weight}
-//                       onChange={(value) =>
-//                         setTitle({ ...title, text_weight: value })
-//                       }
-//                     />
-//                   </Layout.Section>
-
-//                   <Layout.Section variant='oneThird'>
-//                     <Text variant="bodySm">Fonts</Text>
-//                     <Select
-//                       options={fontOptions}
-//                       value={title.fonts}
-//                       onChange={(value) =>
-//                         setTitle({ ...title, fonts: value })
-//                       }
-//                     />
-//                   </Layout.Section> */}
-//                 </Layout>
-
-//                 <Layout>
-//                   <Layout.Section variant='oneThird'>
-//                     <Text variant="bodySm">Text Size</Text>
-//                     <TextField
-//                       name="text_size"
-//                       value={title.text_size}
-//                       placeholder="Enter text size"
-//                       onChange={(value) =>
-//                         setTitle({ ...title, text_size: value })
-//                       }
-//                     />
-//                   </Layout.Section>
-
-//                   <Layout.Section variant='oneThird'>
-//                     <Text variant="bodySm">Text Color</Text>
-//                     <InlineStack gap="200" wrap={false} align="center">
-//                       <TextField
-//                         name="text_color"
-//                         value={title.text_color}
-//                         onChange={(value) => {
-//                           if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-//                             setTitle({ ...title, text_color: value });
-//                           }
-//                         }}
-//                       />
-//                       <input
-//                         type="color"
-//                         value={title.text_color}
-//                         onChange={(e) =>
-//                           setTitle({ ...title, text_color: e.target.value })
-//                         }
-//                         style={{
-//                           width: 30,
-//                           height: 30,
-//                           border: "none",
-//                           background: "transparent",
-//                         }}
-//                       />
-//                     </InlineStack>
-//                   </Layout.Section>
-//                 </Layout>
-
-//               </Box>
-//             </Card>
-//           </Box>
-//         </div>
-
-//         <div className="w-2/3 p-4 relative">
-//           <div className="absolute top-4 right-4 flex justify-end z-10 space-x-4">
-//             <Button primary onClick={addSetting}>
-//               Save
-//             </Button>
-//             <Button onClick={removeSetting}>Discard</Button>
-//           </div>
-
-//           <div className="flex justify-center items-center h-full">
-//             <Card className="w-full max-w-2xl">
-//               <div className="bg-gray-100 p-4">
-//                 <div className="bg-yellow-100 rounded-lg shadow-md border-2 border-white flex flex-row p-4">
-//                   <div className="w-2/5 flex justify-center items-center p-4">
-//                     <Thumbnail source={image} alt="Popup" size="large" />
-//                   </div>
-
-//                   <div className="w-3/5 p-4 flex flex-col justify-center">
-//                     <Text
-//                       variant="headingLg"
-//                       style={{ fontWeight: "bold", fontSize: "20px" }}
-//                     >
-//                       Your Title
-//                     </Text>
-//                     <Text
-//                       variant="bodyMd"
-//                       style={{ fontWeight: "normal", fontSize: "16px" }}
-//                     >
-//                       Your description goes here.
-//                     </Text>
-
-//                     <div className="mt-4">
-//                       <div className="flex flex-col space-y-4">
-//                         <Button fullWidth style={{ fontSize: "14px" }}>
-//                           Reject
-//                         </Button>
-//                         <Button fullWidth style={{ fontSize: "14px" }}>
-//                           Accept
-//                         </Button>
-//                       </div>
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-//             </Card>
-//           </div>
-//         </div>
-//       </div>
-//     </Layout.Section>
-//   </Layout>
-// </div>

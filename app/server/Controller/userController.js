@@ -1,7 +1,11 @@
+const { use } = require("react");
 const db = require("../models/Config/config")
 const User = db.user
 const addSetting = async (req,res) => {
-    const store_id = 145544544424
+    const {name} = req.query
+
+    console.log("name : ", name);
+    
 
     const {age, title, description, acceptButton, rejectButton } = req.body
 
@@ -15,18 +19,18 @@ const addSetting = async (req,res) => {
     
     console.log("req.file : " , req.file);
     if(req?.file){
-        setting.image = `/uploads/${req.file.filename}`
+        setting.image = `/image/${req.file.filename}`
     }
 
     console.log("setting : " ,setting);
     
 
-    if(!store_id){
+    if(!name){
         res.status(400).json({ msg: "Store id is not found." });
     }
 
     const user = await User.findOne({
-        where : {store_id}
+        where : {store_name : name}
     })
 
     if(user) {
@@ -34,7 +38,7 @@ const addSetting = async (req,res) => {
             settings: setting
         },{
             where: {
-                store_id
+                id : user.id
             }
         }
     )    
@@ -42,7 +46,7 @@ const addSetting = async (req,res) => {
     
     }else{
         const userSetting = await User.create({
-            store_id,
+            store_name: name,
             settings: setting
         })
 
@@ -53,14 +57,14 @@ const addSetting = async (req,res) => {
 }
 
 const getSetting = async (req,res) => {
-    const store_id = 145544544424
+    const {name} = req.query
 
-    if(!store_id){
+    if(!name){
         res.status(400).json({ msg: "Store id is not found." });
     }
 
     const user = await User.findOne({
-        where : {store_id}
+        where : {store_name : name}
     })
 
     if(!user) {
