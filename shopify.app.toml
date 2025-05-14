@@ -3,7 +3,7 @@
 client_id = "6473332dff158d7aab8327543871590a"
 name = "age-verification"
 handle = "age-verification-58"
-application_url = "https://purple-thinking-ethiopia-armstrong.trycloudflare.com"
+application_url = "https://insulation-worst-back-jackson.trycloudflare.com"
 embedded = true
 
 [build]
@@ -23,13 +23,13 @@ api_version = "2025-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "write_products,read_products"
 
 [auth]
 redirect_urls = [
-  "https://purple-thinking-ethiopia-armstrong.trycloudflare.com/auth/callback",
-  "https://purple-thinking-ethiopia-armstrong.trycloudflare.com/auth/shopify/callback",
-  "https://purple-thinking-ethiopia-armstrong.trycloudflare.com/api/auth/callback"
+  "https://insulation-worst-back-jackson.trycloudflare.com/auth/callback",
+  "https://insulation-worst-back-jackson.trycloudflare.com/auth/shopify/callback",
+  "https://insulation-worst-back-jackson.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

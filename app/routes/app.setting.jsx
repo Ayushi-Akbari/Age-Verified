@@ -4,30 +4,30 @@ import {
   Text,
   TextField,
   Select,
-  ColorPicker,
   Card,
-  FormLayout,
   Box,
-  Button,
+  DropZone,
   Thumbnail,
 } from "@shopify/polaris";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import VerificationCard from "./app.verificationCard";
 
 export default function SettingsPolaris() {
   const [age, setAge] = useState("18");
-  const [image, setImage] = useState("/path/to/image.png"); // Replace with actual image URL
+  const [hasChanges, setHasChanges] = useState(false);
+  const [image, setImage] = useState(null);
   const [title, setTitle] = useState({
     text: "Welcome!",
     text_weight: "bold",
-    fonts: "",
+    fonts: "sans-serif",
     text_size: 20,
     text_color: "#505050",
   });
   const [description, setDescription] = useState({
     text: `Please verify that you are ${age} years of age or older to enter this site.`,
     text_weight: "normal",
-    fonts: "",
-    text_size: 14,
+    fonts: "sans-serif",
+    text_size: 12,
     text_color: "#505050",
   });
   const [rejectButton, setRejectButton] = useState({
@@ -40,7 +40,7 @@ export default function SettingsPolaris() {
     border_color: "#cccccc",
     border_width: 1,
     border_radius: 6,
-    redirect_url: ""
+    redirect_url: "",
   });
   const [acceptButton, setAcceptButton] = useState({
     text: `Yes, I’m over ${age}`,
@@ -48,25 +48,15 @@ export default function SettingsPolaris() {
     text_weight: "100",
     text_size: 14,
     text_color: "#000000",
-    background_color: "#ffffff" ,
-    border_color: "#000000",
+    background_color: "#ffffff",
+    border_color: "#cccccc",
     border_width: 1,
     border_radius: 6,
   });
 
-  const [descriptionText, setDescriptionText] = useState(
-    "Please verify that you are {{minimum_age}} years of age or older to enter this site.",
-  );
-  const [acceptButtonText, setAcceptButtonText] = useState(
-    "Yes, I’m over {{minimum_age}}",
-  );
-  const [rejectButtonText, setRejectButtonText] = useState(
-    "No, I’m under {{minimum_age}}",
-  );
-
-  useEffect(() => {
-    console.log("title : ", title);
-  });
+  const [descriptionText, setDescriptionText] = useState("Please verify that you are {{minimum_age}} years of age or older to enter this site.",);
+  const [acceptButtonText, setAcceptButtonText] = useState("Yes, I’m over {{minimum_age}}",);
+  const [rejectButtonText, setRejectButtonText] = useState("No, I’m under {{minimum_age}}",);
 
   const weightOptions = [
     { label: "Thin", value: "100" },
@@ -90,26 +80,35 @@ export default function SettingsPolaris() {
   ];
 
   useEffect(() => {
-    const saveButton = document.getElementById('save-button');
-    const discardButton = document.getElementById('discard-button');
-    const saveBar = document.getElementById('my-save-bar');
-
-    if (saveButton && discardButton && saveBar) {
-      saveButton.addEventListener('click', () => {
-        console.log('Saving');
-        saveBar.hide();
-      });
-
-      discardButton.addEventListener('click', () => {
-        console.log('Discarding');
-        saveBar.hide();
-      });
-    }
+    const fetchData = async () => {
+      try {
+        const id_token_new = await shopify.idToken();
+        console.log("id_token_new : ", id_token_new);
+      } catch (error) {
+        console.error("Error fetching ID token:", error);
+      }
+    };
+  
+    fetchData();
   }, []);
 
-  const showSaveBar = () => {
-    const saveBar = document.getElementById('my-save-bar');
-    if (saveBar) saveBar.show();
+  const handleDropZoneDrop = useCallback((_dropFiles, acceptedFiles) => {
+    const reader = new FileReader();
+    reader.onload = () => setImage(reader.result);
+    reader.readAsDataURL(uploadedFile);
+  }, []);
+
+  const handleSectionChange = (section, key, value) => {
+    if (section === 'title') {
+      setTitle(prev => ({ ...prev, [key]: value }));
+    } else if (section === 'description') {
+      setDescription(prev => ({ ...prev, [key]: value }));
+    } else if (section === 'acceptButton') {
+      setAcceptButton(prev => ({ ...prev, [key]: value }));
+    } else if (section === 'rejectButton') {
+      setRejectButton(prev => ({ ...prev, [key]: value }));
+    }
+    setHasChanges(true);
   };
 
   return (
@@ -122,41 +121,42 @@ export default function SettingsPolaris() {
               <Text variant="headingXl" as="h1">
                 Settings
               </Text>
+              <Box paddingBlockStart="8">
+                <Text Text variant="headingMd" as="h3">
+                  Customizations
+                </Text>
+                <Card>
+                  <Text variant="semibold">Verification Settings</Text>
+                  <div className="w-[200px] mt-2">
+                    <TextField
+                      label="Age"
+                      type="number"
+                      value={age}
+                      onChange={(value) => {
+                        {
+                          setAge(value);
 
-              <Text Text variant="headingMd" as="h3">
-                Customizations
-              </Text>
-              <Card>
-                <Text variant="semibold">Verification Settings</Text>
-                <div className="w-[200px] mt-2">
-                  <TextField
-                    label="Age"
-                    type="number"
-                    value={age}
-                    onChange={(value) => {
-                      {
-                        setAge(value);
-                        
-                        setRejectButton((prev) => ({
-                          ...prev,
-                          text: prev.text.replace(age, value), 
-                        }));
-                        
-                        setAcceptButton((prev) => ({
-                          ...prev,
-                          text: prev.text.replace(age, value), 
-                        }));
-                        
-                        setDescription((prev) => ({
-                          ...prev,
-                          text: prev.text.replace(age, value), 
-                        }));
-                      }
-                    }}
-                    suffix="Year(s)"
-                  />
-                </div>
-              </Card>
+                          setRejectButton((prev) => ({
+                            ...prev,
+                            text: prev.text.replace(age, value),
+                          }));
+
+                          setAcceptButton((prev) => ({
+                            ...prev,
+                            text: prev.text.replace(age, value),
+                          }));
+
+                          setDescription((prev) => ({
+                            ...prev,
+                            text: prev.text.replace(age, value),
+                          }));
+                        }
+                      }}
+                      suffix="Year(s)"
+                    />
+                  </div>
+                </Card>
+              </Box>
 
               <Box paddingBlockStart="8">
                 <Text variant="headingMd" as="h3">
@@ -174,7 +174,7 @@ export default function SettingsPolaris() {
                         label="Text"
                         value={title.text}
                         onChange={(value) =>
-                          setTitle({ ...title, text: value })
+                          handleSectionChange('title','text',value)
                         }
                       />
                     </div>
@@ -187,7 +187,7 @@ export default function SettingsPolaris() {
                           options={fontOptions}
                           value={title.fonts}
                           onChange={(value) =>
-                            setTitle({ ...title, fonts: value })
+                            handleSectionChange('title','fonts',value)
                           }
                         />
                       </div>
@@ -197,9 +197,7 @@ export default function SettingsPolaris() {
                           options={weightOptions}
                           value={title.text_weight}
                           onChange={(value) => {
-                            console.log("vaulr : ", value);
-
-                            setTitle({ ...title, text_weight: value });
+                            handleSectionChange('title','text_weight',value)
                           }}
                         />
                       </div>
@@ -208,7 +206,7 @@ export default function SettingsPolaris() {
                           label="Text Size"
                           value={title.text_size}
                           onChange={(value) =>
-                            setTitle({ ...title, text_size: value })
+                            handleSectionChange('title','text_size',value)
                           }
                           placeholder="e.g., 26"
                           suffix="Px"
@@ -225,7 +223,7 @@ export default function SettingsPolaris() {
                             value={title.text_color}
                             onChange={(value) => {
                               if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setTitle({ ...title, text_color: value });
+                                handleSectionChange('title','text_color',value)
                               }
                             }}
                           />
@@ -233,7 +231,7 @@ export default function SettingsPolaris() {
                             type="color"
                             value={title.text_color}
                             onChange={(e) =>
-                              setTitle({ ...title, text_color: e.target.value })
+                              handleSectionChange('title','text_color',e.target.value)
                             }
                             style={{
                               width: 30,
@@ -241,7 +239,7 @@ export default function SettingsPolaris() {
                               border: "none",
                               background: "transparent",
                               marginTop: "22px",
-                            }}
+                            }}  
                           />
                         </div>
                       </div>
@@ -259,14 +257,13 @@ export default function SettingsPolaris() {
                       <TextField
                         label="Text"
                         value={descriptionText}
-                        onChange={(value) =>{
+                        onChange={(value) => {
                           setDescription({
                             ...description,
                             text: value.replace("{{minimum_age}}", age),
                           });
                           setDescriptionText(value);
-                        }
-                        }
+                        }}
                       />
                     </div>
 
@@ -362,22 +359,20 @@ export default function SettingsPolaris() {
                       <TextField
                         label="Text"
                         value={acceptButtonText}
-                        onChange={(value) =>{
-                          console.log("value : " , value);
-                          
+                        onChange={(value) => {
+                          console.log("value : ", value);
+
                           setAcceptButton({
                             ...acceptButton,
                             text: value.replace("{{minimum_age}}", age),
                           });
 
                           console.log("accept button : ", acceptButton);
-                          
-                          setAcceptButtonText(value)
 
-                          console.log("button text : " , );
-                          
-                        }
-                        }
+                          setAcceptButtonText(value);
+
+                          console.log("button text : ");
+                        }}
                       />
                     </div>
 
@@ -456,7 +451,7 @@ export default function SettingsPolaris() {
 
                       <div className="flex-1">
                         <div className="flex items-center">
-                        <TextField
+                          <TextField
                             label="Text Color"
                             value={acceptButton.text_color}
                             onChange={(value) => {
@@ -570,14 +565,13 @@ export default function SettingsPolaris() {
                       <TextField
                         label="Text"
                         value={rejectButtonText}
-                        onChange={(value) =>{
+                        onChange={(value) => {
                           setRejectButton({
                             ...rejectButton,
                             text: value.replace("{{minimum_age}}", age),
                           });
-                          setAcceptButtonText(value)
-                        }
-                        }
+                          setAcceptButtonText(value);
+                        }}
                       />
                     </div>
 
@@ -774,95 +768,49 @@ export default function SettingsPolaris() {
                   </Box>
                 </Card>
               </Box>
+
+              <Box paddingBlockStart="8">
+                <Text variant="headingMd" as="h3">
+                  Image
+                </Text>
+                <Card>
+                  <Box maxWidth="400px" marginX="auto">
+                    <DropZone
+                      accept="image/*"
+                      onDrop={handleDropZoneDrop}
+                      allowMultiple={false}
+                    >
+                      <div className="p-[10px] flex justify-center items-center h-[100px]">
+                        {image ? (
+                          <Thumbnail
+                            source={image}
+                            alt="Uploaded image preview"
+                            size="large"
+                          />
+                        ) : (
+                          <Text variant="bodyMd" color="subdued">
+                            Upload an image
+                          </Text>
+                        )}
+                      </div>
+                    </DropZone>
+                  </Box>
+                </Card>
+              </Box>
             </div>
 
             {/* Right Section */}
             <div className="flex flex-col w-[65%] h-screen fixed right-0 top-0 p-4">
-            <ui-save-bar id="my-save-bar">
-              <button variant="primary" id="save-button"></button>
-              <button id="discard-button"></button>
-            </ui-save-bar>
-              <div className="absolute top-4 right-4 flex justify-end z-10 space-x-4">
-              <Button variant="primary">Save</Button>
-              <Button variant="primary">Discard</Button>
-              </div>
-
-              <div className="flex justify-center items-center h-full">
-                <Card className="w-full">
-                  <div className="bg-gray-100 p-4">
-                    <div className="bg-yellow-100 w-[450px] h-[250px] rounded-lg shadow-md border-2 border-white flex flex-row p-4">
-                      <div className="w-2/5 flex justify-center items-center p-4">
-                        <Thumbnail source={image} alt="Popup" size="large" />
-                      </div>
-                      <div className="w-3/5 p-4 flex flex-col justify-center">
-                        <Text>
-                          <span
-                            style={{
-                              display: 'block',
-                              fontWeight: Number(title.text_weight),
-                              fontSize: `${title.text_size}px`,
-                              fontFamily: title.fonts,
-                              color: title.text_color,
-                              marginBottom: "10px"
-                            }}
-                          >
-                            {title.text}
-                          </span>
-                        </Text>
-                        <Text>
-                          <span
-                            style={{
-                              fontWeight: Number(description.text_weight),
-                              fontSize: `${description.text_size}px`,
-                              fontFamily: description.fonts,
-                              color: description.text_color,
-                            }}
-                          >
-                            {description.text}
-                          </span>
-                        </Text>
-                        <div className="mt-4">
-                          <div className="flex flex-col space-y-4">
-                            <button
-                              // onClick={handleNo}
-                              className={`border py-1.5 rounded-lg active:scale-95`}
-                              style={{
-                                fontSize: `${rejectButton.text_size}px`,
-                                color: rejectButton.text_color,
-                                backgroundColor: rejectButton.background_color,
-                                borderWidth: `${rejectButton.border_width}px`,
-                                borderColor: rejectButton.border_color,
-                                borderRadius: `${rejectButton.border_radius}px`,
-                                fontWeight: Number(rejectButton.text_weight),
-                                fontFamily: rejectButton.fonts,
-                              }}
-                            >
-                              {rejectButton.text}
-                            </button>
-                            <button
-                              // onClick={handleYes}
-                              className={`border py-1.5 rounded-lg active:scale-95`}
-                              style={{
-                                fontSize: `${acceptButton.text_size}px`,
-                                color: acceptButton.text_color,
-                                backgroundColor: acceptButton.background_color,
-                                borderWidth: `${acceptButton.border_width}px`,
-                                borderColor: acceptButton.border_color,
-                                borderRadius: `${acceptButton.border_radius}px`,
-                                fontWeight: Number(acceptButton.text_weight),
-                                fontFamily: acceptButton.fonts,
-                                
-                              }}
-                            >
-                              {acceptButton.text}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </div>
+              <VerificationCard
+                age={age}
+                image={image}
+                title={title}
+                description={description}
+                acceptButton={acceptButton}
+                rejectButton={rejectButton}
+                hasChanges={hasChanges}
+                setHasChanges={setHasChanges}
+              />
             </div>
           </div>
         </Layout.Section>

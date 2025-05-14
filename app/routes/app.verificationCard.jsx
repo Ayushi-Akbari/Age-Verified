@@ -1,67 +1,159 @@
-import { Card } from "@shopify/polaris";
 import { useEffect } from "react";
-import axios from 'axios'
+import axios from "axios";
 
-export default function VerificationPage({}) {
+import {
+  Page,
+  Layout,
+  Text,
+  TextField,
+  Select,
+  ColorPicker,
+  Card,
+  FormLayout,
+  Box,
+  Button,
+  Thumbnail,
+} from "@shopify/polaris";
+
+export default function VerificationPage({age,image, description, acceptButton, rejectButton, title, hasChanges, setHasChanges}) {
+  useEffect(() => {
+    if (hasChanges) {
+      document.getElementById('my-save-bar')?.show();
+    }
+  }, [hasChanges]);
 
   useEffect(() => {
-    
-    fetchData();
-  
-    
-  }, []);
+    const saveBtn = document.getElementById('save-button');
+    const discardBtn = document.getElementById('discard-button');
 
-  const fetchData = async () => {
-    const settingData = await axios.get(`http://localhost:8001/user/get-setting`)
+    saveBtn?.addEventListener('click', () => {
+      console.log('Saving');
+      setHasChanges(false);
+      document.getElementById('my-save-bar')?.hide();
+    });
 
-    console.log("settingData : " , settingData);
+    discardBtn?.addEventListener('click', () => {
+      console.log('Discarding');
+      setHasChanges(false);
+      document.getElementById('my-save-bar')?.hide();
+    });
+
+    return () => {
+      saveBtn?.removeEventListener('click', () => {});
+      discardBtn?.removeEventListener('click', () => {});
     };
-
-  const handleYes = () => {
-    localStorage.setItem("age_verified", "true");
-    window.history.back(); // or redirect to store
-  };
-
-  const handleNo = () => {
-    window.location.href = "https://google.com"; // deny access
-  };
+  }, []); 
 
   return (
-    <Card>
-      <div className="bg-gray-400 p-10">
-      <div className="bg-yellow-100 rounded-2xl shadow-2xl border-4 border-white sm:h-[300px] h-[400px] xs:w-[350px] sm:w-[400px] md:w-[450px] lg:w-[500px] xl:w-[500px] p-4 flex flex-col sm:flex-row relative">
-        <div className="sm:w-2/5 w-full flex justify-center items-center p-4">
-          <img
-            src="/lock.png"
-            alt="Popup Image"
-            width={300}
-            height={300}
-            className="object-contain rounded-lg w-full max-w-[300px]"
-          />
-        </div>
-  
-        <div className="sm:w-3/5 w-full flex flex-col justify-center p-4 text-center sm:text-left">
-          <h1 className="text-xl font-bold text-gray-800 mb-4">title</h1>
-          <p className="text-sm text-gray-600 mb-6">message</p>
-          <div className="flex flex-col space-y-3">
-            <button
-              // onClick={handleNo}
-              className="border border-yellow-600 text-yellow-800 font-medium py-2 rounded-lg hover:bg-yellow-200 transition"
-            >
-              rejectMessage
-            </button>
-            <button
-              // onClick={handleYes}
-              className="bg-blue-700 text-white font-medium py-2 rounded-lg hover:bg-blue-800 transition"
-            >
-              acceptMessage
-            </button>
-          </div>
-        </div>
-      </div>
-      </div>
-    </Card>
-  );
-  
+    <>
+      <ui-save-bar id="my-save-bar">
+        <button variant="primary" id="save-button">
+          Save
+        </button>
+        <button id="discard-button">Discard</button>
+      </ui-save-bar>
 
+      <div className="absolute top-4 right-4 flex justify-end z-10 space-x-4">
+        <Button
+          variant="primary"
+          onClick={() => {
+            console.log("Saving...");
+            document.getElementById("save-button").click();
+          }}
+        >
+          Save
+        </Button>
+        <Button
+          variant="primary"
+          onClick={() => {
+             console.log("Discarding...");
+            document.getElementById("discard-button").click();
+          }}
+        >
+          Discard
+        </Button>
+      </div>
+
+      <div className="flex justify-center items-center h-full">
+        <Card className="w-full">
+          <div className="bg-gray-100 p-4">
+            <div className="bg-yellow-100 w-[450px] h-[250px] rounded-lg shadow-md border-2 border-white flex flex-row p-4">
+              <div className="w-2/5 flex justify-center items-center p-4">
+                <img
+                  src={image}
+                  alt="Popup"
+                  className="w-[150px] h-[150px] object-cover rounded-lg"
+                />
+              </div>
+
+              <div className="w-3/5 p-4 flex flex-col justify-center">
+                <Text>
+                  <span
+                    style={{
+                      display: "block",
+                      fontWeight: Number(title.text_weight),
+                      fontSize: `${title.text_size}px`,
+                      fontFamily: title.fonts,
+                      color: title.text_color,
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {title.text}
+                  </span>
+                </Text>
+                <Text>
+                  <span
+                    style={{
+                      fontWeight: Number(description.text_weight),
+                      fontSize: `${description.text_size}px`,
+                      fontFamily: description.fonts,
+                      color: description.text_color,
+                    }}
+                  >
+                    {description.text}
+                  </span>
+                </Text>
+                <div className="mt-4">
+                  <div className="flex flex-col space-y-4">
+                    <button
+                      // onClick={handleNo}
+                      className={`border py-1.5 rounded-lg active:scale-95`}
+                      style={{
+                        fontSize: `${rejectButton.text_size}px`,
+                        color: rejectButton.text_color,
+                        backgroundColor: rejectButton.background_color,
+                        borderWidth: `${rejectButton.border_width}px`,
+                        borderColor: rejectButton.border_color,
+                        borderRadius: `${rejectButton.border_radius}px`,
+                        fontWeight: Number(rejectButton.text_weight),
+                        fontFamily: rejectButton.fonts,
+                      }}
+                    >
+                      {rejectButton.text}
+                    </button>
+                    <button
+                      // onClick={handleYes}
+                      className={`border py-1.5 rounded-lg active:scale-95`}
+                      style={{
+                        fontSize: `${acceptButton.text_size}px`,
+                        color: acceptButton.text_color,
+                        backgroundColor: acceptButton.background_color,
+                        borderWidth: `${acceptButton.border_width}px`,
+                        borderColor: acceptButton.border_color,
+                        borderRadius: `${acceptButton.border_radius}px`,
+                        fontWeight: Number(acceptButton.text_weight),
+                        fontFamily: acceptButton.fonts,
+                      }}
+                    >
+                      {acceptButton.text}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </>
+  );
 }
