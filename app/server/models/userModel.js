@@ -1,27 +1,58 @@
-module.exports = (sequelize, DataTypes) => {
+const mongoose = require("mongoose");
 
-    const User = sequelize.define('User', {
-        id: {
-            type: DataTypes.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
-        },
-        store_id: {
-            type: DataTypes.UUID,
-            defaultValue: DataTypes.UUIDV4
-        },
-        settings: {
-            type: DataTypes.TEXT,
-            allowNull: false,
-            get() {
-                const settingsString = this.getDataValue('settings');
-                return settingsString ? JSON.parse(settingsString) : null;
-            },
-            set(value) {
-                this.setDataValue('settings', JSON.stringify(value));
-            }
-        },
-    },{timestamps: false});
+const UserSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    match: /.+\@.+\..+/ 
+  },
+  token_id:{
+    type: String
+  },
+  shop_id: {
+    type: String
+  },
+  shop_name: {
+    type: String
+  },
+  country_code: {
+    type: String
+  },
+  plan_displayName: {
+    type: String
+  },
+  plan_partnerDevelopment: {
+    type: Boolean
+  },
+  plan_shopifyPlus: {
+    type: Boolean
+  },
+  currency_code: {
+    type: String
+  },
+  currency_format: {
+    type: String
+  },
+  timezoneAbbreviation: {
+    type: String
+  },
+  ianaTimezone: {
+    type: String
+  },
+  host: {
+    type: String
+  },
+  shopLocales_primary: {
+    type: Boolean
+  },
+  shopLocales_locale: {
+    type: String
+  },
+  theme_id: {
+    type: String
+  }
+});
 
-    return User;
-};
+const userModel = mongoose.model("User", UserSchema);
+
+
+module.exports = userModel;

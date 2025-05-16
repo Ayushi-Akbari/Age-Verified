@@ -4,24 +4,19 @@ import {
   Text,
   TextField,
   Select,
-
   Card,
   Box,
   DropZone,
   Thumbnail,
+  ChoiceList,
+  Checkbox
 } from "@shopify/polaris";
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from 'react-router-dom';
 import VerificationCard from "./app.verificationCard";
-
+import { Trash2, Info } from "lucide-react";
 import { authenticate } from "../shopify.server";
-// import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-
-// import { redirect } from "@remix-run/node";
 import axios from 'axios';
-
-// import {loader} from "./settingServer"
 
 export async function loader({ request }) {
   // const navigate = useNavigate();
@@ -50,16 +45,17 @@ export async function loader({ request }) {
   } catch (error) {
     console.error("Auth failed:", error);
     if (shopParam) {
-      // navigate(`/auth?shop=${shopParam}`);
-      throw new Response("Shop parameter missing", { status: 400 });
+      // throw redirect(`/auth?shop=${shopParam}`);
+      // throw new Response("Shop parameter missing", { status: 400 });
+      return null
     } else {
-      throw new Response("Shop parameter missing", { status: 400 });
+      // throw new Response("Shop parameter missing", { status: 400 });
+      return null
     }
   }
 }
 
-export default function SettingsPolaris() {
-  // const navigate = useNavigate();
+export default function Setting() {
   const [age, setAge] = useState("18");
   const [hasChanges, setHasChanges] = useState(false);
   const [image, setImage] = useState(null);
@@ -101,6 +97,9 @@ export default function SettingsPolaris() {
     border_width: 1,
     border_radius: 6,
   });
+  const [selectedLayout, setSelectedLayout]= useState(null)
+  const [checked, setChecked] = useState(false);
+  const handleChange = useCallback((newChecked) => setChecked(newChecked), []);
 
   const { shop } = useLoaderData(); 
 
@@ -108,10 +107,15 @@ export default function SettingsPolaris() {
   const [acceptButtonText, setAcceptButtonText] = useState("Yes, I’m over {{minimum_age}}");
   const [rejectButtonText, setRejectButtonText] = useState("No, I’m under {{minimum_age}}");
 
-  // const [shops, setShops] = useState(shop);
+  
 
-  useEffect(() => {
+  useEffect(async() => {    
     console.log("hello");
+
+    const id_token_new = await shopify.idToken();
+
+    console.log("id_token_new : " , id_token_new);
+    
     
     console.log("Loaded shop data: ", shop);
     let isCancelled = false
@@ -185,30 +189,17 @@ export default function SettingsPolaris() {
         rejectButton: settingData.rejectButton ? JSON.parse(settingData.rejectButton) : null,
       };
       
-      // Set state values if present
-      setAge(parsedSetting.age || "");
+      setAge(parsedSetting.age || "18");
       
       if (parsedSetting.image) {
-        const path = parsedSetting.image;
-        // const relativePath = parsedSetting.image.replace(/\\/g, "/").split("age-verification/")[1];
-        // console.log("app : " + relativePath);
-        console.log("image : " , image);
-        
+        const path = parsedSetting.image; 
         setImage(`http://localhost:8001${path}`)
-        console.log("image : " , image);
-        console.log("path:", path);
       }
       
       parsedSetting.title && setTitle(parsedSetting.title);
       parsedSetting.description && setDescription(parsedSetting.description);
       parsedSetting.acceptButton && setAcceptButton(parsedSetting.acceptButton);
       parsedSetting.rejectButton && setRejectButton(parsedSetting.rejectButton);
-
-      console.log("title : :  " ,title);
-      console.log("description : :  " ,description);
-      console.log("acceptButton : " ,acceptButton);
-      console.log("rejectButton : " ,rejectButton);
-      
     }
 
   };
@@ -216,12 +207,8 @@ export default function SettingsPolaris() {
   const addSetting = async () => {
 
     if( !shop || !shop.name){
-      // navigate(
-      //   `/auth?shop=${new URL(request.url).searchParams.get("shop")}`,
-      // );
       console.log("login first");
       return null;
-      
     }
 
     console.log("file : ", imageFile);
@@ -262,7 +249,7 @@ export default function SettingsPolaris() {
         <Layout.Section>
           <div className="flex w-full h-full mx-0">
             {/* Left Section */}
-            <div className="w-[35%] p-4 space-y-8 overflow-y-scroll scrollbar-hide">
+            <div className="w-[36%] p-2 space-y-8 overflow-y-scroll scrollbar-hide">
               <Text variant="headingXl" as="h1">
                 Settings
               </Text>
@@ -271,6 +258,21 @@ export default function SettingsPolaris() {
                   Customizations
                 </Text>
                 <Card>
+                  <Text variant="semibold">Pop-up Layouts</Text>
+                  <div className="mt-2 ">
+                    <ChoiceList
+                      // title="Pop-up Layouts"
+                      choices={[
+                        { label: "Layout 1", value: "layout1" },
+                        { label: "Layout 2", value: "layout2" },
+                      ]}
+                      selected={[selectedLayout]}
+                      onChange={(value) => setSelectedLayout(value[0])}
+                    />
+                  </div>
+
+                  <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+
                   <Text variant="semibold">Verification Settings</Text>
                   <div className="w-[200px] mt-2">
                     <TextField
@@ -300,6 +302,30 @@ export default function SettingsPolaris() {
                       suffix="Year(s)"
                     />
                   </div>
+
+                  <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+
+                  <Text variant="semibold">Pop-up Show Settings</Text>
+                  <div className="w-[200px] mt-2">
+                    <Checkbox
+                      label="Pop-up show every time"
+                      checked={checked}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="flex border rounded-md bg-blue-100  p-2 gap-2 items-start">
+                    <div className="w-8 h-4 rounded-md border-blue-100 flex items-center justify-center">
+                      <Info size={16} className="text-blue-700" />
+                    </div>
+                    <span className="text-xm text-blue-950">
+                      The pop-up will appear in every new session for both new
+                      and existing users. In a single session, if the user
+                      clicks the 'Agree' button, the pop-up will not appear
+                      again during that session, as it has already been
+                      accepted.
+                      <br />
+                    </span>
+                  </div>
                 </Card>
               </Box>
 
@@ -319,7 +345,7 @@ export default function SettingsPolaris() {
                         label="Text"
                         value={title.text}
                         onChange={(value) =>
-                          handleSectionChange('title','text',value)
+                          handleSectionChange("title", "text", value)
                         }
                       />
                     </div>
@@ -332,7 +358,7 @@ export default function SettingsPolaris() {
                           options={fontOptions}
                           value={title.fonts}
                           onChange={(value) =>
-                            handleSectionChange('title','fonts',value)
+                            handleSectionChange("title", "fonts", value)
                           }
                         />
                       </div>
@@ -342,7 +368,7 @@ export default function SettingsPolaris() {
                           options={weightOptions}
                           value={title.text_weight}
                           onChange={(value) => {
-                            handleSectionChange('title','text_weight',value)
+                            handleSectionChange("title", "text_weight", value);
                           }}
                         />
                       </div>
@@ -351,7 +377,7 @@ export default function SettingsPolaris() {
                           label="Text Size"
                           value={title.text_size}
                           onChange={(value) =>
-                            handleSectionChange('title','text_size',value)
+                            handleSectionChange("title", "text_size", value)
                           }
                           placeholder="e.g., 26"
                           suffix="Px"
@@ -368,7 +394,11 @@ export default function SettingsPolaris() {
                             value={title.text_color}
                             onChange={(value) => {
                               if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                handleSectionChange('title','text_color',value)
+                                handleSectionChange(
+                                  "title",
+                                  "text_color",
+                                  value,
+                                );
                               }
                             }}
                           />
@@ -376,7 +406,11 @@ export default function SettingsPolaris() {
                             type="color"
                             value={title.text_color}
                             onChange={(e) =>
-                              handleSectionChange('title','text_color',e.target.value)
+                              handleSectionChange(
+                                "title",
+                                "text_color",
+                                e.target.value,
+                              )
                             }
                             style={{
                               width: 30,
@@ -384,7 +418,7 @@ export default function SettingsPolaris() {
                               border: "none",
                               background: "transparent",
                               marginTop: "22px",
-                            }}  
+                            }}
                           />
                         </div>
                       </div>
@@ -916,6 +950,311 @@ export default function SettingsPolaris() {
 
               <Box paddingBlockStart="8">
                 <Text variant="headingMd" as="h3">
+                  Pop-up setting
+                </Text>
+
+                {/* Accept Button  */}
+                <Card>
+                  <Box padding="4">
+                    <Text variant="headingMd">Pop-up settings</Text>
+
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <TextField
+                          label="Heights"
+                          value={acceptButton.border_radius}
+                          onChange={(value) =>
+                            setAcceptButton({
+                              ...acceptButton,
+                              border_radius: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <TextField
+                          label="Width"
+                          value={acceptButton.border_width}
+                          onChange={(value) =>
+                            setAcceptButton({
+                              ...acceptButton,
+                              border_width: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <TextField
+                          label="Border Radius"
+                          value={acceptButton.border_width}
+                          onChange={(value) =>
+                            setAcceptButton({
+                              ...acceptButton,
+                              border_width: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <TextField
+                          label="Border Widht"
+                          value={acceptButton.text_size}
+                          onChange={(value) =>
+                            setAcceptButton({
+                              ...acceptButton,
+                              text_size: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <TextField
+                          label="Top And Bottom Padding"
+                          value={acceptButton.text_size}
+                          onChange={(value) =>
+                            setAcceptButton({
+                              ...acceptButton,
+                              text_size: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <TextField
+                          label="Left And Right Padding"
+                          value={acceptButton.text_size}
+                          onChange={(value) =>
+                            setAcceptButton({
+                              ...acceptButton,
+                              text_size: value,
+                            })
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+                    </div>
+                  </Box>
+
+                  <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+
+                  <Box padding="4">
+                    <Text variant="headingMd">Popup Background</Text>
+
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1">
+                          <TextField
+                            label="Background Color"
+                            value={rejectButton.background_color}
+                            onChange={(value) => {
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setRejectButton({
+                                  ...rejectButton,
+                                  background_color: value,
+                                });
+                              }
+                            }}
+                          />
+                          <input
+                            type="color"
+                            value={rejectButton.background_color}
+                            onChange={(e) =>
+                              setRejectButton({
+                                ...rejectButton,
+                                background_color: e.target.value,
+                              })
+                            }
+                            style={{
+                              width: 50,
+                              height: 30,
+                              border: "none",
+                              background: "transparent",
+                              marginTop: "22px",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1">
+                          <TextField
+                            label="Border Color"
+                            value={rejectButton.border_color}
+                            onChange={(value) => {
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setRejectButton({
+                                  ...rejectButton,
+                                  border_color: value,
+                                });
+                              }
+                            }}
+                          />
+                          <input
+                            type="color"
+                            value={rejectButton.border_color}
+                            onChange={(e) =>
+                              setRejectButton({
+                                ...rejectButton,
+                                border_color: e.target.value,
+                              })
+                            }
+                            style={{
+                              width: 50,
+                              height: 30,
+                              border: "none",
+                              background: "transparent",
+                              marginTop: "22px",
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex-1">
+                          <TextField
+                            label="Background Layer Opacity"
+                            value={acceptButton.border_width}
+                            onChange={(value) =>
+                              setAcceptButton({
+                                ...acceptButton,
+                                border_width: value,
+                              })
+                            }
+                            placeholder="e.g., 26"
+                            suffix="Px"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="w-[200px] mt-3">
+                        <Checkbox
+                          label="Pop-up show every time"
+                          checked={checked}
+                          onChange={handleChange}
+                        />
+                      </div>
+                      <Box maxWidth="400px" marginX="auto">
+                        <DropZone
+                          accept="image/*"
+                          onDrop={handleDropZoneDrop}
+                          allowMultiple={false}
+                        >
+                          <div className="relative p-[10px] flex justify-center items-center h-[100px]">
+                            {image ? (
+                              <>
+                                <Thumbnail
+                                  source={image}
+                                  alt="Uploaded image preview"
+                                  size="large"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setImage(null);
+                                    setImageFile(null); // if you're also managing raw file
+                                  }}
+                                  className="absolute top-0 right-0 bg-white hover:bg-red-100 text-red-600 rounded-full p-1 shadow"
+                                  title="Remove image"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </>
+                            ) : (
+                              <Text variant="bodyMd" color="subdued">
+                                Upload an image
+                              </Text>
+                            )}
+                          </div>
+                        </DropZone>
+                      </Box>
+                    </div>
+                  </Box>
+
+                  <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+
+                  <Box padding="4">
+                    <Text variant="headingMd">Popup Background</Text>
+
+                    <div className="flex gap-3 mb-4 mt-2">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium mb-1">
+                          Outer Layer Color
+                        </label>
+                        <div className="flex items-center border border-gray-][] rounded-lg overflow-hidden w-fit">
+                          <input
+                            type="text"
+                            value={rejectButton.background_color}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                setRejectButton({
+                                  ...rejectButton,
+                                  background_color: value,
+                                });
+                              }
+                            }}
+                            className="px-2 py-1 outline-none text-sm w-[90px]"
+                          />
+                          <input
+                            type="color"
+                            value={rejectButton.background_color}
+                            onChange={(e) =>
+                              setRejectButton({
+                                ...rejectButton,
+                                background_color: e.target.value,
+                              })
+                            }
+                            className="w-8 h-8 border-none p-0 cursor-pointer mr-1 rounded-lg"
+                            
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex-1">
+                          <TextField
+                            label="Background Layer Opacity"
+                            value={acceptButton.border_width}
+                            onChange={(value) =>
+                              setAcceptButton({
+                                ...acceptButton,
+                                border_width: value,
+                              })
+                            }
+                            placeholder="e.g., 26"
+                            suffix="Px"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex-1"></div>
+                    </div>
+                  </Box>
+                </Card>
+              </Box>
+
+              <Box paddingBlockStart="8">
+                <Text variant="headingMd" as="h3">
                   Image
                 </Text>
                 <Card>
@@ -925,13 +1264,26 @@ export default function SettingsPolaris() {
                       onDrop={handleDropZoneDrop}
                       allowMultiple={false}
                     >
-                      <div className="p-[10px] flex justify-center items-center h-[100px]">
+                      <div className="relative p-[10px] flex justify-center items-center h-[100px]">
                         {image ? (
-                          <Thumbnail
-                            source={image}
-                            alt="Uploaded image preview"
-                            size="large"
-                          />
+                          <>
+                            <Thumbnail
+                              source={image}
+                              alt="Uploaded image preview"
+                              size="large"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setImage(null);
+                                setImageFile(null); // if you're also managing raw file
+                              }}
+                              className="absolute top-0 right-0 bg-white hover:bg-red-100 text-red-600 rounded-full p-1 shadow"
+                              title="Remove image"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </>
                         ) : (
                           <Text variant="bodyMd" color="subdued">
                             Upload an image
@@ -945,7 +1297,7 @@ export default function SettingsPolaris() {
             </div>
 
             {/* Right Section */}
-            <div className="flex flex-col w-[65%] h-screen fixed right-0 top-0 p-4">
+            <div className="flex flex-col w-[62%] h-screen fixed right-0 top-0 p-4">
               <VerificationCard
                 age={age}
                 image={image}

@@ -15,7 +15,7 @@ import {
   Thumbnail,
 } from "@shopify/polaris";
 
-export default function VerificationPage({age,image, description, acceptButton, rejectButton, title, hasChanges, setHasChanges, addSetting}) {
+export default function VerificationPage({age,image, description, acceptButton, rejectButton, title, hasChanges, setHasChanges, addSetting, removeSetting}) {
   useEffect(() => {
     if (hasChanges) {
       document.getElementById('my-save-bar')?.show();
@@ -58,8 +58,9 @@ export default function VerificationPage({age,image, description, acceptButton, 
           variant="primary"
           onClick={() => {
             console.log("Saving...");
+            addSetting();
             document.getElementById("save-button").click();
-            addSetting()
+            addSetting();
           }}
         >
           Save
@@ -67,8 +68,9 @@ export default function VerificationPage({age,image, description, acceptButton, 
         <Button
           variant="primary"
           onClick={() => {
-             console.log("Discarding...");
+            console.log("Discarding...");
             document.getElementById("discard-button").click();
+            removeSetting();
           }}
         >
           Discard
@@ -79,15 +81,19 @@ export default function VerificationPage({age,image, description, acceptButton, 
         <Card className="w-full">
           <div className="bg-gray-100 p-4">
             <div className="bg-yellow-100 w-[450px] h-[250px] rounded-lg shadow-md border-2 border-white flex flex-row p-4">
-              <div className="w-2/5 flex justify-center items-center p-4">
-                <img
-                  src={image}
-                  alt="Popup"
-                  className="w-[150px] h-[150px] object-cover rounded-lg"
-                />
-              </div>
+              {image && (
+                <div className="w-2/5 flex justify-center items-center p-4">
+                  <img
+                    src={image}
+                    alt="Popup"
+                    className="w-[150px] h-[150px] object-cover rounded-lg"
+                  />
+                </div>
+              )}
 
-              <div className="w-3/5 p-4 flex flex-col justify-center">
+              <div
+                className={`${!image && "w-full"} w-3/5 p-4 flex flex-col justify-center ${image ? "items-start" : "items-center"}`}
+              >
                 <Text>
                   <span
                     style={{
@@ -114,11 +120,12 @@ export default function VerificationPage({age,image, description, acceptButton, 
                     {description.text}
                   </span>
                 </Text>
-                <div className="mt-4">
-                  <div className="flex flex-col space-y-4">
+                <div className="mt-4 w-full">
+                  <div className="flex flex-col space-y-4 items-center">
                     <button
-                      // onClick={handleNo}
-                      className={`border py-1.5 rounded-lg active:scale-95`}
+                      className={`py-1.5 rounded-lg active:scale-95 flex justify-center items-center ${
+                        image ? "w-full" : "w-3/5"
+                      }`}
                       style={{
                         fontSize: `${rejectButton.text_size}px`,
                         color: rejectButton.text_color,
@@ -132,9 +139,11 @@ export default function VerificationPage({age,image, description, acceptButton, 
                     >
                       {rejectButton.text}
                     </button>
+
                     <button
-                      // onClick={handleYes}
-                      className={`border py-1.5 rounded-lg active:scale-95`}
+                      className={`py-1.5 rounded-lg active:scale-95 flex justify-center items-center ${
+                        image ? "w-full" : "w-3/5"
+                      }`}
                       style={{
                         fontSize: `${acceptButton.text_size}px`,
                         color: acceptButton.text_color,

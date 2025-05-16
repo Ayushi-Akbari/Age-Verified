@@ -1,59 +1,22 @@
-const { use } = require("react");
-const db = require("../models/Config/config")
-const User = db.user
+const userModel = require("../models/userModel")
+
 const addSetting = async (req,res) => {
-    const {name} = req.query
 
-    console.log("name : ", name);
-    
+    console.log("req.body : " , req.body);
 
-    const {age, title, description, acceptButton, rejectButton } = req.body
+    const data = req.body 
 
-    let setting= {
-        age,
-        title,
-        description,
-        acceptButton,
-        rejectButton
+    let userData = await userModel.findOne({ email: req.body.email });
+    if(userData){
+        userData.updateOne(data)
+    }else {
+        userData = await userModel.create(data)
     }
     
-    console.log("req.file : " , req.file);
-    if(req?.file){
-        setting.image = `/image/${req.file.filename}`
-    }
 
-    console.log("setting : " ,setting);
+    // console.log("user : " , userData);
     
-
-    if(!name){
-        res.status(400).json({ msg: "Store id is not found." });
-    }
-
-    const user = await User.findOne({
-        where : {store_name : name}
-    })
-
-    if(user) {
-        const data = await User.update({
-            settings: setting
-        },{
-            where: {
-                id : user.id
-            }
-        }
-    )    
-    console.log("data : " , data);
-    
-    }else{
-        const userSetting = await User.create({
-            store_name: name,
-            settings: setting
-        })
-
-        console.log("user stting : " ,userSetting);
-        
-    }
-    res.status(200).json({ msg: "App Setings added Successfully." });
+    res.status(200).json({ userData, msg: "App Setings added Successfully." });
 }
 
 const getSetting = async (req,res) => {
@@ -74,5 +37,60 @@ const getSetting = async (req,res) => {
     res.status(200).json({ msg: "App Setings Fetched Successfully." , data: user});
 
 }
+
+// const addSetting = async (req,res) => {
+//     const {name} = req.query
+
+//     console.log("name : ", name);
+    
+
+//     const {age, title, description, acceptButton, rejectButton } = req.body
+
+//     let setting= {
+//         age,
+//         title,
+//         description,
+//         acceptButton,
+//         rejectButton
+//     }
+    
+//     console.log("req.file : " , req.file);
+//     if(req?.file){
+//         setting.image = `/image/${req.file.filename}`
+//     }
+
+//     console.log("setting : " ,setting);
+    
+
+//     if(!name){
+//         res.status(400).json({ msg: "Store id is not found." });
+//     }
+
+//     const user = await User.findOne({
+//         where : {store_name : name}
+//     })
+
+//     if(user) {
+//         const data = await User.update({
+//             settings: setting
+//         },{
+//             where: {
+//                 id : user.id
+//             }
+//         }
+//     )    
+//     console.log("data : " , data);
+    
+//     }else{
+//         const userSetting = await User.create({
+//             store_name: name,
+//             settings: setting
+//         })
+
+//         console.log("user stting : " ,userSetting);
+        
+//     }
+//     res.status(200).json({ msg: "App Setings added Successfully." });
+// }
 
 module.exports = {addSetting, getSetting}
