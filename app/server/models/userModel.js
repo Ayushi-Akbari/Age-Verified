@@ -14,6 +14,9 @@ const UserSchema = new mongoose.Schema({
   shop_name: {
     type: String
   },
+  owner_name: {
+    type: String
+  },
   country_code: {
     type: String
   },

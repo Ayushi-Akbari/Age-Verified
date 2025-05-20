@@ -3,7 +3,7 @@
 client_id = "6473332dff158d7aab8327543871590a"
 name = "age-verification"
 handle = "age-verification-58"
-application_url = "https://athletic-hardcover-waters-suggesting.trycloudflare.com"
+application_url = "https://totally-departments-sacred-selections.trycloudflare.com"
 embedded = true
 
 [build]
@@ -27,9 +27,9 @@ scopes = "read_products,write_products,read_locales,read_markets_home,read_theme
 
 [auth]
 redirect_urls = [
-  "https://athletic-hardcover-waters-suggesting.trycloudflare.com/auth/callback",
-  "https://athletic-hardcover-waters-suggesting.trycloudflare.com/auth/shopify/callback",
-  "https://athletic-hardcover-waters-suggesting.trycloudflare.com/api/auth/callback"
+  "https://totally-departments-sacred-selections.trycloudflare.com/auth/callback",
+  "https://totally-departments-sacred-selections.trycloudflare.com/auth/shopify/callback",
+  "https://totally-departments-sacred-selections.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

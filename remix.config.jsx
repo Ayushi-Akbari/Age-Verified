@@ -9,12 +9,22 @@ if (
   process.env.SHOPIFY_APP_URL = process.env.HOST;
   delete process.env.HOST;
 }
-
 /** @type {import('@remix-run/dev').AppConfig} */
 module.exports = {
-  ignoredRouteFiles: ["**/.*"],
   appDirectory: "app",
-  serverModuleFormat: "cjs",
+  ignoredRouteFiles: ["**/.*"],
+  browserBuildDirectory: "public/build",
+  publicPath: "/build/",
+  serverBuildDirectory: "build",
   dev: { port: process.env.HMR_SERVER_PORT || 8002 },
   future: {},
+  server: undefined, // or custom server file if you're using express
 };
+// /** @type {import('@remix-run/dev').AppConfig} */
+// module.exports = {
+//   ignoredRouteFiles: ["**/.*"],
+//   appDirectory: "app",
+//   serverModuleFormat: "jsx",
+//   dev: { port: process.env.HMR_SERVER_PORT || 8002 },
+//   future: {},
+// };

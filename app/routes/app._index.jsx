@@ -5,6 +5,7 @@ import {
 } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import axios from 'axios'
+import NavMenu from "app/component/navMenu";
 
 export const action = async ({ request }) => {
   const formData = await request.formData();

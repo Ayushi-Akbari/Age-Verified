@@ -9,6 +9,7 @@ import {
   DropZone,
   Thumbnail,
   ChoiceList,
+  RadioButton,
   Checkbox
 } from "@shopify/polaris";
 import { useEffect, useState, useCallback } from "react";
@@ -17,42 +18,15 @@ import { Trash2, Info } from "lucide-react";
 import { authenticate } from "../shopify.server";
 import { useLoaderData } from "@remix-run/react";
 import axios from 'axios';
+import NavMenu from "app/component/navMenu";
+// import ReactQuill from 'react-quill';
+// import 'react-quill/dist/quill.snow.css';
 
 export async function loader({ request }) {
   // const navigate = useNavigate();
+  const { admin } = await authenticate.admin(request);
   const shopParam = new URL(request.url).searchParams.get("shop");
-
-  try {
-    const { admin } = await authenticate.admin(request);
-
-    const response = await admin.graphql(`
-      query {
-        shop {
-          name
-          contactEmail
-          createdAt
-          currencyCode
-        }
-      }
-    `);
-
-    const data = await response.json();
-    if(!data){
-      return null
-    }
-    const shop = data.data.shop;
-    return {shop};
-  } catch (error) {
-    console.error("Auth failed:", error);
-    if (shopParam) {
-      // throw redirect(`/auth?shop=${shopParam}`);
-      // throw new Response("Shop parameter missing", { status: 400 });
-      return null
-    } else {
-      // throw new Response("Shop parameter missing", { status: 400 });
-      return null
-    }
-  }
+  return admin
 }
 
 export default function Setting() {
@@ -97,39 +71,89 @@ export default function Setting() {
     border_width: 1,
     border_radius: 6,
   });
+  const [popUp, setPopUp] = useState({
+    height: "350",
+    width: "420",
+    border_readius: "0",
+    border_width: "1",
+    top_bottom_padding: "25",
+    left_right_padding: "30"
+  })
+  const [popUpBackground, setPopUpBackground] = useState({
+    background_color: "#2c2929",
+    border_color: "#2c2929",
+    background_opacity: "0.8",
+    enabale: "",
+    image: ""
+  })
+  const [outerPopUpBackground, setOuterPopUpBackground] = useState({
+    outer_color: "#2c2929",
+    outer_opacity: "0.8",
+    enabale: "",
+    image: ""
+  })
+  const [popUpLogo, setPopUpLogo] = useState({
+    show_logo: true,
+    logo_square: true
+  })
+  const [policy, setPolicy] = useState({
+    checked: true,
+    text: ""
+  })
+  const [monthlyAnalysis, setMonthlyAnalysis] = useState(false)
+  const [advanced, setAdvanced] = useState({
+    css: "",
+    script: ""
+  })
+
+  const [displayCriteria, setDisplayCriteria] = useState({
+    page: 'all-pages',
+    url: ""
+  });
   const [selectedLayout, setSelectedLayout]= useState(null)
   const [checked, setChecked] = useState(false);
+  const [selected, setSelected] = useState('all-pages');
   const handleChange = useCallback((newChecked) => setChecked(newChecked), []);
 
-  const { shop } = useLoaderData(); 
+  const [checkboxes, setCheckboxes] = useState({
+    showEveryTime: false,
+    requireAge: true,
+    rememberChoice: false,
+  });
+
+  // const { shop } = useLoaderData(); 
 
   const [descriptionText, setDescriptionText] = useState("Please verify that you are {{minimum_age}} years of age or older to enter this site.",);
   const [acceptButtonText, setAcceptButtonText] = useState("Yes, I’m over {{minimum_age}}");
   const [rejectButtonText, setRejectButtonText] = useState("No, I’m under {{minimum_age}}");
 
+  const [isClient, setIsClient] = useState(false);
+  const [ReactQuill, setReactQuill] = useState(null);
+  const [value, setValue] = useState("");
+
+  // useEffect(() => {
+  //   let isCancelled = false;
   
+  //   if (!isCancelled) {
+  //     fetchData();
+  //   }
+  
+  //   return () => {
+  //     isCancelled = true;
+  //   };
+  // }, [shop]);
 
-  useEffect(async() => {    
-    console.log("hello");
+  useEffect(() => {
+    setIsClient(true);
 
-    const id_token_new = await shopify.idToken();
-
-    console.log("id_token_new : " , id_token_new);
-    
-    
-    console.log("Loaded shop data: ", shop);
-    let isCancelled = false
-
-    if (!isCancelled) {
-      fetchData();
-    }
-    
-    return () => {
-      isCancelled = true;
-    };
-  }, [shop]);
-
-
+    // Dynamically require ReactQuill only on client
+    import("react-quill").then((mod) => {
+      setReactQuill(() => mod.default);
+      // Import CSS dynamically as well
+      import("react-quill/dist/quill.snow.css");
+    });
+  }, []);
+  
   const weightOptions = [
     { label: "Thin", value: "100" },
     { label: "Extra Light", value: "200" },
@@ -173,12 +197,28 @@ export default function Setting() {
       setAcceptButton(prev => ({ ...prev, [key]: value }));
     } else if (section === 'rejectButton') {
       setRejectButton(prev => ({ ...prev, [key]: value }));
+    } else if (section === "popUp") {
+      setPopUp(prev => ({ ...prev, [key]: value }));
+    } else if (section === "popUpBackground") {
+      setPopUpBackground(prev => ({ ...prev, [key]: value }));
+    } else if (section === "outerPopUpBackground") {
+      setPopUpBackground(prev => ({ ...prev, [key]: value }));
+    } else if (section === "displayCriteria") {
+      setDisplayCriteria(prev => ({ ...prev, [key]: value }));
+    } else if (section === "policy") {    
+      setPolicy(prev => ({ ...prev, [key]: value }));
+    } else if (section === "monthlyAnalysis") {
+      setMonthlyAnalysis(prev => (value));
+    } else if (section === "advanced") {
+      setAdvanced(prev => ({ ...prev, [key]: value }));
+    } else if (section === "popUpLogo") {
+      setPopUpLogo(prev => ({ ...prev, [key]: value }));
     }
     setHasChanges(true);
   };
 
   const fetchData = async () => {
-    const data = await axios.get(`http://localhost:8001/user/get-setting?name=${shop.name}`)
+    const data = await axios.get(`http://localhost:8001/user/get-setting?name=my app s`)
     if(data){
       const settingData = data.data.data.settings
       const parsedSetting = {
@@ -205,11 +245,6 @@ export default function Setting() {
   };
 
   const addSetting = async () => {
-
-    if( !shop || !shop.name){
-      console.log("login first");
-      return null;
-    }
 
     console.log("file : ", imageFile);
     
@@ -245,11 +280,10 @@ export default function Setting() {
 
   return (
     <Page fullWidth>
-      <Layout>
-        <Layout.Section>
-          <div className="flex w-full h-full mx-0">
+   
+          <div className="flex flex-col-reverse lg:flex-row w-full min-h-screen">
             {/* Left Section */}
-            <div className="w-[36%] p-2 space-y-8 overflow-y-scroll scrollbar-hide">
+            <div className="w-full lg:w-[36%] p-2 space-y-8">
               <Text variant="headingXl" as="h1">
                 Settings
               </Text>
@@ -962,12 +996,9 @@ export default function Setting() {
                       <div className="flex-1">
                         <TextField
                           label="Heights"
-                          value={acceptButton.border_radius}
+                          value={popUp.height}
                           onChange={(value) =>
-                            setAcceptButton({
-                              ...acceptButton,
-                              border_radius: value,
-                            })
+                            handleSectionChange("popUp", "height", value)
                           }
                           placeholder="e.g., 26"
                           suffix="Px"
@@ -977,12 +1008,9 @@ export default function Setting() {
                       <div className="flex-1">
                         <TextField
                           label="Width"
-                          value={acceptButton.border_width}
+                          value={popUp.width}
                           onChange={(value) =>
-                            setAcceptButton({
-                              ...acceptButton,
-                              border_width: value,
-                            })
+                            handleSectionChange("popUp", "width", value)
                           }
                           placeholder="e.g., 26"
                           suffix="Px"
@@ -992,12 +1020,9 @@ export default function Setting() {
                       <div className="flex-1">
                         <TextField
                           label="Border Radius"
-                          value={acceptButton.border_width}
+                          value={popUp.border_readius}
                           onChange={(value) =>
-                            setAcceptButton({
-                              ...acceptButton,
-                              border_width: value,
-                            })
+                            handleSectionChange("popUp", "border_readius", value)
                           }
                           placeholder="e.g., 26"
                           suffix="Px"
@@ -1009,12 +1034,9 @@ export default function Setting() {
                       <div className="flex-1">
                         <TextField
                           label="Border Widht"
-                          value={acceptButton.text_size}
+                          value={popUp.border_width}
                           onChange={(value) =>
-                            setAcceptButton({
-                              ...acceptButton,
-                              text_size: value,
-                            })
+                            handleSectionChange("popUp", "border_width", value)
                           }
                           placeholder="e.g., 26"
                           suffix="Px"
@@ -1024,12 +1046,9 @@ export default function Setting() {
                       <div className="flex-1">
                         <TextField
                           label="Top And Bottom Padding"
-                          value={acceptButton.text_size}
+                          value={popUp.top_bottom_padding}
                           onChange={(value) =>
-                            setAcceptButton({
-                              ...acceptButton,
-                              text_size: value,
-                            })
+                            handleSectionChange("popUp", "top_bottom_padding", value)
                           }
                           placeholder="e.g., 26"
                           suffix="Px"
@@ -1039,12 +1058,9 @@ export default function Setting() {
                       <div className="flex-1">
                         <TextField
                           label="Left And Right Padding"
-                          value={acceptButton.text_size}
+                          value={popUp.left_right_padding}
                           onChange={(value) =>
-                            setAcceptButton({
-                              ...acceptButton,
-                              text_size: value,
-                            })
+                            handleSectionChange("popUp", "left_right_padding", value)
                           }
                           placeholder="e.g., 26"
                           suffix="Px"
@@ -1058,90 +1074,79 @@ export default function Setting() {
                   <Box padding="4">
                     <Text variant="headingMd">Popup Background</Text>
 
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
+                    <div className="flex gap-2 mt-2 items-start">
+                      {/* Background Color */}
+                      <div className="flex flex-col ">
+                        <div className="h-[40px]">
+                          <label className="text=[16px] text-[#313335] leading-tight block">
+                            Background Color
+                          </label>
+                        </div>
                         <div className="flex items-center gap-1">
                           <TextField
-                            label="Background Color"
-                            value={rejectButton.background_color}
+                            label=""
+                            value={popUpBackground.background_color}
+                            onChange={(value) =>{
+                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                                handleSectionChange("popUpBackground", "background_color", value)
+                                }
+                            }
+                            }
+                          />
+                          <input
+                            type="color"
+                            value={popUpBackground.background_color}
+                            onChange={(e) =>
+                              handleSectionChange("popUpBackground", "background_color", e.target.value)
+                            }
+                            className="w-[36px] h-[36px] border border-gray-300 rounded"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Border Color */}
+                      <div className="flex flex-col">
+                        <div className="h-[40px]">
+                          <label className=" text-gray-700 leading-tight block">
+                            Border Color
+                          </label>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <TextField
+                            label=""
+                            value={popUpBackground.border_color}
                             onChange={(value) => {
                               if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setRejectButton({
-                                  ...rejectButton,
-                                  background_color: value,
-                                });
+                                handleSectionChange("popUpBackground", "border_color", value)
                               }
                             }}
                           />
                           <input
                             type="color"
-                            value={rejectButton.background_color}
+                            value={popUpBackground.border_color}
                             onChange={(e) =>
-                              setRejectButton({
-                                ...rejectButton,
-                                background_color: e.target.value,
-                              })
+                              handleSectionChange("popUpBackground", "border_color", e.target.value)
                             }
-                            style={{
-                              width: 50,
-                              height: 30,
-                              border: "none",
-                              background: "transparent",
-                              marginTop: "22px",
-                            }}
+                            className="w-[36px] h-[36px] border border-gray-300 rounded"
                           />
                         </div>
                       </div>
 
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            label="Border Color"
-                            value={rejectButton.border_color}
-                            onChange={(value) => {
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setRejectButton({
-                                  ...rejectButton,
-                                  border_color: value,
-                                });
-                              }
-                            }}
-                          />
-                          <input
-                            type="color"
-                            value={rejectButton.border_color}
-                            onChange={(e) =>
-                              setRejectButton({
-                                ...rejectButton,
-                                border_color: e.target.value,
-                              })
-                            }
-                            style={{
-                              width: 50,
-                              height: 30,
-                              border: "none",
-                              background: "transparent",
-                              marginTop: "22px",
-                            }}
-                          />
+                      {/* Background Layer Opacity */}
+                      <div className="flex flex-col ">
+                        <div className="h-[40px]">
+                          <label className="text-[#202223] leading-tight block">
+                            Background Layer Opacity
+                          </label>
                         </div>
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex-1">
-                          <TextField
-                            label="Background Layer Opacity"
-                            value={acceptButton.border_width}
+                        <TextField
+                          label=""
+                          value={popUpBackground.background_opacity}
                             onChange={(value) =>
-                              setAcceptButton({
-                                ...acceptButton,
-                                border_width: value,
-                              })
+                              handleSectionChange("popUpBackground", "background_opacity", value)
                             }
-                            placeholder="e.g., 26"
-                            suffix="Px"
-                          />
-                        </div>
+                          suffix="Px"
+                        />
                       </div>
                     </div>
 
@@ -1193,7 +1198,7 @@ export default function Setting() {
                   <hr className="mt-5 mx-0 border-gray-300 mb-5" />
 
                   <Box padding="4">
-                    <Text variant="headingMd">Popup Background</Text>
+                    <Text variant="headingMd">Outer Pop-up Background</Text>
 
                     <div className="flex gap-3 mb-4 mt-2">
                       <div className="flex-1">
@@ -1225,7 +1230,6 @@ export default function Setting() {
                               })
                             }
                             className="w-8 h-8 border-none p-0 cursor-pointer mr-1 rounded-lg"
-                            
                           />
                         </div>
                       </div>
@@ -1255,10 +1259,27 @@ export default function Setting() {
 
               <Box paddingBlockStart="8">
                 <Text variant="headingMd" as="h3">
-                  Image
+                  Pop-up Logo Settings
                 </Text>
                 <Card>
-                  <Box maxWidth="400px" marginX="auto">
+                  <div className="flex mb-4 gap-7">
+                    <Checkbox
+                      label="Show Logo"
+                      checked={popUpLogo.show_logo}
+                      onChange={(value) =>
+                        handleSectionChange("popUpLogo", "show_logo", !popUpLogo.show_logo)
+                      }
+                    />
+                    <Checkbox
+                      label="Logo Square"
+                      checked={popUpLogo.logo_square}
+                      onChange={(value) =>
+                        handleSectionChange("popUpLogo", "logo_square", !popUpLogo.logo_square)
+                      }
+                    />
+                  </div>
+                  {popUpLogo.show_logo && (
+                    <Box maxWidth="400px" marginX="auto">
                     <DropZone
                       accept="image/*"
                       onDrop={handleDropZoneDrop}
@@ -1292,12 +1313,117 @@ export default function Setting() {
                       </div>
                     </DropZone>
                   </Box>
+                  )}
+                  
+                </Card>
+              </Box>
+
+              <Box paddingBlockStart="8">
+                <Text variant="headingMd" as="h3">
+                  Display Criteria
+                </Text>
+                <Card>
+                  <div className="flex gap-6">
+                    <RadioButton
+                      label="All Pages"
+                      checked={displayCriteria.page === "all-pages"}
+                      id="all-pages"
+                      name="contact"
+                      onChange={() =>
+                        handleSectionChange("displayCriteria", "page", "all-pages")
+                      }
+                    />
+                    <RadioButton
+                      label="Specific Pages"
+                      checked={displayCriteria.page === "specific-pages"}
+                      id="specific-pages"
+                      name="contact"
+                      onChange={() => handleSectionChange("displayCriteria", "page", "specific-pages")}
+                    />
+                  </div>
+                </Card>
+              </Box>
+
+              <Box paddingBlockStart="8" marginY="auto">
+                <Text variant="headingMd" as="h3">
+                  Privacy Policy Setting
+                </Text>
+                <Card>
+                  <Checkbox
+                    label="Privacy Policy"
+                    checked={policy.checked}
+                    onChange={() =>  handleSectionChange("policy", "checked", !policy.checked)}
+                  />
+                  {policy.checked && (
+                    <Box maxWidth="400px" marginX="auto">
+                    <div className="flex h-[200px] mt-4">
+                      {/* Only render ReactQuill if loaded on client */}
+                      {isClient && ReactQuill ? (
+                        <ReactQuill
+                          theme="snow"
+                          checked={policy.text}
+                          onChange={(value) =>  handleSectionChange("policy", "text", value)}
+                          style={{ height: "150px", width: "100%" }}
+                        />
+                      ) : (
+                        <div>Loading editor...</div>
+                      )}
+                    </div>
+                  </Box>
+                  )}
+                  
+                </Card>
+              </Box>
+
+              <Box paddingBlockStart="8">
+                <Text variant="headingMd" as="h3">
+                  Monthly Analysis
+                </Text>
+                <Card>
+                  <div className="flex gap-7">
+                    <Checkbox
+                      label="I don't want to receive monthly analysis emails"
+                      checked={monthlyAnalysis}
+                      onChange={() => handleSectionChange("monthlyAnalysis", null, !monthlyAnalysis)}
+                    />
+                  </div>
+                </Card>
+              </Box>
+
+              <Box paddingBlockStart="8">
+                <Text variant="headingMd" as="h3">
+                  Advanced Settings [Developers only]
+                </Text>
+
+                {/* Accept Button  */}
+                <Card>
+                  <Box padding="4">
+                    <TextField
+                      label="Custom css (Use this option to do a custom css where Age Verification doing anything)"
+                      value={advanced.css}
+                      onChange={(value) => handleSectionChange("advanced", "css", value)}
+                      multiline={4}
+                      autoComplete="off"
+                    />
+                  </Box>
+
+                  <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+
+                  <Box padding="4">
+                    <TextField
+                      label="Custom script (Use this option to do a custom script where Age Verification doing anything)"
+                      value={advanced.script}
+                      onChange={(value) => handleSectionChange("advanced", "script", value)}
+                      multiline={4}
+                      autoComplete="off"
+                    />
+                  </Box>
                 </Card>
               </Box>
             </div>
 
             {/* Right Section */}
-            <div className="flex flex-col w-[62%] h-screen fixed right-0 top-0 p-4">
+            <div className="flex flex-col w-full mt-[55px] mb-5 lg:mt-0 lg:mb-0 lg:w-[64%] lg:h-screen lg:fixed lg:right-0 lg:top-0 lg:p-4">
               <VerificationCard
                 age={age}
                 image={image}
@@ -1311,8 +1437,7 @@ export default function Setting() {
               />
             </div>
           </div>
-        </Layout.Section>
-      </Layout>
+       
     </Page>
   );
 }
