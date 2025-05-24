@@ -10,46 +10,56 @@ import {
   Thumbnail,
   ChoiceList,
   RadioButton,
-  Checkbox
+  Checkbox,
+  Button,
+  AppProvider
 } from "@shopify/polaris";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef  } from "react";
 import VerificationCard from "./app.verificationCard";
-import { Trash2, Info } from "lucide-react";
+import { Trash2, Info, AlertCircle  } from "lucide-react";
 import { authenticate } from "../shopify.server";
 import { useLoaderData } from "@remix-run/react";
 import axios from 'axios';
-import NavMenu from "app/component/navMenu";
-// import ReactQuill from 'react-quill';
-// import 'react-quill/dist/quill.snow.css';
 
 export async function loader({ request }) {
-  // const navigate = useNavigate();
   const { admin } = await authenticate.admin(request);
+  console.log("admin : " , admin);
+  
   const shopParam = new URL(request.url).searchParams.get("shop");
-  return admin
+  
+  return {admin, shopParam}
 }
 
 export default function Setting() {
-  const [age, setAge] = useState("18");
+  const verificationRef = useRef(null);
+
+  const {shopParam} = useLoaderData()
   const [hasChanges, setHasChanges] = useState(false);
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null)
+  const [customization, setCustomization] = useState({
+    layout: "template1",
+    age: "18",
+    verify_method: "no-input",
+    date_fromat: "european_date",
+    popup_show: false
+  });
   const [title, setTitle] = useState({
     text: "Welcome!",
-    text_weight: "bold",
+    text_weight: "700",
     fonts: "sans-serif",
     text_size: 20,
     text_color: "#505050",
   });
   const [description, setDescription] = useState({
-    text: `Please verify that you are ${age} years of age or older to enter this site.`,
-    text_weight: "normal",
+    text: `Please verify that you are ${customization.age} years of age or older to enter this site.`,
+    text_weight: "400",
     fonts: "sans-serif",
     text_size: 12,
     text_color: "#505050",
   });
   const [rejectButton, setRejectButton] = useState({
-    text: `No, I’m under ${age}`,
+    text: `No, I’m under ${customization.age}`,
     fonts: "sans-serif",
     text_weight: "100",
     text_size: 14,
@@ -61,7 +71,7 @@ export default function Setting() {
     redirect_url: "",
   });
   const [acceptButton, setAcceptButton] = useState({
-    text: `Yes, I’m over ${age}`,
+    text: `Yes, I’m over ${customization.age}`,
     fonts: "sans-serif",
     text_weight: "100",
     text_size: 14,
@@ -72,7 +82,7 @@ export default function Setting() {
     border_radius: 6,
   });
   const [popUp, setPopUp] = useState({
-    height: "350",
+    height: "550",
     width: "420",
     border_readius: "0",
     border_width: "1",
@@ -83,18 +93,22 @@ export default function Setting() {
     background_color: "#2c2929",
     border_color: "#2c2929",
     background_opacity: "0.8",
-    enabale: "",
-    image: ""
+    image_enabale: true,
+    image: null,
+    imageFile: null
   })
   const [outerPopUpBackground, setOuterPopUpBackground] = useState({
-    outer_color: "#2c2929",
+    background_color: "#2c2929",
     outer_opacity: "0.8",
-    enabale: "",
-    image: ""
+    image_enabale: true,
+    image: null,
+    imageFile: null
   })
   const [popUpLogo, setPopUpLogo] = useState({
     show_logo: true,
-    logo_square: true
+    logo_square: true,
+    image: null,
+    imageFile: null
   })
   const [policy, setPolicy] = useState({
     checked: true,
@@ -105,54 +119,76 @@ export default function Setting() {
     css: "",
     script: ""
   })
-
   const [displayCriteria, setDisplayCriteria] = useState({
     page: 'all-pages',
-    url: ""
+    count: 0,
+    url: []
   });
-  const [selectedLayout, setSelectedLayout]= useState(null)
-  const [checked, setChecked] = useState(false);
-  const [selected, setSelected] = useState('all-pages');
-  const handleChange = useCallback((newChecked) => setChecked(newChecked), []);
-
-  const [checkboxes, setCheckboxes] = useState({
-    showEveryTime: false,
-    requireAge: true,
-    rememberChoice: false,
-  });
-
-  // const { shop } = useLoaderData(); 
+  const [market, setMarket] = useState('india')
 
   const [descriptionText, setDescriptionText] = useState("Please verify that you are {{minimum_age}} years of age or older to enter this site.",);
   const [acceptButtonText, setAcceptButtonText] = useState("Yes, I’m over {{minimum_age}}");
   const [rejectButtonText, setRejectButtonText] = useState("No, I’m under {{minimum_age}}");
 
-  const [isClient, setIsClient] = useState(false);
   const [ReactQuill, setReactQuill] = useState(null);
   const [value, setValue] = useState("");
 
-  // useEffect(() => {
-  //   let isCancelled = false;
+  useEffect(() => {
+    let isCancelled = false;
   
-  //   if (!isCancelled) {
-  //     fetchData();
-  //   }
+    if (!isCancelled) {
+      fetchData();
+    }
   
-  //   return () => {
-  //     isCancelled = true;
-  //   };
-  // }, [shop]);
+    return () => {
+      isCancelled = true;
+    };
+  }, [shopParam]);
 
   useEffect(() => {
-    setIsClient(true);
-
-    // Dynamically require ReactQuill only on client
     import("react-quill").then((mod) => {
       setReactQuill(() => mod.default);
-      // Import CSS dynamically as well
       import("react-quill/dist/quill.snow.css");
     });
+
+    console.log("store Name : ", shopParam);
+
+    console.log("outerPopUpBackground : " , outerPopUpBackground);
+    
+    
   }, []);
+
+  useEffect(() => {
+    if (!hasChanges) return;
+
+    const saveBar = document.getElementById('my-save-bar');
+    saveBar?.show();
+
+    const saveBtn = document.getElementById('save-button');
+    const discardBtn = document.getElementById('discard-button');
+
+    const handleSave = () => {
+      console.log('Saving');
+      addSetting()
+      setHasChanges(false);
+      saveBar?.hide();
+    };
+
+    const handleDiscard = () => {
+      console.log('Discarding');
+      removeSetting()
+      setHasChanges(false);
+      saveBar?.hide();
+    };
+
+    saveBtn?.addEventListener('click', handleSave);
+    discardBtn?.addEventListener('click', handleDiscard);
+
+    return () => {
+      saveBtn?.removeEventListener('click', handleSave);
+      discardBtn?.removeEventListener('click', handleDiscard);
+    };
+  }, [hasChanges]);
   
   const weightOptions = [
     { label: "Thin", value: "100" },
@@ -173,23 +209,49 @@ export default function Setting() {
     { label: "Poppins", value: "'Poppins', sans-serif" },
     { label: "Roboto", value: "'Roboto', sans-serif" },
   ];
-
-  const handleDropZoneDrop = useCallback((_dropFiles, acceptedFiles) => {
+  const marketOptions= [
+    { label: "India (English) (Primary)", value: "india"}
+  ]
+    
+  const handleDropZoneDrop = useCallback((acceptedFiles, section, key) => {
     const uploadedFile = acceptedFiles[0];
-    console.log("upload file : ", uploadedFile);
-    
-    setImageFile(acceptedFiles[0])
-
-    console.log("image file : ", imageFile);
-    
     const reader = new FileReader();
-    reader.onload = () => setImage(reader.result);
+  
+    reader.onload = () => {
+      const base64 = reader.result;
+  
+      if (section === "popUpLogo") {
+        setPopUpLogo(prev => ({
+          ...prev,
+          [key]: base64,
+          [`${key}File`]: uploadedFile
+        }));
+      } else if (section === "popUpBackground") {
+        setPopUpBackground(prev => ({
+          ...prev,
+          [key]: base64,
+          [`${key}File`]: uploadedFile
+        }));
+      } else if (section === "outerPopUpBackground") {
+        setOuterPopUpBackground(prev => ({
+          ...prev,
+          [key]: base64,
+          [`${key}File`]: uploadedFile
+        }));
+      }
+
+      setHasChanges(true);
+    };
+  
     reader.readAsDataURL(uploadedFile);
   }, []);
-  
-
+    
   const handleSectionChange = (section, key, value) => {
-    if (section === 'title') {
+    if (section === 'market') {
+      setMarket(value);
+    } else if (section === 'customization') {
+      setCustomization(prev => ({ ...prev, [key]: value }));
+    } else if (section === 'title') {
       setTitle(prev => ({ ...prev, [key]: value }));
     } else if (section === 'description') {
       setDescription(prev => ({ ...prev, [key]: value }));
@@ -202,7 +264,7 @@ export default function Setting() {
     } else if (section === "popUpBackground") {
       setPopUpBackground(prev => ({ ...prev, [key]: value }));
     } else if (section === "outerPopUpBackground") {
-      setPopUpBackground(prev => ({ ...prev, [key]: value }));
+      setOuterPopUpBackground(prev => ({ ...prev, [key]: value }));
     } else if (section === "displayCriteria") {
       setDisplayCriteria(prev => ({ ...prev, [key]: value }));
     } else if (section === "policy") {    
@@ -213,970 +275,1240 @@ export default function Setting() {
       setAdvanced(prev => ({ ...prev, [key]: value }));
     } else if (section === "popUpLogo") {
       setPopUpLogo(prev => ({ ...prev, [key]: value }));
-    }
+    } 
     setHasChanges(true);
   };
 
   const fetchData = async () => {
-    const data = await axios.get(`http://localhost:8001/user/get-setting?name=my app s`)
+    const data = await axios.get(`http://localhost:8001/setting/get-setting?shop=${shopParam}`)
     if(data){
       const settingData = data.data.data.settings
       const parsedSetting = {
         ...settingData,
+        customization: settingData.customization ? JSON.parse(settingData.customization) : null,
         title: settingData.title ? JSON.parse(settingData.title) : null,
         description: settingData.description ? JSON.parse(settingData.description) : null,
         acceptButton: settingData.acceptButton ? JSON.parse(settingData.acceptButton) : null,
         rejectButton: settingData.rejectButton ? JSON.parse(settingData.rejectButton) : null,
+        popUp: settingData.popUp ? JSON.parse(settingData.popUp) : null,
+        popUpBackground: settingData.popUpBackground ? JSON.parse(settingData.popUpBackground) : null,
+        outerPopUpBackground: settingData.outerPopUpBackground ? JSON.parse(settingData.outerPopUpBackground) : null,
+        popUpLogo: settingData.popUpLogo ? JSON.parse(settingData.popUpLogo) : null,
+        policy: settingData.policy ? JSON.parse(settingData.policy) : null,
+        advanced: settingData.advanced ? JSON.parse(settingData.advanced) : null,
+        displayCriteria: settingData.displayCriteria ? JSON.parse(settingData.displayCriteria) : null,
+        monthlyAnalysis: settingData.monthlyAnalysis ? settingData.monthlyAnalysis: null,
+        market: settingData.market ? settingData.market: null
       };
-      
-      setAge(parsedSetting.age || "18");
-      
-      if (parsedSetting.image) {
-        const path = parsedSetting.image; 
-        setImage(`http://localhost:8001${path}`)
-      }
-      
+
+      console.log("parsedSetting : ", parsedSetting);
+       
+      parsedSetting.customization && setRejectButton(parsedSetting.customization);
       parsedSetting.title && setTitle(parsedSetting.title);
       parsedSetting.description && setDescription(parsedSetting.description);
       parsedSetting.acceptButton && setAcceptButton(parsedSetting.acceptButton);
       parsedSetting.rejectButton && setRejectButton(parsedSetting.rejectButton);
+      parsedSetting.popUp && setPopUp(parsedSetting.popUp);
+      parsedSetting.popUpBackground && setPopUpBackground(parsedSetting.popUpBackground);
+      parsedSetting.outerPopUpBackground && setOuterPopUpBackground(parsedSetting.outerPopUpBackground);
+      parsedSetting.popUpLogo && setPopUpLogo(parsedSetting.popUpLogo);
+      parsedSetting.policy && setPolicy(parsedSetting.policy);
+      parsedSetting.advanced && setAdvanced(parsedSetting.advanced);
+      parsedSetting.displayCriteria && setDisplayCriteria(parsedSetting.displayCriteria);
+      parsedSetting.monthlyAnalysis && setDisplayCriteria(parsedSetting.monthlyAnalysis);
+      parsedSetting.market && setDisplayCriteria(parsedSetting.market);
+
+
+      console.log("outerPopUpBackground inside fetch : " , outerPopUpBackground);
+
+      if (parsedSetting.popUpBackground.image) {
+        const path = parsedSetting.popUpBackground.image; 
+        setPopUpBackground({
+          image: `http://localhost:8001${path}`,
+          imageFile: null,
+        });
+      }
+      if (parsedSetting.outerPopUpBackground.image) {
+        const path = parsedSetting.outerPopUpBackground.image; 
+        setOuterPopUpBackground({
+          image: `http://localhost:8001${path}`,
+          imageFile: null,
+        });
+      }
+      if (parsedSetting.popUpLogo.image) {
+        const path = parsedSetting.popUpLogo.image; 
+        setPopUpLogo({
+          image: `http://localhost:8001${path}`,
+          imageFile: null,
+        });
+      }
     }
 
   };
 
   const addSetting = async () => {
 
-    console.log("file : ", imageFile);
+    console.log("shopParam : ", shopParam);
+    console.log("outerPopUpBackground : " , outerPopUpBackground);
+
+    const htmlContent = verificationRef.current?.getHtmlContent(); // 👈 get from child
+    console.log("htmlContent:", htmlContent);
     
+    const removeImages = (obj) => {
+      const { image, imageFile, ...rest } = obj;
+      return rest;
+    };    
     const formData = new FormData();
- 
-    formData.append("age", age);
-    formData.append("image", imageFile)
+
+    console.log("customization",customization)
+    console.log("title",title)
+    console.log("description",description)
+    console.log("acceptButton",acceptButton)
+    console.log("rejectButton",rejectButton)
+    console.log("popUp",popUp)
+    console.log("outerPopUpBackground", outerPopUpBackground)
+    console.log("popUpLogo", popUpLogo)
+    console.log("popUpBackground", popUpBackground)
+    console.log("policy",policy)
+    console.log("advanced",advanced)
+    console.log("displayCriteria",displayCriteria)
+    console.log("market",market)
+    console.log("monthlyAnalysis",monthlyAnalysis)
+
+    formData.append("popUpBackgroundImage", popUpBackground.imageFile)
+    formData.append("outerPopUpBackgroundImage", outerPopUpBackground.imageFile)
+    formData.append("popUpLogoImage", popUpLogo.imageFile)
+
+    formData.append("customization", JSON.stringify(customization));
     formData.append("title", JSON.stringify(title));
     formData.append("description", JSON.stringify(description));
     formData.append("acceptButton", JSON.stringify(acceptButton));
     formData.append("rejectButton", JSON.stringify(rejectButton));
-
-    for (const [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
-        
+    formData.append("popUp", JSON.stringify(popUp));
+    formData.append("outerPopUpBackground", JSON.stringify(removeImages(outerPopUpBackground)));
+    formData.append("popUpLogo", JSON.stringify(removeImages(popUpLogo)));
+    formData.append("popUpBackground", JSON.stringify(removeImages(popUpBackground)));
+    formData.append("policy", JSON.stringify(policy));
+    formData.append("advanced", JSON.stringify(advanced));
+    formData.append("displayCriteria", JSON.stringify(displayCriteria));
+    formData.append("market", JSON.stringify(market));
+    formData.append("monthlyAnalysis", JSON.stringify(monthlyAnalysis));
+    formData.append("htmlContent", htmlContent)
+    
+  
     const response = await axios.post(
-      `http://localhost:8001/user/add-setting?name=${shop.name}`,
+      `http://localhost:8001/setting/add-setting?shop=${shopParam}`,
       formData,
     );
 
-    console.log("response : ", response.status);
+    console.log("response : ", response);
     if(response.status === 200){
       fetchData()
     }
-
-    
   };
 
   const removeSetting = async () =>{
     window.location.reload();
   }
-
+  
   return (
-    <Page fullWidth>
-   
-          <div className="flex flex-col-reverse lg:flex-row w-full min-h-screen">
-            {/* Left Section */}
-            <div className="w-full lg:w-[36%] p-2 space-y-8">
-              <Text variant="headingXl" as="h1">
-                Settings
+    <AppProvider>
+      <Page fullWidth>
+        <div className="flex flex-col-reverse lg:flex-row w-full min-h-screen">
+          {/* Left Section */}
+          <div className="w-full lg:w-[36%] p-2 space-y-8">
+            <Text variant="headingXl" as="h1">
+              Settings
+            </Text>
+
+            {/* Customizations */}
+            <Box paddingBlockStart="8">
+              <Card>
+                <Text variant="semibold">Markets</Text>
+                <div className="mt-2 ">
+                  <Select
+                    label="Font"
+                    options={marketOptions}
+                    value={market}
+                    onChange={(value) =>
+                      handleSectionChange("market", null, value)
+                    }
+                  />
+                </div>
+              </Card>
+            </Box>
+
+            {/* Customizations */}
+            <Box paddingBlockStart="8">
+              <Text Text variant="headingMd" as="h3">
+                Customizations
               </Text>
-              <Box paddingBlockStart="8">
-                <Text Text variant="headingMd" as="h3">
-                  Customizations
-                </Text>
-                <Card>
-                  <Text variant="semibold">Pop-up Layouts</Text>
-                  <div className="mt-2 ">
-                    <ChoiceList
-                      // title="Pop-up Layouts"
-                      choices={[
-                        { label: "Layout 1", value: "layout1" },
-                        { label: "Layout 2", value: "layout2" },
-                      ]}
-                      selected={[selectedLayout]}
-                      onChange={(value) => setSelectedLayout(value[0])}
+              <Card>
+                <Text variant="semibold">Pop-up Layouts</Text>
+                <div className="flex gap-8 mt-5">
+                  <RadioButton
+                    label="Template 1"
+                    checked={customization.layout === "template1"}
+                    id="template1"
+                    name="layout"
+                    onChange={() =>
+                      handleSectionChange(
+                        "customization",
+                        "layout",
+                        "template1",
+                      )
+                    }
+                  />
+                  <RadioButton
+                    label="Template 2"
+                    checked={customization.layout === "template2"}
+                    id="template2"
+                    name="layout"
+                    onChange={() =>
+                      handleSectionChange(
+                        "customization",
+                        "layout",
+                        "template2",
+                      )
+                    }
+                  />
+                </div>
+
+                <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+
+                <Text variant="semibold">Verification Settings</Text>
+                <div className="flex flex-row flex-wrap items-end gap-4 mt-2">
+                  <div className="flex-shrink-0">
+                    <RadioButton
+                      label="No Input "
+                      checked={customization.verify_method === "no-input"}
+                      id="no-input"
+                      name="verify_method"
+                      onChange={() =>
+                        handleSectionChange(
+                          "customization",
+                          "verify_method",
+                          "no-input",
+                        )
+                      }
                     />
                   </div>
-
-                  <hr className="mt-5 mx-0 border-gray-300 mb-5" />
-
-                  <Text variant="semibold">Verification Settings</Text>
-                  <div className="w-[200px] mt-2">
+                  <div className="flex-shrink-0">
+                    <RadioButton
+                      label="Via Birthdate"
+                      checked={customization.verify_method === "via-birthdate"}
+                      id="via-birthdate"
+                      name="verify_method"
+                      onChange={() =>
+                        handleSectionChange(
+                          "customization",
+                          "verify_method",
+                          "via-birthdate",
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="w-[175px] flex-shrink-0">
                     <TextField
                       label="Age"
                       type="number"
-                      value={age}
+                      inputMode="numeric"
+                      value={customization.age}
                       onChange={(value) => {
-                        {
-                          setAge(value);
 
-                          setRejectButton((prev) => ({
-                            ...prev,
-                            text: prev.text.replace(age, value),
-                          }));
+                        console.log("customization.age : ", customization.age);
+                        
+                        console.log("value : " , value);
+                        
+                        setRejectButton((prev) => ({
+                          ...prev,
+                          text: prev.text.replace(customization.age, value),
+                        }));
 
-                          setAcceptButton((prev) => ({
-                            ...prev,
-                            text: prev.text.replace(age, value),
-                          }));
+                        setAcceptButton((prev) => ({
+                          ...prev,
+                          text: prev.text.replace(customization.age, value),
+                        }));
 
-                          setDescription((prev) => ({
-                            ...prev,
-                            text: prev.text.replace(age, value),
-                          }));
-                        }
+                        setDescription((prev) => ({
+                          ...prev,
+                          text: prev.text.replace(customization.age, value),
+                        }));
+
+                        handleSectionChange("customization", "age", value);
+
+                        console.log("rejectButton.text : ", rejectButton.text);
+                        console.log("acceptButton.text : ", acceptButton.text);
+                        console.log("description.text : ", description.text);
+                        console.log("customization.age : ", customization.age);
+                        
                       }}
                       suffix="Year(s)"
                     />
                   </div>
+                </div>
 
-                  <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+                <hr className="mt-5 mx-0 border-gray-300 mb-5" />
 
-                  <Text variant="semibold">Pop-up Show Settings</Text>
-                  <div className="w-[200px] mt-2">
-                    <Checkbox
-                      label="Pop-up show every time"
-                      checked={checked}
-                      onChange={handleChange}
+                {customization.verify_method === "via-birthdate" && (
+                  <>
+                    <Text variant="semibold">Date Format</Text>
+                    <div className="flex px-3 mt-3">
+                      <div className="flex flex-row w-1/2">
+                        <RadioButton
+                          label=""
+                          checked={
+                            customization.date_fromat === "european_date"
+                          }
+                          id="european_date"
+                          name="date_fromat"
+                          onChange={() =>
+                            handleSectionChange(
+                              "customization",
+                              "date_fromat",
+                              "european_date",
+                            )
+                          }
+                        />
+                        <div className="flex flex-col text-xs">
+                          European Date Format
+                          <span className="text-xs text-gray-500">
+                            (DD/MM/YYYY)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-row w-1/2">
+                        <RadioButton
+                          label=""
+                          checked={customization.date_fromat === "us_date"}
+                          id="us_date"
+                          name="date_fromat"
+                          onChange={() =>
+                            handleSectionChange(
+                              "customization",
+                              "date_fromat",
+                              "us_date",
+                            )
+                          }
+                        />
+                        <div className="flex flex-col text-xs">
+                          US Date Format
+                          <span className="text-xs text-gray-500">
+                            (MM/DD/YYYY)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+                  </>
+                )}
+
+                <Text variant="semibold">Pop-up Show Settings</Text>
+                <div className="w-[200px] mt-2">
+                  <Checkbox
+                    label="Pop-up show every time"
+                    checked={customization.popup_show}
+                    onChange={() => {
+                      handleSectionChange(
+                        "customization",
+                        "popup_show",
+                        !customization.popup_show,
+                      );
+                    }}
+                  />
+                </div>
+                <div className="flex border rounded-md bg-blue-100  p-2 gap-2 items-start">
+                  <div className="w-8 h-4 rounded-md border-blue-100 flex items-center justify-center">
+                    <Info size={16} className="text-blue-700" />
+                  </div>
+                  <span className="text-xm text-blue-950">
+                    The pop-up will appear in every new session for both new and
+                    existing users. In a single session, if the user clicks the
+                    'Agree' button, the pop-up will not appear again during that
+                    session, as it has already been accepted.
+                    <br />
+                  </span>
+                </div>
+              </Card>
+            </Box>
+
+            {/* Text Customizations */}
+            <Box paddingBlockStart="8">
+              <Text variant="headingMd" as="h3">
+                Text Customizations
+              </Text>
+
+              {/* Title  */}
+              <Card>
+                <Box padding="4">
+                  <Text variant="headingMd">Title</Text>
+
+                  {/* Part 1 - Title Text */}
+                  <div className="mb-4 mt-3">
+                    <TextField
+                      label="Text"
+                      value={title.text}
+                      onChange={(value) =>
+                        handleSectionChange("title", "text", value)
+                      }
                     />
                   </div>
-                  <div className="flex border rounded-md bg-blue-100  p-2 gap-2 items-start">
-                    <div className="w-8 h-4 rounded-md border-blue-100 flex items-center justify-center">
-                      <Info size={16} className="text-blue-700" />
-                    </div>
-                    <span className="text-xm text-blue-950">
-                      The pop-up will appear in every new session for both new
-                      and existing users. In a single session, if the user
-                      clicks the 'Agree' button, the pop-up will not appear
-                      again during that session, as it has already been
-                      accepted.
-                      <br />
-                    </span>
-                  </div>
-                </Card>
-              </Box>
 
-              <Box paddingBlockStart="8">
-                <Text variant="headingMd" as="h3">
-                  Text Customizations
-                </Text>
-
-                {/* Title  */}
-                <Card>
-                  <Box padding="4">
-                    <Text variant="headingMd">Title</Text>
-
-                    {/* Part 1 - Title Text */}
-                    <div className="mb-4 mt-3">
-                      <TextField
-                        label="Text"
-                        value={title.text}
+                  {/* Part 2 - Font & Weight */}
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <Select
+                        label="Font"
+                        options={fontOptions}
+                        value={title.fonts}
                         onChange={(value) =>
-                          handleSectionChange("title", "text", value)
+                          handleSectionChange("title", "fonts", value)
                         }
                       />
                     </div>
+                    <div className="flex-1">
+                      <Select
+                        label="Text Weight"
+                        options={weightOptions}
+                        value={title.text_weight}
+                        onChange={(value) => {
+                          handleSectionChange("title", "text_weight", value);
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <TextField
+                        label="Text Size"
+                        value={title.text_size}
+                        onChange={(value) =>
+                          handleSectionChange("title", "text_size", value)
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+                  </div>
 
-                    {/* Part 2 - Font & Weight */}
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
-                        <Select
-                          label="Font"
-                          options={fontOptions}
-                          value={title.fonts}
-                          onChange={(value) =>
-                            handleSectionChange("title", "fonts", value)
-                          }
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <Select
-                          label="Text Weight"
-                          options={weightOptions}
-                          value={title.text_weight}
+                  {/* Part 3 - Size & Color */}
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <TextField
+                          label="Text Color"
+                          value={title.text_color}
                           onChange={(value) => {
-                            handleSectionChange("title", "text_weight", value);
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange("title", "text_color", value);
+                            }
+                          }}
+                        />
+                        <input
+                          type="color"
+                          value={title.text_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "title",
+                              "text_color",
+                              e.target.value,
+                            )
+                          }
+                          style={{
+                            width: 30,
+                            height: 30,
+                            border: "none",
+                            background: "transparent",
+                            marginTop: "22px",
                           }}
                         />
                       </div>
-                      <div className="flex-1">
-                        <TextField
-                          label="Text Size"
-                          value={title.text_size}
-                          onChange={(value) =>
-                            handleSectionChange("title", "text_size", value)
-                          }
-                          placeholder="e.g., 26"
-                          suffix="Px"
-                        />
-                      </div>
                     </div>
+                  </div>
+                </Box>
 
-                    {/* Part 3 - Size & Color */}
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <TextField
-                            label="Text Color"
-                            value={title.text_color}
-                            onChange={(value) => {
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                handleSectionChange(
-                                  "title",
-                                  "text_color",
-                                  value,
-                                );
-                              }
-                            }}
-                          />
-                          <input
-                            type="color"
-                            value={title.text_color}
-                            onChange={(e) =>
-                              handleSectionChange(
-                                "title",
-                                "text_color",
-                                e.target.value,
-                              )
-                            }
-                            style={{
-                              width: 30,
-                              height: 30,
-                              border: "none",
-                              background: "transparent",
-                              marginTop: "22px",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </Box>
+                <hr className="mt-7 mx-0 border-gray-300 mb-5" />
 
-                  <hr className="mt-7 mx-0 border-gray-300 mb-5" />
+                {/* description */}
+                <Box padding="4">
+                  <Text variant="headingMd">Description</Text>
 
-                  {/* description */}
-                  <Box padding="4">
-                    <Text variant="headingMd">Description</Text>
+                  {/* Part 1 - Title Text */}
+                  <div className="mb-4 mt-3">
+                    <TextField
+                      label="Text"
+                      value={descriptionText}
+                      onChange={(value) => {
+                        const text = value.replace(
+                          "{{minimum_age}}",
+                          customization.age,
+                        );
 
-                    {/* Part 1 - Title Text */}
-                    <div className="mb-4 mt-3">
-                      <TextField
-                        label="Text"
-                        value={descriptionText}
-                        onChange={(value) => {
-                          setDescription({
-                            ...description,
-                            text: value.replace("{{minimum_age}}", age),
-                          });
-                          setDescriptionText(value);
-                        }}
-                      />
-                    </div>
+                        handleSectionChange("description", "text", text);
+                        setDescriptionText(value);
+                      }}
+                    />
+                  </div>
 
-                    {/* Part 2 - Font & Weight */}
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
-                        <Select
-                          label="Font"
-                          options={fontOptions}
-                          value={description.fonts}
-                          onChange={(value) =>
-                            setDescription({ ...description, fonts: value })
-                          }
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <Select
-                          label="Text Weight"
-                          options={weightOptions}
-                          value={description.text_weight}
-                          onChange={(value) =>
-                            setDescription({
-                              ...description,
-                              text_weight: value,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <TextField
-                          label="Text Size"
-                          value={description.text_size}
-                          onChange={(value) =>
-                            setDescription({ ...description, text_size: value })
-                          }
-                          placeholder="e.g., 26"
-                          suffix="Px"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Part 3 - Size & Color */}
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <TextField
-                            label="Text Color"
-                            value={description.text_color}
-                            onChange={(value) => {
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setDescription({
-                                  ...description,
-                                  text_color: value,
-                                });
-                              }
-                            }}
-                          />
-                          <input
-                            type="color"
-                            value={description.text_color}
-                            onChange={(e) =>
-                              setDescription({
-                                ...description,
-                                text_color: e.target.value,
-                              })
-                            }
-                            style={{
-                              width: 30,
-                              height: 30,
-                              border: "none",
-                              background: "transparent",
-                              marginTop: "22px",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </Box>
-                </Card>
-              </Box>
-
-              <Box paddingBlockStart="8">
-                <Text variant="headingMd" as="h3">
-                  Button Settings
-                </Text>
-
-                {/* Accept Button  */}
-                <Card>
-                  <Box padding="4">
-                    <Text variant="headingMd">Accept Button</Text>
-
-                    <div className="mb-4 mt-3">
-                      <TextField
-                        label="Text"
-                        value={acceptButtonText}
-                        onChange={(value) => {
-                          console.log("value : ", value);
-
-                          setAcceptButton({
-                            ...acceptButton,
-                            text: value.replace("{{minimum_age}}", age),
-                          });
-
-                          console.log("accept button : ", acceptButton);
-
-                          setAcceptButtonText(value);
-
-                          console.log("button text : ");
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
-                        <TextField
-                          label="Border Radius"
-                          value={acceptButton.border_radius}
-                          onChange={(value) =>
-                            setAcceptButton({
-                              ...acceptButton,
-                              border_radius: value,
-                            })
-                          }
-                          placeholder="e.g., 26"
-                          suffix="Px"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <TextField
-                          label="Border Width"
-                          value={acceptButton.border_width}
-                          onChange={(value) =>
-                            setAcceptButton({
-                              ...acceptButton,
-                              border_width: value,
-                            })
-                          }
-                          placeholder="e.g., 26"
-                          suffix="Px"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <Select
-                          label="Text Weight"
-                          options={weightOptions}
-                          value={acceptButton.text_weight}
-                          onChange={(value) =>
-                            setAcceptButton({
-                              ...acceptButton,
-                              text_weight: value,
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
-                        <Select
-                          label="Font"
-                          options={fontOptions}
-                          value={acceptButton.fonts}
-                          onChange={(value) =>
-                            setAcceptButton({ ...acceptButton, fonts: value })
-                          }
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <TextField
-                          label="Text Size"
-                          value={acceptButton.text_size}
-                          onChange={(value) =>
-                            setAcceptButton({
-                              ...acceptButton,
-                              text_size: value,
-                            })
-                          }
-                          placeholder="e.g., 26"
-                          suffix="Px"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <TextField
-                            label="Text Color"
-                            value={acceptButton.text_color}
-                            onChange={(value) => {
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setAcceptButton({
-                                  ...acceptButton,
-                                  text_color: value,
-                                });
-                              }
-                            }}
-                          />
-                          <input
-                            type="color"
-                            value={acceptButton.text_color}
-                            onChange={(e) =>
-                              setAcceptButton({
-                                ...acceptButton,
-                                text_color: e.target.value,
-                              })
-                            }
-                            style={{
-                              width: 50,
-                              height: 30,
-                              border: "none",
-                              background: "transparent",
-                              marginTop: "22px",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            label="Background Color"
-                            value={acceptButton.background_color}
-                            onChange={(value) => {
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setAcceptButton({
-                                  ...acceptButton,
-                                  background_color: value,
-                                });
-                              }
-                            }}
-                          />
-                          <input
-                            type="color"
-                            value={acceptButton.background_color}
-                            onChange={(e) =>
-                              setAcceptButton({
-                                ...acceptButton,
-                                background_color: e.target.value,
-                              })
-                            }
-                            style={{
-                              width: 50,
-                              height: 30,
-                              border: "none",
-                              background: "transparent",
-                              marginTop: "22px",
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            label="Border Color"
-                            value={acceptButton.border_color}
-                            onChange={(value) => {
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setAcceptButton({
-                                  ...acceptButton,
-                                  border_color: value,
-                                });
-                              }
-                            }}
-                          />
-                          <input
-                            type="color"
-                            value={acceptButton.border_color}
-                            onChange={(e) =>
-                              setAcceptButton({
-                                ...acceptButton,
-                                border_color: e.target.value,
-                              })
-                            }
-                            style={{
-                              width: 50,
-                              height: 30,
-                              border: "none",
-                              background: "transparent",
-                              marginTop: "22px",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </Box>
-
-                  <hr className="mt-7 mx-0 border-gray-300 mb-5" />
-
-                  {/* Reject Button */}
-                  <Box padding="4">
-                    <Text variant="headingMd">Reject Button</Text>
-
-                    <div className="mb-4 mt-3">
-                      <TextField
-                        label="Text"
-                        value={rejectButtonText}
-                        onChange={(value) => {
-                          setRejectButton({
-                            ...rejectButton,
-                            text: value.replace("{{minimum_age}}", age),
-                          });
-                          setAcceptButtonText(value);
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
-                        <TextField
-                          label="Border Radius"
-                          value={rejectButton.border_radius}
-                          onChange={(value) =>
-                            setRejectButton({
-                              ...rejectButton,
-                              border_radius: value,
-                            })
-                          }
-                          placeholder="e.g., 26"
-                          suffix="Px"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <TextField
-                          label="Border Width"
-                          value={rejectButton.border_width}
-                          onChange={(value) =>
-                            setRejectButton({
-                              ...rejectButton,
-                              border_width: value,
-                            })
-                          }
-                          placeholder="e.g., 26"
-                          suffix="Px"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <Select
-                          label="Text Weight"
-                          options={weightOptions}
-                          value={rejectButton.text_weight}
-                          onChange={(value) =>
-                            setRejectButton({
-                              ...rejectButton,
-                              text_weight: value,
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
-                        <Select
-                          label="Font"
-                          options={fontOptions}
-                          value={rejectButton.fonts}
-                          onChange={(value) =>
-                            setRejectButton({ ...rejectButton, fonts: value })
-                          }
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <TextField
-                          label="Text Size"
-                          value={rejectButton.text_size}
-                          onChange={(value) =>
-                            setRejectButton({
-                              ...rejectButton,
-                              text_size: value,
-                            })
-                          }
-                          placeholder="e.g., 26"
-                          suffix="Px"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <TextField
-                            label="Text Color"
-                            value={rejectButton.text_color}
-                            onChange={(value) => {
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setRejectButton({
-                                  ...rejectButton,
-                                  text_color: value,
-                                });
-                              }
-                            }}
-                          />
-                          <input
-                            type="color"
-                            value={rejectButton.text_color}
-                            onChange={(e) =>
-                              setRejectButton({
-                                ...rejectButton,
-                                text_color: e.target.value,
-                              })
-                            }
-                            style={{
-                              width: 50,
-                              height: 30,
-                              border: "none",
-                              background: "transparent",
-                              marginTop: "22px",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            label="Background Color"
-                            value={rejectButton.background_color}
-                            onChange={(value) => {
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setRejectButton({
-                                  ...rejectButton,
-                                  background_color: value,
-                                });
-                              }
-                            }}
-                          />
-                          <input
-                            type="color"
-                            value={rejectButton.background_color}
-                            onChange={(e) =>
-                              setRejectButton({
-                                ...rejectButton,
-                                background_color: e.target.value,
-                              })
-                            }
-                            style={{
-                              width: 50,
-                              height: 30,
-                              border: "none",
-                              background: "transparent",
-                              marginTop: "22px",
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            label="Border Color"
-                            value={rejectButton.border_color}
-                            onChange={(value) => {
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setRejectButton({
-                                  ...rejectButton,
-                                  border_color: value,
-                                });
-                              }
-                            }}
-                          />
-                          <input
-                            type="color"
-                            value={rejectButton.border_color}
-                            onChange={(e) =>
-                              setRejectButton({
-                                ...rejectButton,
-                                border_color: e.target.value,
-                              })
-                            }
-                            style={{
-                              width: 50,
-                              height: 30,
-                              border: "none",
-                              background: "transparent",
-                              marginTop: "22px",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className=" mt-2">
-                      <TextField
-                        label="Redirect Url"
-                        type="number"
-                        value={rejectButton.redirect_url}
+                  {/* Part 2 - Font & Weight */}
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <Select
+                        label="Font"
+                        options={fontOptions}
+                        value={description.fonts}
                         onChange={(value) =>
-                          setRejectButton({
-                            ...rejectButton,
-                            redirect_url: value,
-                          })
+                          handleSectionChange("description", "fonts", value)
                         }
                       />
                     </div>
-                  </Box>
-                </Card>
-              </Box>
+                    <div className="flex-1">
+                      <Select
+                        label="Text Weight"
+                        options={weightOptions}
+                        value={description.text_weight}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "description",
+                            "text_weight",
+                            value,
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <TextField
+                        label="Text Size"
+                        value={description.text_size}
+                        onChange={(value) =>
+                          handleSectionChange("description", "text_size", value)
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+                  </div>
 
-              <Box paddingBlockStart="8">
-                <Text variant="headingMd" as="h3">
-                  Pop-up setting
-                </Text>
-
-                {/* Accept Button  */}
-                <Card>
-                  <Box padding="4">
-                    <Text variant="headingMd">Pop-up settings</Text>
-
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
+                  {/* Part 3 - Size & Color */}
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
                         <TextField
-                          label="Heights"
-                          value={popUp.height}
-                          onChange={(value) =>
-                            handleSectionChange("popUp", "height", value)
+                          label="Text Color"
+                          value={description.text_color}
+                          onChange={(value) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange(
+                                "description",
+                                "text_color",
+                                value,
+                              );
+                            }
+                          }}
+                        />
+                        <input
+                          type="color"
+                          value={description.text_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "description",
+                              "text_color",
+                              e.target.value,
+                            )
                           }
-                          placeholder="e.g., 26"
-                          suffix="Px"
+                          style={{
+                            width: 30,
+                            height: 30,
+                            border: "none",
+                            background: "transparent",
+                            marginTop: "22px",
+                          }}
                         />
                       </div>
+                    </div>
+                  </div>
+                </Box>
+              </Card>
+            </Box>
 
-                      <div className="flex-1">
+            {/* Button Settings */}
+            <Box paddingBlockStart="8">
+              <Text variant="headingMd" as="h3">
+                Button Settings
+              </Text>
+
+              {/* Accept Button  */}
+              <Card>
+                <Box padding="4">
+                  <Text variant="headingMd">Accept Button</Text>
+
+                  <div className="mb-4 mt-3">
+                    <TextField
+                      label="Text"
+                      value={acceptButtonText}
+                      onChange={(value) => {
+                        const text = value.replace(
+                          "{{minimum_age}}",
+                          customization.age,
+                        )
+                          handleSectionChange("acceptButton", "text", text);
+                        setAcceptButtonText(value);
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <TextField
+                        label="Border Radius"
+                        value={acceptButton.border_radius}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "acceptButton",
+                            "border_radius",
+                            value,
+                          )
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <TextField
+                        label="Border Width"
+                        value={acceptButton.border_width}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "acceptButton",
+                            "border_width",
+                            value,
+                          )
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <Select
+                        label="Text Weight"
+                        options={weightOptions}
+                        value={acceptButton.text_weight}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "acceptButton",
+                            "text_weight",
+                            value,
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <Select
+                        label="Font"
+                        options={fontOptions}
+                        value={acceptButton.fonts}
+                        onChange={(value) =>
+                          handleSectionChange("acceptButton", "fonts", value)
+                        }
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <TextField
+                        label="Text Size"
+                        value={acceptButton.text_size}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "acceptButton",
+                            "border_size",
+                            value,
+                          )
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center">
                         <TextField
-                          label="Width"
-                          value={popUp.width}
-                          onChange={(value) =>
-                            handleSectionChange("popUp", "width", value)
+                          label="Text Color"
+                          value={acceptButton.text_color}
+                          onChange={(value) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange(
+                                "acceptButton",
+                                "text_color",
+                                value,
+                              );
+                            }
+                          }}
+                        />
+                        <input
+                          type="color"
+                          value={acceptButton.text_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "acceptButton",
+                              "text_color",
+                              e.target.value,
+                            )
                           }
-                          placeholder="e.g., 26"
-                          suffix="Px"
+                          style={{
+                            width: 50,
+                            height: 30,
+                            border: "none",
+                            background: "transparent",
+                            marginTop: "22px",
+                          }}
                         />
                       </div>
+                    </div>
+                  </div>
 
-                      <div className="flex-1">
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1">
                         <TextField
-                          label="Border Radius"
-                          value={popUp.border_readius}
-                          onChange={(value) =>
-                            handleSectionChange("popUp", "border_readius", value)
+                          label="Background Color"
+                          value={acceptButton.background_color}
+                          onChange={(value) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange(
+                                "acceptButton",
+                                "background_color",
+                                value,
+                              );
+                            }
+                          }}
+                        />
+                        <input
+                          type="color"
+                          value={acceptButton.background_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "acceptButton",
+                              "background_color",
+                              e.target.value,
+                            )
                           }
-                          placeholder="e.g., 26"
-                          suffix="Px"
+                          style={{
+                            width: 50,
+                            height: 30,
+                            border: "none",
+                            background: "transparent",
+                            marginTop: "22px",
+                          }}
                         />
                       </div>
                     </div>
 
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1">
                         <TextField
-                          label="Border Widht"
-                          value={popUp.border_width}
-                          onChange={(value) =>
-                            handleSectionChange("popUp", "border_width", value)
-                          }
-                          placeholder="e.g., 26"
-                          suffix="Px"
+                          label="Border Color"
+                          value={acceptButton.border_color}
+                          onChange={(value) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange(
+                                "acceptButton",
+                                "border_color",
+                                value,
+                              );
+                            }
+                          }}
                         />
-                      </div>
-
-                      <div className="flex-1">
-                        <TextField
-                          label="Top And Bottom Padding"
-                          value={popUp.top_bottom_padding}
-                          onChange={(value) =>
-                            handleSectionChange("popUp", "top_bottom_padding", value)
+                        <input
+                          type="color"
+                          value={acceptButton.border_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "acceptButton",
+                              "border_color",
+                              e.target.value,
+                            )
                           }
-                          placeholder="e.g., 26"
-                          suffix="Px"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <TextField
-                          label="Left And Right Padding"
-                          value={popUp.left_right_padding}
-                          onChange={(value) =>
-                            handleSectionChange("popUp", "left_right_padding", value)
-                          }
-                          placeholder="e.g., 26"
-                          suffix="Px"
+                          style={{
+                            width: 50,
+                            height: 30,
+                            border: "none",
+                            background: "transparent",
+                            marginTop: "22px",
+                          }}
                         />
                       </div>
                     </div>
-                  </Box>
+                  </div>
+                </Box>
 
-                  <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+                <hr className="mt-7 mx-0 border-gray-300 mb-5" />
 
-                  <Box padding="4">
-                    <Text variant="headingMd">Popup Background</Text>
+                {/* Reject Button */}
+                <Box padding="4">
+                  <Text variant="headingMd">Reject Button</Text>
 
-                    <div className="flex gap-2 mt-2 items-start">
-                      {/* Background Color */}
-                      <div className="flex flex-col ">
-                        <div className="h-[40px]">
-                          <label className="text=[16px] text-[#313335] leading-tight block">
-                            Background Color
-                          </label>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            label=""
-                            value={popUpBackground.background_color}
-                            onChange={(value) =>{
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                handleSectionChange("popUpBackground", "background_color", value)
-                                }
+                  <div className="mb-4 mt-3">
+                    <TextField
+                      label="Text"
+                      value={rejectButtonText}
+                      onChange={(value) => {
+                        const text = value.replace(
+                          "{{minimum_age}}",
+                          customization.age,
+                        )
+                          handleSectionChange("rejectButton", "text", text);
+                        setRejectButtonText(value);
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <TextField
+                        label="Border Radius"
+                        value={rejectButton.border_radius}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "rejectButton",
+                            "border_radius",
+                            value,
+                          )
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <TextField
+                        label="Border Width"
+                        value={rejectButton.border_width}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "rejectButton",
+                            "border_widtht",
+                            value,
+                          )
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <Select
+                        label="Text Weight"
+                        options={weightOptions}
+                        value={rejectButton.text_weight}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "rejectButton",
+                            "text_weight",
+                            value,
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <Select
+                        label="Font"
+                        options={fontOptions}
+                        value={rejectButton.fonts}
+                        onChange={(value) =>
+                          handleSectionChange("rejectButton", "fonts", value)
+                        }
+                      ></Select>
+                    </div>
+
+                    <div className="flex-1">
+                      <TextField
+                        label="Text Size"
+                        value={rejectButton.text_size}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "rejectButton",
+                            "text_size",
+                            value,
+                          )
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center">
+                        <TextField
+                          label="Text Color"
+                          value={rejectButton.text_color}
+                          onChange={(value) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange(
+                                "rejectButton",
+                                "text_color",
+                                value,
+                              );
                             }
-                            }
-                          />
-                          <input
-                            type="color"
-                            value={popUpBackground.background_color}
-                            onChange={(e) =>
-                              handleSectionChange("popUpBackground", "background_color", e.target.value)
-                            }
-                            className="w-[36px] h-[36px] border border-gray-300 rounded"
-                          />
-                        </div>
+                          }}
+                        />
+                        <input
+                          type="color"
+                          value={rejectButton.text_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "rejectButton",
+                              "text_color",
+                              e.target.value,
+                            )
+                          }
+                          style={{
+                            width: 50,
+                            height: 30,
+                            border: "none",
+                            background: "transparent",
+                            marginTop: "22px",
+                          }}
+                        />
                       </div>
+                    </div>
+                  </div>
 
-                      {/* Border Color */}
-                      <div className="flex flex-col">
-                        <div className="h-[40px]">
-                          <label className=" text-gray-700 leading-tight block">
-                            Border Color
-                          </label>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            label=""
-                            value={popUpBackground.border_color}
-                            onChange={(value) => {
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                handleSectionChange("popUpBackground", "border_color", value)
-                              }
-                            }}
-                          />
-                          <input
-                            type="color"
-                            value={popUpBackground.border_color}
-                            onChange={(e) =>
-                              handleSectionChange("popUpBackground", "border_color", e.target.value)
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1">
+                        <TextField
+                          label="Background Color"
+                          value={rejectButton.background_color}
+                          onChange={(value) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange(
+                                "rejectButton",
+                                "background_color",
+                                value,
+                              );
                             }
-                            className="w-[36px] h-[36px] border border-gray-300 rounded"
-                          />
-                        </div>
+                          }}
+                        />
+                        <input
+                          type="color"
+                          value={rejectButton.background_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "rejectButton",
+                              "background_color",
+                              e.target.value,
+                            )
+                          }
+                          style={{
+                            width: 50,
+                            height: 30,
+                            border: "none",
+                            background: "transparent",
+                            marginTop: "22px",
+                          }}
+                        />
                       </div>
+                    </div>
 
-                      {/* Background Layer Opacity */}
-                      <div className="flex flex-col ">
-                        <div className="h-[40px]">
-                          <label className="text-[#202223] leading-tight block">
-                            Background Layer Opacity
-                          </label>
-                        </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1">
+                        <TextField
+                          label="Border Color"
+                          value={rejectButton.border_color}
+                          onChange={(value) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange(
+                                "rejectButton",
+                                "border_color",
+                                value,
+                              );
+                            }
+                          }}
+                        />
+                        <input
+                          type="color"
+                          value={rejectButton.border_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "rejectButton",
+                              "border_color",
+                              e.target.value,
+                            )
+                          }
+                          style={{
+                            width: 50,
+                            height: 30,
+                            border: "none",
+                            background: "transparent",
+                            marginTop: "22px",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className=" mt-2">
+                    <TextField
+                      label="Redirect Url"
+                      value={rejectButton.redirect_url}
+                      onChange={(value) =>
+                        handleSectionChange(
+                          "rejectButton",
+                          "redirect_url",
+                          value,
+                        )
+                      }
+                    />
+                  </div>
+                </Box>
+              </Card>
+            </Box>
+
+            {/* Pop-up setting */}
+            <Box paddingBlockStart="8">
+              <Text variant="headingMd" as="h3">
+                Pop-up setting
+              </Text>
+
+              {/* Accept Button  */}
+              <Card>
+                <Box padding="4">
+                  <Text variant="headingMd">Pop-up settings</Text>
+
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <TextField
+                        label="Heights"
+                        value={popUp.height}
+                        onChange={(value) =>
+                          handleSectionChange("popUp", "height", value)
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <TextField
+                        label="Width"
+                        value={popUp.width}
+                        onChange={(value) =>
+                          handleSectionChange("popUp", "width", value)
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <TextField
+                        label="Border Radius"
+                        value={popUp.border_readius}
+                        onChange={(value) =>
+                          handleSectionChange("popUp", "border_readius", value)
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <TextField
+                        label="Border Width"
+                        value={popUp.border_width}
+                        onChange={(value) =>
+                          handleSectionChange("popUp", "border_width", value)
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <TextField
+                        label="Top And Bottom Padding"
+                        value={popUp.top_bottom_padding}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "popUp",
+                            "top_bottom_padding",
+                            value,
+                          )
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <TextField
+                        label="Left And Right Padding"
+                        value={popUp.left_right_padding}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "popUp",
+                            "left_right_padding",
+                            value,
+                          )
+                        }
+                        placeholder="e.g., 26"
+                        suffix="Px"
+                      />
+                    </div>
+                  </div>
+                </Box>
+
+                <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+
+                <Box padding="4">
+                  <Text variant="headingMd">Popup Background</Text>
+
+                  <div className="flex gap-2 mt-2 items-start">
+                    {/* Background Color */}
+                    <div className="flex flex-col ">
+                      <div className="h-[40px]">
+                        <label className="text=[16px] text-[#313335] leading-tight block">
+                          Background Color
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-1">
                         <TextField
                           label=""
-                          value={popUpBackground.background_opacity}
-                            onChange={(value) =>
-                              handleSectionChange("popUpBackground", "background_opacity", value)
+                          value={popUpBackground.background_color}
+                          onChange={(value) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange(
+                                "popUpBackground",
+                                "background_color",
+                                value,
+                              );
                             }
-                          suffix="Px"
+                          }}
+                        />
+                        <input
+                          type="color"
+                          value={popUpBackground.background_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "popUpBackground",
+                              "background_color",
+                              e.target.value,
+                            )
+                          }
+                          className="w-[36px] h-[36px] border border-gray-300 rounded"
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <div className="w-[200px] mt-3">
-                        <Checkbox
-                          label="Pop-up show every time"
-                          checked={checked}
-                          onChange={handleChange}
+                    {/* Border Color */}
+                    <div className="flex flex-col">
+                      <div className="h-[40px]">
+                        <label className=" text-gray-700 leading-tight block">
+                          Border Color
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <TextField
+                          label=""
+                          value={popUpBackground.border_color}
+                          onChange={(value) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange(
+                                "popUpBackground",
+                                "border_color",
+                                value,
+                              );
+                            }
+                          }}
+                        />
+                        <input
+                          type="color"
+                          value={popUpBackground.border_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "popUpBackground",
+                              "border_color",
+                              e.target.value,
+                            )
+                          }
+                          className="w-[36px] h-[36px] border border-gray-300 rounded"
                         />
                       </div>
-                      <Box maxWidth="400px" marginX="auto">
+                    </div>
+
+                    {/* Background Layer Opacity */}
+                    <div className="flex flex-col ">
+                      <div className="h-[40px]">
+                        <label className="text-[#202223] leading-tight block">
+                          Background Layer Opacity
+                        </label>
+                      </div>
+                      <TextField
+                        label=""
+                        value={popUpBackground.background_opacity}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "popUpBackground",
+                            "background_opacity",
+                            value,
+                          )
+                        }
+                        suffix="Px"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="w-[200px] mt-3">
+                      <Checkbox
+                        label="Enable Background Image"
+                        checked={popUpBackground.image_enabale}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "popUpBackground",
+                            "image_enabale",
+                            !popUpBackground.image_enabale,
+                          )
+                        }
+                      />
+                    </div>
+                    {popUpBackground.image_enabale && (
+                      <Box marginx="auto">
                         <DropZone
                           accept="image/*"
-                          onDrop={handleDropZoneDrop}
+                          onDrop={(acceptedFiles) =>
+                            handleDropZoneDrop(
+                              acceptedFiles,
+                              "popUpBackground",
+                              "image",
+                            )
+                          }
                           allowMultiple={false}
                         >
                           <div className="relative p-[10px] flex justify-center items-center h-[100px]">
-                            {image ? (
+                            {popUpBackground.image ? (
                               <>
                                 <Thumbnail
-                                  source={image}
+                                  source={popUpBackground.image}
                                   alt="Uploaded image preview"
                                   size="large"
                                 />
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setImage(null);
-                                    setImageFile(null); // if you're also managing raw file
+                                    setPopUpBackground((prev) => ({
+                                      ...prev,
+                                      image: null,
+                                      imageFile: null,
+                                    }));
                                   }}
                                   className="absolute top-0 right-0 bg-white hover:bg-red-100 text-red-600 rounded-full p-1 shadow"
                                   title="Remove image"
@@ -1192,112 +1524,199 @@ export default function Setting() {
                           </div>
                         </DropZone>
                       </Box>
-                    </div>
-                  </Box>
-
-                  <hr className="mt-5 mx-0 border-gray-300 mb-5" />
-
-                  <Box padding="4">
-                    <Text variant="headingMd">Outer Pop-up Background</Text>
-
-                    <div className="flex gap-3 mb-4 mt-2">
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium mb-1">
-                          Outer Layer Color
-                        </label>
-                        <div className="flex items-center border border-gray-][] rounded-lg overflow-hidden w-fit">
-                          <input
-                            type="text"
-                            value={rejectButton.background_color}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                                setRejectButton({
-                                  ...rejectButton,
-                                  background_color: value,
-                                });
-                              }
-                            }}
-                            className="px-2 py-1 outline-none text-sm w-[90px]"
-                          />
-                          <input
-                            type="color"
-                            value={rejectButton.background_color}
-                            onChange={(e) =>
-                              setRejectButton({
-                                ...rejectButton,
-                                background_color: e.target.value,
-                              })
-                            }
-                            className="w-8 h-8 border-none p-0 cursor-pointer mr-1 rounded-lg"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex-1">
-                          <TextField
-                            label="Background Layer Opacity"
-                            value={acceptButton.border_width}
-                            onChange={(value) =>
-                              setAcceptButton({
-                                ...acceptButton,
-                                border_width: value,
-                              })
-                            }
-                            placeholder="e.g., 26"
-                            suffix="Px"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex-1"></div>
-                    </div>
-                  </Box>
-                </Card>
-              </Box>
-
-              <Box paddingBlockStart="8">
-                <Text variant="headingMd" as="h3">
-                  Pop-up Logo Settings
-                </Text>
-                <Card>
-                  <div className="flex mb-4 gap-7">
-                    <Checkbox
-                      label="Show Logo"
-                      checked={popUpLogo.show_logo}
-                      onChange={(value) =>
-                        handleSectionChange("popUpLogo", "show_logo", !popUpLogo.show_logo)
-                      }
-                    />
-                    <Checkbox
-                      label="Logo Square"
-                      checked={popUpLogo.logo_square}
-                      onChange={(value) =>
-                        handleSectionChange("popUpLogo", "logo_square", !popUpLogo.logo_square)
-                      }
-                    />
+                    )}
                   </div>
-                  {popUpLogo.show_logo && (
-                    <Box maxWidth="400px" marginX="auto">
+                </Box>
+
+                <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+
+                <Box padding="4">
+                  <Text variant="headingMd">Outer Pop-up Background</Text>
+
+                  <div className="flex gap-3 mb-4 mt-2">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium mb-1">
+                        Outer Layer Color
+                      </label>
+                      <div className="flex items-center border border-gray-][] rounded-lg overflow-hidden w-fit">
+                        <input
+                          type="text"
+                          value={outerPopUpBackground.background_color}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
+                              handleSectionChange(
+                                "outerPopUpBackground",
+                                "background_color",
+                                e.target.value,
+                              );
+                            }
+                          }}
+                          className="px-2 py-1 outline-none text-sm w-[90px]"
+                        />
+                        <input
+                          type="color"
+                          value={outerPopUpBackground.background_color}
+                          onChange={(e) =>
+                            handleSectionChange(
+                              "outerPopUpBackground",
+                              "background_color",
+                              e.target.value,
+                            )
+                          }
+                          className="w-8 h-8 border-none p-0 cursor-pointer mr-1 rounded-lg"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex-1">
+                        <TextField
+                          label="Background Layer Opacity"
+                          value={outerPopUpBackground.outer_opacity}
+                          onChange={(value) =>
+                            handleSectionChange(
+                              "outerPopUpBackground",
+                              "outer_opacity",
+                              value,
+                            )
+                          }
+                          placeholder="e.g., 26"
+                          suffix="Px"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex-1"></div>
+                  </div>
+
+                  <div>
+                    <div className="mt-3">
+                      <Checkbox
+                        label="Enable Outer Background Image"
+                        checked={outerPopUpBackground.image_enabale}
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "outerPopUpBackground",
+                            "image_enabale",
+                            !outerPopUpBackground.image_enabale,
+                          )
+                        }
+                      />
+                    </div>
+                    {outerPopUpBackground.image_enabale && (
+                      <Box marginx="auto">
+                        <DropZone
+                          accept="image/*"
+                          onDrop={(acceptedFiles) =>
+                            handleDropZoneDrop(
+                              acceptedFiles,
+                              "outerPopUpBackground",
+                              "image",
+                            )
+                          }
+                          allowMultiple={false}
+                        >
+                          <div className="relative p-[10px] flex justify-center items-center h-[100px]">
+                            {outerPopUpBackground.image ? (
+                              <>
+                                <Thumbnail
+                                  source={outerPopUpBackground.image}
+                                  alt="Uploaded image preview"
+                                  size="large"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOuterPopUpBackground((prev) => ({
+                                      ...prev,
+                                      image: null,
+                                      imageFile: null,
+                                    }));
+                                  }}
+                                  className="absolute top-0 right-0 bg-white hover:bg-red-100 text-red-600 rounded-full p-1 shadow"
+                                  title="Remove image"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </>
+                            ) : (
+                              <Text variant="bodyMd" color="subdued">
+                                Upload an image
+                              </Text>
+                            )}
+                          </div>
+                        </DropZone>
+                      </Box>
+                    )}
+                  </div>
+                </Box>
+              </Card>
+            </Box>
+
+            {/* Pop-up Logo Settings */}
+            <Box paddingBlockStart="8">
+              <Text variant="headingMd" as="h3">
+                Pop-up Logo Settings
+              </Text>
+              <Card>
+                <div className="flex mb-4 gap-7">
+                  <Checkbox
+                    label="Show Logo"
+                    checked={popUpLogo.show_logo}
+                    onChange={(value) =>
+                      handleSectionChange(
+                        "popUpLogo",
+                        "show_logo",
+                        !popUpLogo.show_logo,
+                      )
+                    }
+                  />
+                  <Checkbox
+                    label="Logo Square"
+                    checked={popUpLogo.logo_square}
+                    onChange={(value) =>
+                      handleSectionChange(
+                        "popUpLogo",
+                        "logo_square",
+                        !popUpLogo.logo_square,
+                      )
+                    }
+                  />
+                </div>
+                {popUpLogo.show_logo && (
+                  <Box marginx="auto">
                     <DropZone
                       accept="image/*"
-                      onDrop={handleDropZoneDrop}
+                      onDrop={(acceptedFiles) =>
+                        handleDropZoneDrop(acceptedFiles, "popUpLogo", "image")
+                      }
                       allowMultiple={false}
                     >
                       <div className="relative p-[10px] flex justify-center items-center h-[100px]">
-                        {image ? (
+                        {popUpLogo.image ? (
                           <>
-                            <Thumbnail
-                              source={image}
-                              alt="Uploaded image preview"
-                              size="large"
-                            />
+                            <div
+                              className={
+                                popUpLogo.logo_square
+                                  ? "rounded-none overflow-hidden"
+                                  : "rounded-full overflow-hidden"
+                              }
+                            >
+                              <Thumbnail
+                                source={popUpLogo.image}
+                                alt="Uploaded image preview"
+                                size="large"
+                              />
+                            </div>
                             <button
                               type="button"
                               onClick={() => {
-                                setImage(null);
-                                setImageFile(null); // if you're also managing raw file
+                                setPopUpLogo((prev) => ({
+                                  ...prev,
+                                  image: null,
+                                  imageFile: null,
+                                }));
                               }}
                               className="absolute top-0 right-0 bg-white hover:bg-red-100 text-red-600 rounded-full p-1 shadow"
                               title="Remove image"
@@ -1313,56 +1732,175 @@ export default function Setting() {
                       </div>
                     </DropZone>
                   </Box>
-                  )}
-                  
-                </Card>
-              </Box>
+                )}
+              </Card>
+            </Box>
 
-              <Box paddingBlockStart="8">
-                <Text variant="headingMd" as="h3">
-                  Display Criteria
-                </Text>
-                <Card>
-                  <div className="flex gap-6">
-                    <RadioButton
-                      label="All Pages"
-                      checked={displayCriteria.page === "all-pages"}
-                      id="all-pages"
-                      name="contact"
-                      onChange={() =>
-                        handleSectionChange("displayCriteria", "page", "all-pages")
-                      }
-                    />
-                    <RadioButton
-                      label="Specific Pages"
-                      checked={displayCriteria.page === "specific-pages"}
-                      id="specific-pages"
-                      name="contact"
-                      onChange={() => handleSectionChange("displayCriteria", "page", "specific-pages")}
-                    />
-                  </div>
-                </Card>
-              </Box>
-
-              <Box paddingBlockStart="8" marginY="auto">
-                <Text variant="headingMd" as="h3">
-                  Privacy Policy Setting
-                </Text>
-                <Card>
-                  <Checkbox
-                    label="Privacy Policy"
-                    checked={policy.checked}
-                    onChange={() =>  handleSectionChange("policy", "checked", !policy.checked)}
+            {/* Display Criteria */}
+            <Box paddingBlockStart="8">
+              <Text variant="headingMd" as="h3">
+                Display Criteria
+              </Text>
+              <Card>
+                <div className="flex gap-8">
+                  <RadioButton
+                    label="All Pages"
+                    checked={displayCriteria.page === "all-pages"}
+                    id="all-pages"
+                    name="page"
+                    onChange={() =>
+                      handleSectionChange(
+                        "displayCriteria",
+                        "page",
+                        "all-pages",
+                      )
+                    }
                   />
-                  {policy.checked && (
-                    <Box maxWidth="400px" marginX="auto">
+                  <RadioButton
+                    label="Specific Pages"
+                    checked={displayCriteria.page === "specific-pages"}
+                    id="specific-pages"
+                    name="page"
+                    onChange={() =>
+                      handleSectionChange(
+                        "displayCriteria",
+                        "page",
+                        "specific-pages",
+                      )
+                    }
+                  />
+
+                  {displayCriteria.page === "specific-pages" && (
+                    <Button
+                      variant="primary"
+                      onClick={() =>
+                        // console.log("coint : ", displayCriteria + 1),
+                        
+                        handleSectionChange(
+                          "displayCriteria",
+                          "count",
+                          displayCriteria.count + 1,
+                        )
+                      }
+                    >
+                      Add URL
+                    </Button>
+                  )}
+                </div>
+
+                {displayCriteria.page === "specific-pages" && (
+                  <div className="mt-2">
+                    <Text variant="bodyMd" as="p">
+                      Enter URL
+                    </Text>
+                    <div className="mt-2 w-9/10">
+                      <TextField
+                        label=""
+                        value={displayCriteria.url?.[0] || ""}
+                        onChange={(value) => {
+                          const newUrls = [...displayCriteria.url];
+                          newUrls[0] = value;
+                          handleSectionChange(
+                            "displayCriteria",
+                            "url",
+                            newUrls,
+                          );
+                        }}
+                        autoComplete="off"
+                      />
+                      {!displayCriteria.url?.[0] && (
+                        <div className="flex items-center gap-2 text-red-600 mt-1 w-full">
+                          <AlertCircle size={18} />
+                          <span className="truncate">
+                            Please add a valid URL for the specific page.
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {Array.from({ length: displayCriteria.count }).map(
+                      (_, index) => (
+                        <div className="mt-2 w-9/10">
+                          <div className="flex items-center gap-2 w-full">
+                            <div className="flex-grow">
+                              <TextField
+                                label=""
+                                value={displayCriteria.url[index + 1] || ""}
+                                onChange={(value) => {
+                                  const newUrls = [...displayCriteria.url];
+                                  newUrls[index + 1] = value;
+                                  handleSectionChange(
+                                    "displayCriteria",
+                                    "url",
+                                    newUrls,
+                                  );
+                                }}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <Trash2
+                              size={16}
+                              className="cursor-pointer text-red-600 hover:text-red-700"
+                              onClick={() => {
+                                console.log("index : ", index + 1);
+
+                                const newUrls = displayCriteria.url.filter(
+                                  (_, i) => i !== index + 1,
+                                );
+                                console.log("newUrls : ", newUrls);
+                                handleSectionChange(
+                                  "displayCriteria",
+                                  "count",
+                                  displayCriteria.count - 1,
+                                );
+                                handleSectionChange(
+                                  "displayCriteria",
+                                  "url",
+                                  newUrls,
+                                );
+                              }}
+                            />
+                          </div>
+                          {!displayCriteria.url[index + 1] && (
+                            <div className="flex items-center gap-2 text-red-600 mt-1 w-full">
+                              <AlertCircle size={18} />
+                              <span className="truncate">
+                                Please add a valid URL for the specific page.
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ),
+                    )}
+                  </div>
+                )}
+              </Card>
+            </Box>
+
+            {/* Privacy Policy Setting */}
+            <Box paddingBlockStart="8" marginy="auto">
+              <Text variant="headingMd" as="h3">
+                Privacy Policy Setting
+              </Text>
+              <Card>
+                <Checkbox
+                  label="Privacy Policy"
+                  checked={policy.checked}
+                  onChange={() =>
+                    handleSectionChange("policy", "checked", !policy.checked)
+                  }
+                />
+                {policy.checked && (
+                  <Box maxWidth="400px" marginx="auto">
                     <div className="flex h-[200px] mt-4">
                       {/* Only render ReactQuill if loaded on client */}
-                      {isClient && ReactQuill ? (
+                      {ReactQuill ? (
                         <ReactQuill
                           theme="snow"
                           checked={policy.text}
-                          onChange={(value) =>  handleSectionChange("policy", "text", value)}
+                          onChange={(value) =>
+                            handleSectionChange("policy", "text", value)
+                          }
                           style={{ height: "150px", width: "100%" }}
                         />
                       ) : (
@@ -1370,74 +1908,123 @@ export default function Setting() {
                       )}
                     </div>
                   </Box>
-                  )}
-                  
-                </Card>
-              </Box>
+                )}
+              </Card>
+            </Box>
 
-              <Box paddingBlockStart="8">
-                <Text variant="headingMd" as="h3">
-                  Monthly Analysis
-                </Text>
-                <Card>
-                  <div className="flex gap-7">
-                    <Checkbox
-                      label="I don't want to receive monthly analysis emails"
-                      checked={monthlyAnalysis}
-                      onChange={() => handleSectionChange("monthlyAnalysis", null, !monthlyAnalysis)}
-                    />
-                  </div>
-                </Card>
-              </Box>
+            {/* Monthly Analysis */}
+            <Box paddingBlockStart="8">
+              <Text variant="headingMd" as="h3">
+                Monthly Analysis
+              </Text>
+              <Card>
+                <div className="flex gap-7">
+                  <Checkbox
+                    label="I don't want to receive monthly analysis emails"
+                    checked={monthlyAnalysis}
+                    onChange={() =>
+                      handleSectionChange(
+                        "monthlyAnalysis",
+                        null,
+                        !monthlyAnalysis,
+                      )
+                    }
+                  />
+                </div>
+              </Card>
+            </Box>
 
-              <Box paddingBlockStart="8">
-                <Text variant="headingMd" as="h3">
-                  Advanced Settings [Developers only]
-                </Text>
+            {/* Advanced Settings [Developers only] */}
+            <Box paddingBlockStart="8">
+              <Text variant="headingMd" as="h3">
+                Advanced Settings [Developers only]
+              </Text>
 
-                {/* Accept Button  */}
-                <Card>
-                  <Box padding="4">
-                    <TextField
-                      label="Custom css (Use this option to do a custom css where Age Verification doing anything)"
-                      value={advanced.css}
-                      onChange={(value) => handleSectionChange("advanced", "css", value)}
-                      multiline={4}
-                      autoComplete="off"
-                    />
-                  </Box>
+              {/* Accept Button  */}
+              <Card>
+                <Box padding="4">
+                  <TextField
+                    label="Custom css (Use this option to do a custom css where Age Verification doing anything)"
+                    value={advanced.css}
+                    onChange={(value) =>
+                      handleSectionChange("advanced", "css", value)
+                    }
+                    multiline={4}
+                    autoComplete="off"
+                  />
+                </Box>
 
-                  <hr className="mt-5 mx-0 border-gray-300 mb-5" />
+                <hr className="mt-5 mx-0 border-gray-300 mb-5" />
 
-                  <Box padding="4">
-                    <TextField
-                      label="Custom script (Use this option to do a custom script where Age Verification doing anything)"
-                      value={advanced.script}
-                      onChange={(value) => handleSectionChange("advanced", "script", value)}
-                      multiline={4}
-                      autoComplete="off"
-                    />
-                  </Box>
-                </Card>
-              </Box>
+                <Box padding="4">
+                  <TextField
+                    label="Custom script (Use this option to do a custom script where Age Verification doing anything)"
+                    value={advanced.script}
+                    onChange={(value) =>
+                      handleSectionChange("advanced", "script", value)
+                    }
+                    multiline={4}
+                    autoComplete="off"
+                  />
+                </Box>
+              </Card>
+            </Box>
+          </div>
+
+          {/* Right Section */}
+          <div
+            className="flex flex-col w-full mb-5 lg:mt-0 lg:mb-0 lg:w-[64%] lg:h-screen lg:fixed lg:right-0 lg:top-0 lg:p-1 overflow-y-auto scrollbar-hide"
+            // style={{ overflowY: "auto" }}
+          >
+            <ui-save-bar id="my-save-bar">
+              <button variant="primary" id="save-button">
+                Save
+              </button>
+              <button id="discard-button">Discard</button>
+            </ui-save-bar>
+
+            <div className="mt-5 mb-10 right-4 flex justify-end space-x-4">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  console.log("Saving...");
+                  addSetting();
+                  document.getElementById("save-button").click();
+                }}
+              >
+                Save
+              </Button>
+              <Button
+              variant="primary"
+              onClick={() => {
+                console.log("Discarding...");
+                removeSetting();
+                document.getElementById("discard-button").click();
+              }}
+            >
+              Discard
+            </Button>
             </div>
-
-            {/* Right Section */}
-            <div className="flex flex-col w-full mt-[55px] mb-5 lg:mt-0 lg:mb-0 lg:w-[64%] lg:h-screen lg:fixed lg:right-0 lg:top-0 lg:p-4">
-              <VerificationCard
-                age={age}
-                image={image}
-                title={title}
-                description={description}
-                acceptButton={acceptButton}
-                rejectButton={rejectButton}
-                hasChanges={hasChanges}
-                setHasChanges={setHasChanges}
-                addSetting={addSetting}
-              />
+            <div className="px-4 pb-8">
+            <VerificationCard
+              image={image}
+              customization={customization}
+              title={title}
+              description={description}
+              acceptButton={acceptButton}
+              rejectButton={rejectButton}
+              popUp={popUp}
+              popUpBackground={popUpBackground}
+              outerPopUpBackground={outerPopUpBackground}
+              popUpLogo={popUpLogo}
+              policy={policy}
+              advanced={advanced}
+              ref={verificationRef}
+            />
             </div>
           </div>
-       
-    </Page>
+        </div>
+      </Page>
+    </AppProvider>
   );
 }

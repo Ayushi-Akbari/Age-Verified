@@ -1,10 +1,10 @@
 import { json } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
-import { AppProvider } from "@shopify/shopify-app-remix/react";
 import "@shopify/polaris/build/esm/styles.css";
 import { authenticate } from "../shopify.server";
 import { StrictMode } from "react";
+import NavMenu from "../component/navMenu"
 
 
 export const loader = async ({ request }) => {
@@ -14,24 +14,12 @@ export const loader = async ({ request }) => {
 };
 
 export default function App() {
-  const { apiKey } = useLoaderData();
+  // const { apiKey } = useLoaderData();
 
   return (
     <StrictMode>
-    <AppProvider isEmbeddedApp apiKey={apiKey}>
-      <ui-nav-menu>
-        <Link to="/app" rel="home">
-          Home
-        </Link>
-        <Link to="/app/analytics">Analytics </Link>
-        <Link to="/app/plans">Plans </Link>
-        <Link to="/app/setting">Setting</Link>
-      </ui-nav-menu>
-      <Outlet />
-    </AppProvider>
+    <NavMenu />
      </StrictMode>
-
-     
   );
 }
 

@@ -1,15 +1,21 @@
-// app/components/NavMenu.jsx
-import { Link } from "@remix-run/react";
+import { Outlet } from "@remix-run/react";
+import { StrictMode } from "react";
 
-export default function NavMenu() {
+export default function AppLayout() {
   return (
-    <nav style={{ marginBottom: "1rem" }}>
-      <ul style={{ listStyle: "none", display: "flex", gap: "1rem" }}>
-        <li><Link to="/app/index" rel="home">Home</Link></li>
-        <li><Link to="/app/analytics">Analytics</Link></li>
-        <li><Link to="/app/plans">Plans</Link></li>
-        <li><Link to="/app/setting">Setting</Link></li>
-      </ul>
-    </nav>
+    <>
+      <ui-nav-menu>
+        <a href="/app" rel="home">Home</a>
+        <a href="/app/analytics">Analytics</a>
+        <a href="/app/plans">Plans</a>
+        <a href="/app/setting">Settings</a>
+        <a href="/app/webhook">Webhook</a>
+      </ui-nav-menu>
+
+      {/* THIS IS IMPORTANT */}
+      <main>
+        <Outlet />
+      </main>
+    </>
   );
 }

@@ -12,16 +12,7 @@ export const action = async ({ request }) => {
   const id_token = formData.get("id_token");
   const shop = formData.get("shop");
 
-  console.log("id_token : ", id_token);
-
-  console.log("shop : ", shop);
-
-  const url = `https://${shop}/admin/oauth/access_token`;+
-
-  console.log("process.env.SHOPIFY_API_KEY : ", process.env.SHOPIFY_API_KEY);
-  console.log("process.env.SHOPIFY_API_SECRET : " , process.env.SHOPIFY_API_SECRET);
-  
-  const data = {
+  const credential = {
     client_id: process.env.SHOPIFY_API_KEY,
     client_secret: process.env.SHOPIFY_API_SECRET,
     grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
@@ -31,11 +22,16 @@ export const action = async ({ request }) => {
       "urn:shopify:params:oauth:token-type:offline-access-token",
   };
 
-  console.log("data : ", data);
+  if(!shop || !credential){
+    throw new Error("Store name is missing or null!");
+  }
+  const url = `https://${shop}/admin/oauth/access_token`;
+  if (!url) {
+    throw new Error("URL is missing or null!");
+  }
   
-
-  const response = await axios.post(url, data);
-  console.log("response : ", response);
+  const response = await axios.post(url, credential);
+  // console.log("response : ", response);
 
   if (response.status !== 200) {
     return {msg: response.error , status : 404};
@@ -45,38 +41,44 @@ export const action = async ({ request }) => {
 
   const query = `
   query ShopName {
-    shop {
+  shop {
       billingAddress {
-        countryCodeV2
-        phone
+          countryCodeV2
+          phone
       }
       email
       id
       name
       plan {
-        displayName
-        partnerDevelopment
-        shopifyPlus
+      displayName
+      partnerDevelopment
+      shopifyPlus
       }
+      shopOwnerName
       currencyCode
       currencyFormats {
-        moneyFormat
+      moneyFormat
       }
       timezoneAbbreviation
       ianaTimezone
       primaryDomain {
-        host
+      host
       }
-    }
-    shopLocales(published: true) {
+  }
+  themes(first: 10, roles: MAIN) {
+      nodes {
+      id
+      }
+  }
+  shopLocales(published: true) {
       primary
       locale
-    }
   }
+}
 `;
-  // Now query Shopify GraphQL API
+
   const shopResponse = await fetch(
-    `https://${shop}/admin/api/2023-10/graphql.json`,
+    `https://${shop}/admin/api/2025-04/graphql.json`,
     {
       method: "POST",
       headers: {
@@ -92,38 +94,44 @@ export const action = async ({ request }) => {
   if (shopResponse.status !== 200) {
     return {msg: shopResponse.error , status : 404};
   }
-  console.log("shopifyResponse 1 : " , shopResponse);
 
   const json = await shopResponse.json();
-  console.log("json : " , json);
-
-  const themeResponse = await fetch(`https://${shop}/admin/api/2023-10/themes.json`, {
-    method: "GET",
-    headers: {
-      "X-Shopify-Access-Token": access_token,
-      "Content-Type": "application/json"
-    }
-  });
-
-  if (themeResponse.status !== 200) {
-    return {msg: themeResponse.error , status : 404};
+  
+  const userData = json.data
+ 
+  const data = {
+    email: userData.shop.email,
+    token_id: id_token,
+    shop_id: userData.shop.id,
+    shop_name: userData.shop.name,
+    country_code: userData.shop.billingAddress.countryCodeV2,
+    phone: userData.shop.billingAddress.phone,
+    plan_displayName: userData.shop.plan.displayName,
+    plan_partnerDevelopment: userData.shop.plan.partnerDevelopment,
+    plan_shopifyPlus: userData.shop.plan.shopifyPlus,
+    currency_code: userData.shop.currencyCode,
+    currency_format: userData.shop.currencyFormats.moneyFormat,
+    timezoneAbbreviation: userData.shop.timezoneAbbreviation,
+    ianaTimezone: userData.shop.ianaTimezone,
+    host: userData.shop.primaryDomain.host,
+    shopLocales_primary: userData.shopLocales[0].primary,
+    shopLocales_locale: userData.shopLocales[0].locale,
+    theme_id: userData.themes.nodes[0].id,
   }
-  const themeData = await themeResponse.json();
-  const mainTheme = themeData.themes.find(theme => theme.role === "main");
-  console.log("Themes:", themeData.themes);
 
-const fetcherdata = {
-    status: 200,
-    data : json.data,
-    theme : mainTheme
-}
-  return fetcherdata;
+    const res = await axios.post("http://localhost:8001/user/add-shop", data)
+
+    if(res.status !== 200){
+      return {msg: shopResponse.error , status : 404};
+    }
+  return res.data
 };
 
 export default function Index() {
   const shopify = useAppBridge();
   const fetcher = useFetcher();
   const [retrieved, setRetrieved] = useState(false);
+  
   const [idToken, setIdToken] = useState(null)
   const [userData, setUserData] = useState(null)
 
@@ -136,12 +144,12 @@ export default function Index() {
 
         const url = new URL(window.location.href);
         const shop = url.searchParams.get("shop");
-        console.log("shop:", shop);
+        // console.log("shop:", shop);
 
-        fetcher.submit(
-          { id_token: idToken, shop },
-          { method: "post", action: "/app?index" }
-        );
+        // fetcher.submit(
+        //   { id_token: idToken, shop },
+        //   { method: "post", action: "/app?index" }
+        // );
       }
 
       fetchIdTokenAndSubmit();
@@ -150,12 +158,8 @@ export default function Index() {
     // Check when data comes back
     if (fetcher.data && !retrieved) { 
       async function fetchUserData() {
-        const userData = fetcher.data.data
-      const theme = fetcher.data.theme
-
-      console.log("theme : " , theme);
-      
-
+        const userData = fetcher.data
+    
       const data = {
         email: userData.shop.email,
         token_id: idToken,
@@ -171,16 +175,16 @@ export default function Index() {
         timezoneAbbreviation: userData.shop.timezoneAbbreviation,
         ianaTimezone: userData.shop.ianaTimezone,
         host: userData.shop.primaryDomain.host,
-        shopLocales_primary: userData.shopLocales.primary,
-        shopLocales_locale: userData.shopLocales.locale,
-        theme_id: theme.admin_graphql_api_id,
+        shopLocales_primary: userData.shopLocales[0].primary,
+        shopLocales_locale: userData.shopLocales[0].locale,
+        theme_id: userData.themes.nodes[0].id,
       }
 
-      console.log("data : " , data);
+      // console.log("data : " , data);
 
-      // const response = await axios.post("http://localhost:8001/user/add-setting", data)
+      const response = await axios.post("http://localhost:8001/user/add-shop", data)
 
-      console.log("response : " , response);
+      // console.log("response : " , response);
 
       setUserData(response.data.userData)
       
@@ -188,15 +192,20 @@ export default function Index() {
       } 
       fetchUserData()
 
-      console.log("userData : " , userData);
+     
       
     }
   }, [fetcher, retrieved, shopify, userData]);
 
   return (
+    <>
+    {/* <NavMenu /> */}
     <Page>
+      
       Hello
     </Page>
-  );
+  
+    </>
+  )  
 }
 

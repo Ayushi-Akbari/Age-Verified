@@ -3,7 +3,7 @@
 client_id = "6473332dff158d7aab8327543871590a"
 name = "age-verification"
 handle = "age-verification-58"
-application_url = "https://totally-departments-sacred-selections.trycloudflare.com"
+application_url = "https://drums-main-cemetery-atlas.trycloudflare.com"
 embedded = true
 
 [build]
@@ -23,13 +23,14 @@ api_version = "2025-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products,write_products,read_locales,read_markets_home,read_themes"
+scopes = ""
+optional_scopes = [ "read_themes", "read_locales", "write_themes" ]
 
 [auth]
 redirect_urls = [
-  "https://totally-departments-sacred-selections.trycloudflare.com/auth/callback",
-  "https://totally-departments-sacred-selections.trycloudflare.com/auth/shopify/callback",
-  "https://totally-departments-sacred-selections.trycloudflare.com/api/auth/callback"
+  "https://drums-main-cemetery-atlas.trycloudflare.com/auth/callback",
+  "https://drums-main-cemetery-atlas.trycloudflare.com/auth/shopify/callback",
+  "https://drums-main-cemetery-atlas.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

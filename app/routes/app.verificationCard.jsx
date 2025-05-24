@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { forwardRef, useRef, useImperativeHandle, useEffect } from "react";
 import axios from "axios";
 
 import {
@@ -15,86 +15,167 @@ import {
   Thumbnail,
 } from "@shopify/polaris";
 
-export default function VerificationPage({age,image, description, acceptButton, rejectButton, title, hasChanges, setHasChanges, addSetting, removeSetting}) {
-  useEffect(() => {
-    if (hasChanges) {
-      document.getElementById('my-save-bar')?.show();
-    }
-  }, [hasChanges]);
+const VerificationPage = forwardRef((props, ref) => {
 
-  useEffect(() => {
-    const saveBtn = document.getElementById('save-button');
-    const discardBtn = document.getElementById('discard-button');
+  const previewRef = useRef(null);
 
-    saveBtn?.addEventListener('click', () => {
-      console.log('Saving');
-      setHasChanges(false);
-      document.getElementById('my-save-bar')?.hide();
-    });
+  const {image, customization, title, description, acceptButton, rejectButton, popUp, popUpBackground, outerPopUpBackground, popUpLogo, policy, advanced, addSetting} = props
 
-    discardBtn?.addEventListener('click', () => {
-      console.log('Discarding');
-      setHasChanges(false);
-      document.getElementById('my-save-bar')?.hide();
-    });
-
-    return () => {
-      saveBtn?.removeEventListener('click', () => {});
-      discardBtn?.removeEventListener('click', () => {});
-    };
-  }, []); 
+  useImperativeHandle(ref, () => ({
+    getHtmlContent: () => {
+      if (previewRef.current) {
+        return previewRef.current.innerHTML;
+      }
+      return "";
+    },
+  }));
 
   return (
-    <>
-      <ui-save-bar id="my-save-bar">
-        <button variant="primary" id="save-button">
-          Save
-        </button>
-        <button id="discard-button">Discard</button>
-      </ui-save-bar>
-
-      <div className="absolute top-4 right-4 flex justify-end z-10 space-x-4">
-        <Button
-          variant="primary"
-          onClick={() => {
-            console.log("Saving...");
-            addSetting();
-            document.getElementById("save-button").click();
-            addSetting();
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100%",
+        width: "100%",
+      }}
+    >
+      <div
+        style={{
+          width: "95%",
+          // minHeight: "50vh",
+          backgroundColor: "#fff",
+          borderRadius: "8px",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          border: "1px solid #dfe3e8",
+          padding: "16px",
+          boxSizing: "border-box",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "0.875rem",
+            marginBottom: "0.75rem",
           }}
         >
-          Save
-        </Button>
-        <Button
-          variant="primary"
-          onClick={() => {
-            console.log("Discarding...");
-            document.getElementById("discard-button").click();
-            removeSetting();
+          Preview
+        </div>
+        <div
+          ref={previewRef}
+          style={{
+            width: "100%",
+            height: "100%",
           }}
         >
-          Discard
-        </Button>
-      </div>
-
-      <div className="flex justify-center items-center h-full">
-        <Card className="w-full">
-          <div className="bg-gray-100 p-4">
-            <div className="bg-yellow-100 w-[450px] h-[250px] rounded-lg shadow-md border-2 border-white flex flex-row p-4">
-              {image && (
-                <div className="w-2/5 flex justify-center items-center p-4">
-                  <img
-                    src={image}
-                    alt="Popup"
-                    className="w-[150px] h-[150px] object-cover rounded-lg"
-                  />
-                </div>
-              )}
-
+          <div
+            style={{
+              backgroundColor: outerPopUpBackground.background_color,
+              opacity: outerPopUpBackground.background_opacity,
+              ...(outerPopUpBackground.image_enabale && {
+                backgroundImage: `url(${outerPopUpBackground.image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }),
+              width: "100%",
+              padding: "4rem 5rem"
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                width: "100%",
+              }}
+            >
               <div
-                className={`${!image && "w-full"} w-3/5 p-4 flex flex-col justify-center ${image ? "items-start" : "items-center"}`}
+                style={{
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                  display: "flex",
+                  flexDirection: "row",
+                  padding: "1rem",
+                  width: `${popUp.width}px`,
+                  height: `${popUp.height}px`,
+                  border: "2px solid white",
+                  borderWidth: `${popUp.border_width}px`,
+                  borderRadius: `${popUp.border_radius}px`,
+                  paddingLeft: `${popUp.top_bottom_padding}px`,
+                  paddingRight: `${popUp.left_right_padding}px`,
+                  backgroundColor: popUpBackground.background_color,
+                  borderColor: popUpBackground.border_color,
+                  opacity: popUpBackground.background_opacity,
+                }}
               >
-                <Text>
+                {popUpBackground.image_enabale && (
+                  <div
+                    style={{
+                      width: "40%",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      padding: "1rem",
+                    }}
+                  >
+                    {popUpBackground.image ? (
+                      <img
+                        src={popUpBackground.image}
+                        style={{
+                          width: "100px",
+                          height: "100px",
+                          objectFit: "cover",
+                        }}
+                        alt="Popup background"
+                      />
+                    ) : null}
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    width: popUpBackground.image_enabale ? "60%" : "100%",
+                    padding: "1rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  {popUpLogo.show_logo && (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        padding: "1rem",
+                        width: "100px",
+                        height: "100px",
+                      }}
+                    >
+                      {popUpLogo.image ? (
+                        <img
+                          src={popUpLogo.image}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            borderRadius: popUpLogo.logo_square
+                              ? "0"
+                              : "9999px",
+                          }}
+                          alt="Popup Logo"
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+
                   <span
                     style={{
                       display: "block",
@@ -107,8 +188,7 @@ export default function VerificationPage({age,image, description, acceptButton, 
                   >
                     {title.text}
                   </span>
-                </Text>
-                <Text>
+
                   <span
                     style={{
                       fontWeight: Number(description.text_weight),
@@ -119,51 +199,76 @@ export default function VerificationPage({age,image, description, acceptButton, 
                   >
                     {description.text}
                   </span>
-                </Text>
-                <div className="mt-4 w-full">
-                  <div className="flex flex-col space-y-4 items-center">
-                    <button
-                      className={`py-1.5 rounded-lg active:scale-95 flex justify-center items-center ${
-                        image ? "w-full" : "w-3/5"
-                      }`}
-                      style={{
-                        fontSize: `${rejectButton.text_size}px`,
-                        color: rejectButton.text_color,
-                        backgroundColor: rejectButton.background_color,
-                        borderWidth: `${rejectButton.border_width}px`,
-                        borderColor: rejectButton.border_color,
-                        borderRadius: `${rejectButton.border_radius}px`,
-                        fontWeight: Number(rejectButton.text_weight),
-                        fontFamily: rejectButton.fonts,
-                      }}
-                    >
-                      {rejectButton.text}
-                    </button>
 
-                    <button
-                      className={`py-1.5 rounded-lg active:scale-95 flex justify-center items-center ${
-                        image ? "w-full" : "w-3/5"
-                      }`}
+                  <div style={{ marginTop: "1rem", width: "100%" }}>
+                    <div
                       style={{
-                        fontSize: `${acceptButton.text_size}px`,
-                        color: acceptButton.text_color,
-                        backgroundColor: acceptButton.background_color,
-                        borderWidth: `${acceptButton.border_width}px`,
-                        borderColor: acceptButton.border_color,
-                        borderRadius: `${acceptButton.border_radius}px`,
-                        fontWeight: Number(acceptButton.text_weight),
-                        fontFamily: acceptButton.fonts,
+                        display: "flex",
+                        flexDirection: "column",
+                        rowGap: "1rem",
+                        alignItems: "center",
+                        width: "100%",
                       }}
                     >
-                      {acceptButton.text}
-                    </button>
+                      <button
+                        id="rejectButton"
+                        style={{
+                          paddingTop: "0.375rem",
+                          paddingBottom: "0.375rem",
+                          transform: "scale(1)",
+                          transition: "transform 0.1s",
+                          width: popUpBackground.image_enabale ? "100%" : "60%",
+                          fontSize: `${rejectButton.text_size}px`,
+                          color: rejectButton.text_color,
+                          backgroundColor: rejectButton.background_color,
+                          borderWidth: `${rejectButton.border_width}px`,
+                          borderColor: rejectButton.border_color,
+                          borderRadius: `${rejectButton.border_radius}px`,
+                          fontWeight: Number(rejectButton.text_weight),
+                          fontFamily: rejectButton.fonts,
+                        }}
+                      >
+                        {rejectButton.text}
+                      </button>
+
+                      <button
+                        id="acceptButton"
+                        style={{
+                          paddingTop: "0.375rem",
+                          paddingBottom: "0.375rem",
+                          transform: "scale(1)",
+                          transition: "transform 0.1s",
+                          width: popUpBackground.image_enabale ? "100%" : "60%",
+                          fontSize: `${acceptButton.text_size}px`,
+                          color: acceptButton.text_color,
+                          backgroundColor: acceptButton.background_color,
+                          borderWidth: `${acceptButton.border_width}px`,
+                          borderColor: acceptButton.border_color,
+                          borderRadius: `${acceptButton.border_radius}px`,
+                          fontWeight: Number(acceptButton.text_weight),
+                          fontFamily: acceptButton.fonts,
+                        }}
+                      >
+                        {acceptButton.text}
+                      </button>
+                    </div>
                   </div>
+
+                  <div
+                    dangerouslySetInnerHTML={{ __html: policy.text }}
+                    style={{ marginTop: "1.25rem" }}
+                  />
                 </div>
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
-    </>
+    </div>
   );
-}
+  
+});
+
+export default VerificationPage;
+
+ 

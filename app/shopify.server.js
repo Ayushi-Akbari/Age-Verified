@@ -40,7 +40,7 @@ const shopify = shopifyApp({
     : {}),
 });
 
-console.log("shopify  : " , shopify);
+// console.log("shopify  : " , shopify);
 
 
 export default shopify;

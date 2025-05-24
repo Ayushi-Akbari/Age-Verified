@@ -1,9 +1,10 @@
 const express = require('express')
 const router = express.Router()
-const {addSetting, getSetting} = require("../Controller/userController")
+const {addShopData, getShopData, getStoreId} = require("../Controller/userController")
 const upload = require("../Multer/multer")
 
-router.post('/add-setting',  upload.single('image'), addSetting)
-router.get('/get-setting', getSetting)
+router.post('/add-shop',  upload.single('image'), addShopData)
+router.get('/get-shop', getShopData)
+router.get('/get-store-id', getStoreId)
 
 module.exports = router
