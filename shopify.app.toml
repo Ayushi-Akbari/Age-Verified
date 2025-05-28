@@ -3,7 +3,7 @@
 client_id = "6473332dff158d7aab8327543871590a"
 name = "age-verification"
 handle = "age-verification-58"
-application_url = "https://drums-main-cemetery-atlas.trycloudflare.com"
+application_url = "https://softball-mysterious-it-uses.trycloudflare.com"
 embedded = true
 
 [build]
@@ -24,13 +24,18 @@ api_version = "2025-04"
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = ""
-optional_scopes = [ "read_themes", "read_locales", "write_themes" ]
+optional_scopes = [
+  "read_themes",
+  "read_locales",
+  "write_themes",
+  "write_script_tags"
+]
 
 [auth]
 redirect_urls = [
-  "https://drums-main-cemetery-atlas.trycloudflare.com/auth/callback",
-  "https://drums-main-cemetery-atlas.trycloudflare.com/auth/shopify/callback",
-  "https://drums-main-cemetery-atlas.trycloudflare.com/api/auth/callback"
+  "https://softball-mysterious-it-uses.trycloudflare.com/auth/callback",
+  "https://softball-mysterious-it-uses.trycloudflare.com/auth/shopify/callback",
+  "https://softball-mysterious-it-uses.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

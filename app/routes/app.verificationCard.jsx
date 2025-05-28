@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useImperativeHandle, useEffect } from "react";
+import { forwardRef, useRef, useImperativeHandle, useEffect, useState } from "react";
 import axios from "axios";
 
 import {
@@ -29,6 +29,28 @@ const VerificationPage = forwardRef((props, ref) => {
       return "";
     },
   }));
+
+  const currentYear = new Date().getFullYear();
+
+  const range = (count, offset = 1, reverse = false) =>
+    Array.from({ length: count }, (_, i) =>
+      reverse ? currentYear - i : i + offset
+    );
+
+  const [selectedDay, setDay] = useState('1');
+  const [selectedMonth, setMonth] = useState('1');
+  const [selectedYear, setYear] = useState(`${currentYear}`);
+
+  const selectStyle = {
+    padding: '5px 12px',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+    backgroundColor: '#e0e0e0',
+    color: '#000',
+    fontSize: '14px',
+    marginRight: '8px',
+    cursor: 'pointer',
+  };
 
   return (
     <div
@@ -78,7 +100,7 @@ const VerificationPage = forwardRef((props, ref) => {
                 backgroundRepeat: "no-repeat",
               }),
               width: "100%",
-              padding: "4rem 5rem"
+              padding: "4rem 5rem",
             }}
           >
             <div
@@ -199,6 +221,74 @@ const VerificationPage = forwardRef((props, ref) => {
                   >
                     {description.text}
                   </span>
+
+                  {customization.verify_method === 'via-birthdate' && (
+                    <div style={{ display: "flex", alignItems: "center", marginTop: "8px", padding: "5px" }}>
+                    <div style={{display: "flex", flexDirection: customization.date_fromat === 'european_date' ? "row" : "row-reverse" }}>
+                    <select
+                      id="dateSelect"
+                      style={{
+                        padding: "5px 3px",
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                        color: "#000",
+                        fontSize: "14px",
+                        marginRight: "8px",
+                        cursor: "pointer",
+                      }}
+                      value={selectedDay}
+                      onChange={(e) => setDay(e.target.value)}
+                    >
+                      {range(31).map((day) => (
+                        <option key={day} value={day}>
+                          {day}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      id="monthSelect"
+                      style={{
+                        padding: "5px 8px",
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                        color: "#000",
+                        fontSize: "14px",
+                        marginRight: "8px",
+                        cursor: "pointer",
+                      }}
+                      value={selectedMonth}
+                      onChange={(e) => setMonth(e.target.value)}
+                    >
+                      {range(12).map((month) => (
+                        <option key={month} value={month}>
+                          {month}
+                        </option>
+                      ))}
+                    </select>
+                    </div>
+                    <select
+                      id="yearSelect"
+                      style={{
+                        padding: "5px 8px",
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                        color: "#000",
+                        fontSize: "14px",
+                        marginRight: "8px",
+                        cursor: "pointer",
+                      }}
+                      value={selectedYear}
+                      onChange={(e) => setYear(e.target.value)}
+                    >
+                      {range(100, 0, true).map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                    </div>
+                  )}
 
                   <div style={{ marginTop: "1rem", width: "100%" }}>
                     <div

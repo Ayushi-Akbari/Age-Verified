@@ -1,3 +1,4 @@
+const { log } = require("console");
 const Setting = require("../models/SettingModel");
 const User = require("../models/UserModel");
 
@@ -11,7 +12,7 @@ const addSettingData = async (req, res) => {
   
 
   if (!isUser) {
-    return res.status(404).send({ messgae: "Store Is Not Found." });
+    return res.status(404).send({ messgae: "Shop Is Not Found." });
   }
 
   const setting = ({
@@ -37,18 +38,23 @@ const addSettingData = async (req, res) => {
     setting[key] = JSON.parse(setting[key] || "{}");    
     if (req?.files?.[fileKey]?.[0]) {
       setting[key].image = `/image/${req.files[fileKey][0].filename}`;
+      // setting[key].imageFile = null
     }else{
       setting[key].image = null
+      // setting[key].imageFile = null
+
     }
     setting[key] = JSON.stringify(setting[key]);
+
+    console.log("Parsed and attached image for key:", key, "Image path:", setting[key]);
+    
   };
   parseAndAttachImage("popUpBackground", "popUpBackgroundImage");
   parseAndAttachImage("outerPopUpBackground", "outerPopUpBackgroundImage");
   parseAndAttachImage("popUpLogo", "popUpLogoImage");
 
-  console.log("htmlontent : " , htmlContent);
+  // console.log("htmlontent : " , htmlContent);
   
-
   const isPresent = await Setting.findOne({ shop_name: shop });
   console.log("isPresent : " , isPresent);
   
@@ -64,7 +70,7 @@ const addSettingData = async (req, res) => {
       },
     );
   } else {
-    settingData = Setting.create({
+    settingData = await Setting.create({
       shop_id: isUser._id,
       shop_name: shop,
       settings: setting,
@@ -102,10 +108,10 @@ const getSettingData = async (req, res) => {
     const isUser = await User.findOne({ host: shop });
 
     if (!isUser) {
-      return res.status(404).send({ message: "Store not found." });
+      return res.status(404).send({ message: "Shop not found." });
     }
 
-    const settingData = await Setting.findOne({ shop_name: shop });
+    const settingData = await Setting.findOne({ shop_id: isUser._id });
 
     if (!settingData) {
       return res.status(404).send({ message: "Setting not found." });
@@ -120,5 +126,15 @@ const getSettingData = async (req, res) => {
     return res.status(500).send({ message: "Internal server error." });
   }
 };
+
+// const updateSetting = async (req, res) => {
+//   const { shop  } = req.query;
+
+//   if (!shop) {
+//     return res.status(400).send({ message: "Shop name is required." });
+//   }
+
+//   // const isUser = await User.findOne({
+// }
 
 module.exports = { addSettingData, getSettingData };

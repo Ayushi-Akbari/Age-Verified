@@ -16,6 +16,7 @@ import {
 } from "@shopify/polaris";
 import { useEffect, useState, useCallback, useRef  } from "react";
 import VerificationCard from "./app.verificationCard";
+import Template2 from "./app.template2";
 import { Trash2, Info, AlertCircle  } from "lucide-react";
 import { authenticate } from "../shopify.server";
 import { useLoaderData } from "@remix-run/react";
@@ -23,14 +24,13 @@ import axios from 'axios';
 
 export async function loader({ request }) {
   const { admin } = await authenticate.admin(request);
-  console.log("admin : " , admin);
-  
   const shopParam = new URL(request.url).searchParams.get("shop");
   
   return {admin, shopParam}
 }
 
 export default function Setting() {
+  const startTime = performance.now(); 
   const verificationRef = useRef(null);
 
   const {shopParam} = useLoaderData()
@@ -133,11 +133,20 @@ export default function Setting() {
   const [ReactQuill, setReactQuill] = useState(null);
   const [value, setValue] = useState("");
 
+   useEffect(() => {
+    requestAnimationFrame(() => {
+      const endTime = performance.now();
+      const renderDuration = endTime - startTime;
+      console.log(`UI design load/render time setting page: ${renderDuration.toFixed(2)} ms`);
+    });
+  }, []);
+
   useEffect(() => {
     let isCancelled = false;
   
     if (!isCancelled) {
       fetchData();
+      isCancelled = true;
     }
   
     return () => {
@@ -303,7 +312,7 @@ export default function Setting() {
 
       console.log("parsedSetting : ", parsedSetting);
        
-      parsedSetting.customization && setRejectButton(parsedSetting.customization);
+      parsedSetting.customization && setCustomization(parsedSetting.customization);
       parsedSetting.title && setTitle(parsedSetting.title);
       parsedSetting.description && setDescription(parsedSetting.description);
       parsedSetting.acceptButton && setAcceptButton(parsedSetting.acceptButton);
@@ -315,32 +324,40 @@ export default function Setting() {
       parsedSetting.policy && setPolicy(parsedSetting.policy);
       parsedSetting.advanced && setAdvanced(parsedSetting.advanced);
       parsedSetting.displayCriteria && setDisplayCriteria(parsedSetting.displayCriteria);
-      parsedSetting.monthlyAnalysis && setDisplayCriteria(parsedSetting.monthlyAnalysis);
-      parsedSetting.market && setDisplayCriteria(parsedSetting.market);
+      parsedSetting.monthlyAnalysis && setMonthlyAnalysis(parsedSetting.monthlyAnalysis);
+      parsedSetting.market && setMarket(parsedSetting.market);
 
 
-      console.log("outerPopUpBackground inside fetch : " , outerPopUpBackground);
+      console.log("outerPopUpBackground inside fetch : " , popUpLogo);
+      
 
       if (parsedSetting.popUpBackground.image) {
         const path = parsedSetting.popUpBackground.image; 
-        setPopUpBackground({
+        setPopUpBackground((prev) => ({
+          ...prev,
           image: `http://localhost:8001${path}`,
-          imageFile: null,
-        });
+        }));
       }
       if (parsedSetting.outerPopUpBackground.image) {
         const path = parsedSetting.outerPopUpBackground.image; 
-        setOuterPopUpBackground({
+        setOuterPopUpBackground((prev) => ({
+          ...prev,
           image: `http://localhost:8001${path}`,
-          imageFile: null,
-        });
+        }));
       }
       if (parsedSetting.popUpLogo.image) {
-        const path = parsedSetting.popUpLogo.image; 
-        setPopUpLogo({
+        const path = parsedSetting.popUpLogo.image;
+        console.log("----------------");
+         
+          console.log("popUpLogo.image : ", popUpLogo);
+
+        setPopUpLogo((prev) => ({
+          ...prev,
           image: `http://localhost:8001${path}`,
-          imageFile: null,
-        });
+        }));
+        
+        console.log("popUpLogo.image : ", popUpLogo);
+        
       }
     }
 
@@ -351,11 +368,18 @@ export default function Setting() {
     console.log("shopParam : ", shopParam);
     console.log("outerPopUpBackground : " , outerPopUpBackground);
 
-    const htmlContent = verificationRef.current?.getHtmlContent(); // 👈 get from child
+    const htmlContent = verificationRef.current?.getHtmlContent();
     console.log("htmlContent:", htmlContent);
     
     const removeImages = (obj) => {
-      const { image, imageFile, ...rest } = obj;
+      console.log("obj : ", obj);
+      
+      const { image, ...rest } = obj;
+
+      rest.imageFile = null;
+
+      console.log("rest : ", rest);
+      
       return rest;
     };    
     const formData = new FormData();
@@ -372,13 +396,15 @@ export default function Setting() {
     console.log("policy",policy)
     console.log("advanced",advanced)
     console.log("displayCriteria",displayCriteria)
-    console.log("market",market)
-    console.log("monthlyAnalysis",monthlyAnalysis)
+    // console.log("market",market)
+    // console.log("monthlyAnalysis",monthlyAnalysis)
 
     formData.append("popUpBackgroundImage", popUpBackground.imageFile)
     formData.append("outerPopUpBackgroundImage", outerPopUpBackground.imageFile)
     formData.append("popUpLogoImage", popUpLogo.imageFile)
 
+    console.log("popUpLogo.imageFile : ", popUpLogo.imageFile);
+    
     formData.append("customization", JSON.stringify(customization));
     formData.append("title", JSON.stringify(title));
     formData.append("description", JSON.stringify(description));
@@ -391,11 +417,14 @@ export default function Setting() {
     formData.append("policy", JSON.stringify(policy));
     formData.append("advanced", JSON.stringify(advanced));
     formData.append("displayCriteria", JSON.stringify(displayCriteria));
-    formData.append("market", JSON.stringify(market));
-    formData.append("monthlyAnalysis", JSON.stringify(monthlyAnalysis));
+    formData.append("market", market);
+    formData.append("monthlyAnalysis", monthlyAnalysis);
     formData.append("htmlContent", htmlContent)
-    
-  
+
+    for (let pair of formData.entries()) {
+      console.log(`${pair[0]}:`, pair[1]);
+    }
+
     const response = await axios.post(
       `http://localhost:8001/setting/add-setting?shop=${shopParam}`,
       formData,
@@ -416,7 +445,7 @@ export default function Setting() {
       <Page fullWidth>
         <div className="flex flex-col-reverse lg:flex-row w-full min-h-screen">
           {/* Left Section */}
-          <div className="w-full lg:w-[36%] p-2 space-y-8">
+          <div className="w-full lg:w-[38%] p-2 space-y-8">
             <Text variant="headingXl" as="h1">
               Settings
             </Text>
@@ -445,7 +474,7 @@ export default function Setting() {
               </Text>
               <Card>
                 <Text variant="semibold">Pop-up Layouts</Text>
-                <div className="flex gap-8 mt-5">
+                <div className="flex gap-4 mt-5">
                   <RadioButton
                     label="Template 1"
                     checked={customization.layout === "template1"}
@@ -469,6 +498,47 @@ export default function Setting() {
                         "customization",
                         "layout",
                         "template2",
+                      )
+                    }
+                  />
+                  <RadioButton
+                    label="Template 3"
+                    checked={customization.layout === "template3"}
+                    id="template3"
+                    name="layout"
+                    onChange={() =>
+                      handleSectionChange(
+                        "customization",
+                        "layout",
+                        "template3",
+                      )
+                    }
+                  />
+                </div>
+                <div className="flex gap-4 mt-2">
+                  <RadioButton
+                    label="Template 4"
+                    checked={customization.layout === "template4"}
+                    id="template4"
+                    name="layout"
+                    onChange={() =>
+                      handleSectionChange(
+                        "customization",
+                        "layout",
+                        "template4",
+                      )
+                    }
+                  />
+                  <RadioButton
+                    label="Template 5"
+                    checked={customization.layout === "template5"}
+                    id="template5"
+                    name="layout"
+                    onChange={() =>
+                      handleSectionChange(
+                        "customization",
+                        "layout",
+                        "template5",
                       )
                     }
                   />
@@ -517,22 +587,23 @@ export default function Setting() {
                       onChange={(value) => {
 
                         console.log("customization.age : ", customization.age);
+                        const age = customization.age
                         
                         console.log("value : " , value);
                         
                         setRejectButton((prev) => ({
                           ...prev,
-                          text: prev.text.replace(customization.age, value),
+                          text: rejectButtonText.replace("{{minimum_age}}", value)
                         }));
 
                         setAcceptButton((prev) => ({
                           ...prev,
-                          text: prev.text.replace(customization.age, value),
+                          text: acceptButtonText.replace("{{minimum_age}}", value)
                         }));
 
                         setDescription((prev) => ({
                           ...prev,
-                          text: prev.text.replace(customization.age, value),
+                          text: descriptionText.replace("{{minimum_age}}", value)
                         }));
 
                         handleSectionChange("customization", "age", value);
@@ -1322,7 +1393,12 @@ export default function Setting() {
                   <div className="flex gap-3 mb-4 mt-2">
                     <div className="flex-1">
                       <TextField
-                        label="Border Width"
+                        // label="Border Width"
+                        label={
+                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]"> 
+                            Border Width
+                          </span>
+                        }
                         value={popUp.border_width}
                         onChange={(value) =>
                           handleSectionChange("popUp", "border_width", value)
@@ -1334,7 +1410,12 @@ export default function Setting() {
 
                     <div className="flex-1">
                       <TextField
-                        label="Top And Bottom Padding"
+                        // label="Top And Bottom Padding"
+                        label={
+                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px] "> 
+                            Top And Bottom Padding
+                          </span>
+                        }
                         value={popUp.top_bottom_padding}
                         onChange={(value) =>
                           handleSectionChange(
@@ -1350,7 +1431,12 @@ export default function Setting() {
 
                     <div className="flex-1">
                       <TextField
-                        label="Left And Right Padding"
+                        // label="Left And Right Padding"
+                        label={
+                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]"> 
+                            Left And Right Padding
+                          </span>
+                        }
                         value={popUp.left_right_padding}
                         onChange={(value) =>
                           handleSectionChange(
@@ -1374,14 +1460,14 @@ export default function Setting() {
                   <div className="flex gap-2 mt-2 items-start">
                     {/* Background Color */}
                     <div className="flex flex-col ">
-                      <div className="h-[40px]">
-                        <label className="text=[16px] text-[#313335] leading-tight block">
-                          Background Color
-                        </label>
-                      </div>
+                      
                       <div className="flex items-center gap-1">
                         <TextField
-                          label=""
+                          label={
+                            <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]"> 
+                              Background Color
+                            </span>
+                          }
                           value={popUpBackground.background_color}
                           onChange={(value) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
@@ -1403,21 +1489,20 @@ export default function Setting() {
                               e.target.value,
                             )
                           }
-                          className="w-[36px] h-[36px] border border-gray-300 rounded"
+                          className="w-[36px] h-[36px] mt-[40px] sm:mt-[20px] lg:mt-[40px] border border-gray-300 rounded"
                         />
                       </div>
                     </div>
 
                     {/* Border Color */}
                     <div className="flex flex-col">
-                      <div className="h-[40px]">
-                        <label className=" text-gray-700 leading-tight block">
-                          Border Color
-                        </label>
-                      </div>
                       <div className="flex items-center gap-1">
                         <TextField
-                          label=""
+                          label={
+                            <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
+                              Border Color
+                            </span>
+                          }
                           value={popUpBackground.border_color}
                           onChange={(value) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
@@ -1439,20 +1524,18 @@ export default function Setting() {
                               e.target.value,
                             )
                           }
-                          className="w-[36px] h-[36px] border border-gray-300 rounded"
+                          className="w-[36px] h-[36px] mt-[40px] sm:mt-[20px] lg:mt-[40px] border border-gray-300 rounded"
                         />
                       </div>
                     </div>
 
                     {/* Background Layer Opacity */}
-                    <div className="flex flex-col ">
-                      <div className="h-[40px]">
-                        <label className="text-[#202223] leading-tight block">
-                          Background Layer Opacity
-                        </label>
-                      </div>
                       <TextField
-                        label=""
+                        label={
+                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
+                            Background Layer Opacity
+                          </span>
+                        }
                         value={popUpBackground.background_opacity}
                         onChange={(value) =>
                           handleSectionChange(
@@ -1464,7 +1547,6 @@ export default function Setting() {
                         suffix="Px"
                       />
                     </div>
-                  </div>
 
                   <div>
                     <div className="w-[200px] mt-3">
@@ -1535,36 +1617,35 @@ export default function Setting() {
 
                   <div className="flex gap-3 mb-4 mt-2">
                     <div className="flex-1">
-                      <label className="block text-sm font-medium mb-1">
-                        Outer Layer Color
-                      </label>
-                      <div className="flex items-center border border-gray-][] rounded-lg overflow-hidden w-fit">
-                        <input
-                          type="text"
-                          value={outerPopUpBackground.background_color}
-                          onChange={(e) => {
-                            const value = e.target.value;
+                      <div className="flex gap-1">
+                        <TextField
+                          label={
+                            <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
+                              Border Color
+                            </span>
+                          }
+                          value={popUpBackground.border_color}
+                          onChange={(value) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
                               handleSectionChange(
-                                "outerPopUpBackground",
-                                "background_color",
-                                e.target.value,
+                                "popUpBackground",
+                                "border_color",
+                                value,
                               );
                             }
                           }}
-                          className="px-2 py-1 outline-none text-sm w-[90px]"
                         />
                         <input
                           type="color"
-                          value={outerPopUpBackground.background_color}
+                          value={popUpBackground.border_color}
                           onChange={(e) =>
                             handleSectionChange(
-                              "outerPopUpBackground",
-                              "background_color",
+                              "popUpBackground",
+                              "border_color",
                               e.target.value,
                             )
                           }
-                          className="w-8 h-8 border-none p-0 cursor-pointer mr-1 rounded-lg"
+                          className="w-[36px] h-[36px] mt-[40px] sm:mt-[20px] lg:mt-[40px] border border-gray-300 rounded"
                         />
                       </div>
                     </div>
@@ -1572,7 +1653,12 @@ export default function Setting() {
                     <div className="flex-1">
                       <div className="flex-1">
                         <TextField
-                          label="Background Layer Opacity"
+                          // label="Background Layer Opacity"
+                          label={
+                            <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
+                              Background Layer Opacity
+                            </span>
+                          }
                           value={outerPopUpBackground.outer_opacity}
                           onChange={(value) =>
                             handleSectionChange(
@@ -1660,7 +1746,7 @@ export default function Setting() {
                 Pop-up Logo Settings
               </Text>
               <Card>
-                <div className="flex mb-4 gap-7">
+                <div className="flex gap-7">
                   <Checkbox
                     label="Show Logo"
                     checked={popUpLogo.show_logo}
@@ -1892,7 +1978,7 @@ export default function Setting() {
                 />
                 {policy.checked && (
                   <Box maxWidth="400px" marginx="auto">
-                    <div className="flex h-[200px] mt-4">
+                    <div className="flex h-[210px] mt-4">
                       {/* Only render ReactQuill if loaded on client */}
                       {ReactQuill ? (
                         <ReactQuill
@@ -1973,7 +2059,7 @@ export default function Setting() {
 
           {/* Right Section */}
           <div
-            className="flex flex-col w-full mb-5 lg:mt-0 lg:mb-0 lg:w-[64%] lg:h-screen lg:fixed lg:right-0 lg:top-0 lg:p-1 overflow-y-auto scrollbar-hide"
+            className="flex flex-col w-full mb-5 lg:mt-0 lg:mb-0 lg:w-[62%] lg:h-screen lg:fixed lg:right-0 lg:top-0 lg:p-1 overflow-y-auto scrollbar-hide"
             // style={{ overflowY: "auto" }}
           >
             <ui-save-bar id="my-save-bar">
@@ -2006,7 +2092,8 @@ export default function Setting() {
             </Button>
             </div>
             <div className="px-4 pb-8">
-            <VerificationCard
+            {customization.layout === 'template1' ? (
+              <VerificationCard
               image={image}
               customization={customization}
               title={title}
@@ -2021,6 +2108,25 @@ export default function Setting() {
               advanced={advanced}
               ref={verificationRef}
             />
+            ) : customization.layout === 'template2' ? (
+              <Template2
+              image={image}
+              customization={customization}
+              title={title}
+              description={description}
+              acceptButton={acceptButton}
+              rejectButton={rejectButton}
+              popUp={popUp}
+              popUpBackground={popUpBackground}
+              outerPopUpBackground={outerPopUpBackground}
+              popUpLogo={popUpLogo}
+              policy={policy}
+              advanced={advanced}
+              ref={verificationRef}
+            />
+            ) : null
+            }
+            
             </div>
           </div>
         </div>

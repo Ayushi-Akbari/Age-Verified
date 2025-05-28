@@ -3,7 +3,6 @@ import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
 import "@shopify/polaris/build/esm/styles.css";
 import { authenticate } from "../shopify.server";
-import { StrictMode } from "react";
 import NavMenu from "../component/navMenu"
 
 
@@ -17,9 +16,9 @@ export default function App() {
   // const { apiKey } = useLoaderData();
 
   return (
-    <StrictMode>
     <NavMenu />
-     </StrictMode>
+    // <><Outlet />
+    // </>
   );
 }
 

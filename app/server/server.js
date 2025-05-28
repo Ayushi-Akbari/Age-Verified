@@ -3,19 +3,21 @@ const cors = require('cors');
 require('dotenv').config();
 const path = require("path")
 const userModel = require("./models/UserModel.js")
-const userRoute = require("./Routes/userRoutes.js")
 const settingModel = require("./models/SettingModel.js")
-const settingRoute = require("./Routes/SettingRoute.js")
+const analyticsModel = require("./models/AnalyticsModel.js")
+const { settingRoute, userRoute, analyticsRoute, WebhookRoute } = require("./Routes/index.js");
 const app = express();
 const PORT = 8001;
 
 app.use(cors({ origin: '*', allowedHeaders: ['Content-Type', 'Authorization'] }));
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use("/image", express.static(path.join(__dirname, "image")));
 
 app.use("/user", userRoute)
 app.use("/setting", settingRoute)
+app.use("/analytics", analyticsRoute);
+app.use("/hooks", WebhookRoute);
 
 app.use((req, res, next) => {
   console.log("Request:", req.method, req.url);

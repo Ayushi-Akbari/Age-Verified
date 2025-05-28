@@ -11,11 +11,11 @@ export default function PolarisButtonExample({ onClick, message }) {
     <AppProvider>
       <div style={{ padding: '2rem' }}>
         <Page>
-        <Button onClick={onClick} variant="primary">{message}</Button>
-        <Button onClick={onClick} variant="primary">{message}</Button>
-        <Button onClick={onClick} variant="primary">{message}</Button>
-        <Button onClick={onClick} variant="primary">{message}</Button>
-        <Button onClick={onClick} variant="primary">{message}</Button>
+        <Button onClick={onClick} variant="primary">Button      </Button>
+        <Button onClick={onClick} variant="primary">Button      </Button>
+        <Button onClick={onClick} variant="primary">Button      </Button>
+        <Button onClick={onClick} variant="primary">Button      </Button>
+        <Button onClick={onClick} variant="primary">Button      </Button>
         </Page>
         
         

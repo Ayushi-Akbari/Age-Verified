@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const {addSettingData, getSettingData} = require("../Controller/SettingController")
+const {addSettingData, getSettingData} = require("../Controllers/SettingController")
 const upload = require("../Multer/multer")
 
 router.post('/add-setting', upload.fields([

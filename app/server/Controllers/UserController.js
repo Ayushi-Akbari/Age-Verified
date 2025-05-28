@@ -23,24 +23,24 @@ const addShopData = async (req,res) => {
 }
 
 const getShopData = async (req,res) => {
-    const {shop_name} = req.query
-    if(!shop_name){
-        res.status(400).json({ msg: "Store is not found." });
+    const {shop} = req.query
+    if(!shop){
+        res.status(400).json({ msg: "Shop is not found." });
     }
-    const user = await User.findOne({ host: shop_name })
+    const user = await User.findOne({ host: shop })
     if(!user) {
         res.status(400).json({ msg: "App Settings not found.." });
     }
     res.status(200).json({ msg: "App Setings Fetched Successfully." , data: user});
 }
 
-const getStoreId = async (req,res) => {
-    const {shop_name} = req.query
+const getShopId = async (req,res) => {
+    const {shop} = req.query
     
-    if(!shop_name){
-        res.status(400).json({ msg: "Store is not found." });
+    if(!shop){
+        res.status(400).json({ msg: "Shop is not found." });
     }
-    const user = await User.findOne({ host: shop_name })
+    const user = await User.findOne({ host: shop })
 
     if(!user) {
         res.status(400).json({ msg: "App Settings not found.." });
@@ -48,4 +48,4 @@ const getStoreId = async (req,res) => {
     res.status(200).json({ msg: "App Setings Fetched Successfully." , data: user._id});
 }
 
-module.exports = {addShopData, getShopData, getStoreId}
+module.exports = {addShopData, getShopData, getShopId}

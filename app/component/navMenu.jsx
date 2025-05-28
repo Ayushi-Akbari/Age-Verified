@@ -9,10 +9,8 @@ export default function AppLayout() {
         <a href="/app/analytics">Analytics</a>
         <a href="/app/plans">Plans</a>
         <a href="/app/setting">Settings</a>
-        <a href="/app/webhook">Webhook</a>
       </ui-nav-menu>
 
-      {/* THIS IS IMPORTANT */}
       <main>
         <Outlet />
       </main>

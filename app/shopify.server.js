@@ -40,9 +40,6 @@ const shopify = shopifyApp({
     : {}),
 });
 
-// console.log("shopify  : " , shopify);
-
-
 export default shopify;
 export const apiVersion = ApiVersion.January25;
 export const addDocumentResponseHeaders = shopify.addDocumentResponseHeaders;

@@ -31,6 +31,8 @@ export const action = async ({ request }) => {
   if (!shop || !data) {
     throw new Error("Store name is missing or null!");
   }
+
+  //Access token
   const url = `https://${shop}/admin/oauth/access_token`;
   if (!url) {
     throw new Error("URL is missing or null!");
@@ -48,6 +50,7 @@ export const action = async ({ request }) => {
     throw new Error("Access Token is missing or null!");
   }
 
+  // Fetch access scopes
   const scopesResponse = await fetch(
     `https://${shop}/admin/oauth/access_scopes.json`,
     {
@@ -79,80 +82,66 @@ export const links = () => {
 };
 
 export default function App() {
+  console.log("hiiiiiiiiiiiiii");
+  
   const fetcher = useFetcher();
   const submitted = useRef(false);
   const scopesRequested = useRef(false);
 
-  useEffect(() => {
-    if (fetcher.state === "idle" && !fetcher.data && !submitted.current) {
-      submitted.current = true;
+ useEffect(() => {
 
-      async function fetchIdTokenAndSubmit() {
+    if (!submitted.current) {
+      submitted.current = true;
+      (async () => {
         try {
           const idToken = await shopify.idToken();
           const url = new URL(window.location.href);
           const shop = url.searchParams.get("shop");
           if (idToken && shop) {
-
             fetcher.submit(
               { id_token: idToken, shop },
-              { method: "post", action: "/" },
+              { method: "post", action: "/" }
             );
           }
         } catch (error) {
           console.error("Error getting ID token:", error);
         }
-      }
-
-      fetchIdTokenAndSubmit();
+      })();
     }
+  }, []);
 
-    if (fetcher.state === "idle" && fetcher.data && !scopesRequested.current) {
-      scopesRequested.current = true;
+  useEffect(() => {
+  if (fetcher.data && !scopesRequested.current) {
+    scopesRequested.current = true;
+    (async () => {
+      try {
+        const idToken = await shopify.idToken();
+        const url = new URL(window.location.href);
+        const shop = url.searchParams.get("shop");
 
-      async function fetchAndRequestScopes() {
-        try {
-          console.log("fetcher.data:", fetcher.data);
-          const idToken = await shopify.idToken();
-          const url = new URL(window.location.href);
-          const shop = url.searchParams.get("shop");
+        if (
+          fetcher.data.result.length > 0 &&
+          fetcher.data.requiredScopes?.length > 0
+        ) {
+          const response = await shopify.scopes.request(fetcher.data.result);
 
-          if (
-            fetcher.data.result.length > 0 &&
-            fetcher.data.requiredScopes?.length > 0
-          ) {
-            const response = await shopify.scopes.request(fetcher.data.result);
-            console.log("Shopify scope request response:", response);
-
-            if (response.result === "granted-all") {
-              console.log("All requested scopes granted.");
-              if (idToken && shop) {
-                fetcher.submit(
-                  { id_token: idToken, shop },
-                  { method: "post", action: "/app?index" },
-                );
-              }
-            } else if (response.result === "declined-all") {
-              console.log("Scopes were declined.");
-            } else {
-              console.log("Partial scopes granted or request was dismissed.");
-            }
-          } else {
-            if (idToken && shop) {
-              fetcher.submit(
-                { id_token: idToken, shop },
-                { method: "post", action: "/app?index" },
-              );
-            }
+          if (response.result === "granted-all") {
+            window.onload()
           }
-        } catch (err) {
-          console.error("Error requesting scopes:", err);
+        } else {
+          if (idToken && shop) {
+            fetcher.submit(
+              { id_token: idToken, shop },
+              { method: "post", action: "/app?index" }
+            );
+          }
         }
+      } catch (err) {
+        console.error("Error requesting scopes:", err);
       }
-
-      fetchAndRequestScopes();
-    }
-  }, [fetcher.state, fetcher.data]);
+    })();
+  }
+}, [fetcher.data]);
 
   return (
     <html>
@@ -161,7 +150,6 @@ export default function App() {
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <link rel="preconnect" href="https://cdn.shopify.com/" />
 
-        {/* load this lib first before any js or css */}
         <meta
           name="shopify-api-key"
           content="6473332dff158d7aab8327543871590a"
@@ -176,7 +164,6 @@ export default function App() {
         <Links />
       </head>
       <body>
-        {/* <NavMenu /> */}
         <Outlet />
         <ScrollRestoration />
         <Scripts />

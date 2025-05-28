@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useFetcher } from "@remix-run/react";
 import {
+  Button,
+  AppProvider,
   Page,
 } from "@shopify/polaris";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import axios from 'axios'
 import NavMenu from "app/component/navMenu";
+import webhookSubscription from "./webhook";
 
 export const action = async ({ request }) => {
   const formData = await request.formData();
@@ -25,13 +27,14 @@ export const action = async ({ request }) => {
   if(!shop || !credential){
     throw new Error("Store name is missing or null!");
   }
+
+  //Access token
   const url = `https://${shop}/admin/oauth/access_token`;
   if (!url) {
     throw new Error("URL is missing or null!");
   }
   
   const response = await axios.post(url, credential);
-  // console.log("response : ", response);
 
   if (response.status !== 200) {
     return {msg: response.error , status : 404};
@@ -39,6 +42,7 @@ export const action = async ({ request }) => {
 
   const access_token = response.data.access_token
 
+  // Shop detail from graphql
   const query = `
   query ShopName {
   shop {
@@ -98,7 +102,8 @@ export const action = async ({ request }) => {
   const json = await shopResponse.json();
   
   const userData = json.data
- 
+
+ // Shop detail store to database
   const data = {
     email: userData.shop.email,
     token_id: id_token,
@@ -124,88 +129,66 @@ export const action = async ({ request }) => {
     if(res.status !== 200){
       return {msg: shopResponse.error , status : 404};
     }
-  return res.data
+    
+    if(!shop || !access_token || !res.data.userData._id){
+      throw new Error("Shop, access token or user ID is missing or null!");
+    }
+
+    const result = await webhookSubscription(shop, access_token, res.data.userData._id )
+    console.log("result : " , result);
+
+    // const ScriptData = await axios.post(`https://${shop}/admin/api/2025-04/script_tags.json`, {
+    //   script_tag: {
+    //     event: 'onload',
+    //     src: `https://${shop}/app/routes/age-verification.js`
+    //   }
+    // }, {
+    //   headers: {
+    //     'X-Shopify-Access-Token': access_token,
+    //     'Content-Type': 'application/json'
+    //   }
+    // });
+
+    // console.log("Script Data : ", ScriptData.data);
+    
+    
+
+  return {data:res.data, access_token: access_token}
 };
 
 export default function Index() {
-  const shopify = useAppBridge();
-  const fetcher = useFetcher();
-  const [retrieved, setRetrieved] = useState(false);
-  
-  const [idToken, setIdToken] = useState(null)
-  const [userData, setUserData] = useState(null)
+  const startTime = performance.now();
 
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
-    if (!retrieved && fetcher.state === "idle" && !fetcher.data) {
-      async function fetchIdTokenAndSubmit() {
-        const idToken = await shopify.idToken();
-        setIdToken(idToken)
+    const timer = setTimeout(() => {
+      setMessage('Updated after 5 seconds!');
+    }, 5000);
 
-        const url = new URL(window.location.href);
-        const shop = url.searchParams.get("shop");
-        // console.log("shop:", shop);
+    return () => clearTimeout(timer);
+  }, []);
 
-        // fetcher.submit(
-        //   { id_token: idToken, shop },
-        //   { method: "post", action: "/app?index" }
-        // );
-      }
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      const endTime = performance.now();
+      const renderDuration = endTime - startTime;
+      console.log(`UI design load/render time index page: ${renderDuration.toFixed(2)} ms`);
+    });
+  }, []);
 
-      fetchIdTokenAndSubmit();
-    }
-
-    // Check when data comes back
-    if (fetcher.data && !retrieved) { 
-      async function fetchUserData() {
-        const userData = fetcher.data
-    
-      const data = {
-        email: userData.shop.email,
-        token_id: idToken,
-        shop_id: userData.shop.id,
-        shop_name: userData.shop.name,
-        country_code: userData.shop.billingAddress.countryCodeV2,
-        phone: userData.shop.billingAddress.phone,
-        plan_displayName: userData.shop.plan.displayName,
-        plan_partnerDevelopment: userData.shop.plan.partnerDevelopment,
-        plan_shopifyPlus: userData.shop.plan.shopifyPlus,
-        currency_code: userData.shop.currencyCode,
-        currency_format: userData.shop.currencyFormats.moneyFormat,
-        timezoneAbbreviation: userData.shop.timezoneAbbreviation,
-        ianaTimezone: userData.shop.ianaTimezone,
-        host: userData.shop.primaryDomain.host,
-        shopLocales_primary: userData.shopLocales[0].primary,
-        shopLocales_locale: userData.shopLocales[0].locale,
-        theme_id: userData.themes.nodes[0].id,
-      }
-
-      // console.log("data : " , data);
-
-      const response = await axios.post("http://localhost:8001/user/add-shop", data)
-
-      // console.log("response : " , response);
-
-      setUserData(response.data.userData)
-      
-      setRetrieved(true);
-      } 
-      fetchUserData()
-
-     
-      
-    }
-  }, [fetcher, retrieved, shopify, userData]);
+  console.log("hiiiiiiiiiiiiii app index");
 
   return (
-    <>
-    {/* <NavMenu /> */}
-    <Page>
-      
-      Hello
-    </Page>
-  
-    </>
-  )  
+    <AppProvider>
+      <Page>
+        <Button>
+          {message ? message : "Loding ...."}
+        </Button>
+        Dashboard content here...
+      </Page>
+    </AppProvider>
+  );
 }
+
 

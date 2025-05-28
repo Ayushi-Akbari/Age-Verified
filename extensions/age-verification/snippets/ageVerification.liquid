@@ -1,14 +1,6 @@
 {{ 'output.css' | asset_url | stylesheet_tag }}
 {{ 'ageVerification.js' | asset_url | script_tag }}
 
-
-{% assign age_limit = block.settings.age_limit %}
-{% assign title = block.settings.title %}
-{% assign message = block.settings.message | replace: '[ age ]', age_limit %}
-{% assign accept_message = block.settings.accept_message | replace: '[ age ]', age_limit %}
-{% assign reject_message = block.settings.reject_message | replace: '[ age ]', age_limit %}
-{% assign popup_image = block.settings.popup_image %}
-
 <style>
   html, body {
     height: 100%;

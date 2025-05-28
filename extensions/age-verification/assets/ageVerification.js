@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async() => {
 
   const ageVerified = checkAgeVerified("age_verified");
   const popup = document.getElementById("popup-modal");
@@ -14,29 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   fetchData();
 
-  document.getElementById('age-verification-dynamic-content').addEventListener('click', (event) => {
-    if (event.target && (event.target.id === 'acceptButton' || event.target.id === 'rejectButton')) {
-      const btn = event.target;
-      console.log('Accept button clicked via delegation!');
-      btn.style.transform = 'scale(0.95)';
-      setTimeout(() => {
-        btn.style.transform = 'scale(1)';
-      }, 150);
-
-      if(event.target.id === 'acceptButton'){
-        document.cookie = "age_verified=true; path=/; max-age=" + 60*60*24*30 + "; Secure; SameSite=None";
-        console.log("true : ", document.cookie.split('; ').find(row => row.startsWith('age_verified='))?.split('=')[1] === 'true');
-        if(document.cookie.split('; ').find(row => row.startsWith('age_verified='))?.split('=')[1] === 'true'){
-          popup.style.display = "none";
-        }
-      }else if(event.target.id === 'rejectButton'){
-        document.cookie = "age_verified=false; path=/; max-age=" + 60*60*24*30 + "; Secure; SameSite=None";
-        console.log("false : ", document.cookie.split('; ').find(row => row.startsWith('age_verified='))?.split('=')[1] === 'false');
-        if(document.cookie.split('; ').find(row => row.startsWith('age_verified='))?.split('=')[1] === 'false'){
-          popup.style.display = "flex";
-        }
-      }
-    }
+  document.getElementById('age-verification-dynamic-content').addEventListener('click', async(event) => {
+    handleAgeVerification(event);
   });
   
 });
@@ -80,4 +59,65 @@ function checkAgeVerified() {
     if (cookieVal === "false") return false;
   }
   return null;
+}
+
+async function handleAgeVerification(event) { 
+  if (event.target && (event.target.id === 'acceptButton' || event.target.id === 'rejectButton')) {
+    const btn = event.target;
+    console.log('Accept button clicked via delegation!');
+    btn.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      btn.style.transform = 'scale(1)';
+    }, 150);
+
+    const popup = document.getElementById("popup-modal");
+
+    if(event.target.id === 'acceptButton'){
+      document.cookie = "age_verified=true; path=/; max-age=" + 60*60*24*30 + "; Secure; SameSite=None";
+      if(document.cookie.split('; ').find(row => row.startsWith('age_verified='))?.split('=')[1] === 'true'){
+        popup.style.display = "none";
+        const data = {
+          verified: true,
+          shop: document.querySelector('[data-my-app-embed]')?.dataset.store
+        };
+
+        try {
+          const response = await fetch('http://localhost:8001/analytics/add-analytics', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          });
+          console.log("Analytics data sent successfully.", response);
+        } catch (error) {
+          console.error("Failed to send analytics data:", error);
+        }
+        
+      }
+    }else if(event.target.id === 'rejectButton'){
+      document.cookie = "age_verified=false; path=/; max-age=" + 60*60*24*30 + "; Secure; SameSite=None";
+      if(document.cookie.split('; ').find(row => row.startsWith('age_verified='))?.split('=')[1] === 'false'){
+        popup.style.display = "flex";
+
+        const data = {
+          verified: false,
+          shop: document.querySelector('[data-my-app-embed]')?.dataset.store
+        };
+
+        try {
+          const response = await fetch('http://localhost:8001/analytics/add-analytics', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          });
+          console.log("Analytics data sent successfully.", response);
+        } catch (error) {
+          console.error("Failed to send analytics data:", error);
+        }
+      }
+    }
+  }
 }
