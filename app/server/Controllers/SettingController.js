@@ -8,9 +8,6 @@ const addSettingData = async (req, res) => {
 
   const isUser = await User.findOne({ host: shop });
 
-  console.log("isUser : " , isUser);
-  
-
   if (!isUser) {
     return res.status(404).send({ messgae: "Shop Is Not Found." });
   }
@@ -34,6 +31,9 @@ const addSettingData = async (req, res) => {
 
   const htmlContent = req.body.htmlContent
 
+  console.log("req.files : ", req.files);
+  
+
   const parseAndAttachImage = (key, fileKey) => {
     setting[key] = JSON.parse(setting[key] || "{}");    
     if (req?.files?.[fileKey]?.[0]) {
@@ -56,8 +56,8 @@ const addSettingData = async (req, res) => {
   // console.log("htmlontent : " , htmlContent);
   
   const isPresent = await Setting.findOne({ shop_name: shop });
-  console.log("isPresent : " , isPresent);
-  
+  console.log("isPresent : " , isPresent.settings.popUpBackground);
+    console.log("isPresent : " , isPresent.settings.outerPopUpBackground);
   let settingData;
   if (isPresent) {
     settingData = await Setting.updateOne(
@@ -77,9 +77,6 @@ const addSettingData = async (req, res) => {
       html_content: htmlContent
     });
   }
-
-  console.log("settingData : " , settingData);
-  
 
   if (!settingData) {
     return res.status(404).send({ messgae: "Setting Is Failed to Add." });

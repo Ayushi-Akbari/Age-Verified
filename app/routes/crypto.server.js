@@ -1,3 +1,4 @@
+// app/utils/encryption.server.js
 import crypto from 'crypto';
 
 const algorithm = 'aes-256-cbc';
@@ -6,7 +7,7 @@ const secretKey = process.env.ENCRYPTION_SECRET_KEY;
 const secretIv = process.env.ENCRYPTION_SECRET_IV;
 
 if (!secretKey || !secretIv) {
-  throw new Error('Missing ENCRYPTION_SECRET_KEY or ENCRYPTION_SECRET_IV in environment');
+  throw new Error('Missing encryption secrets in environment variables');
 }
 
 const key = crypto.createHash('sha256').update(secretKey).digest();

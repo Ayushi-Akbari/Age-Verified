@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useFetcher } from "@remix-run/react";
 import {
   Button,
@@ -7,7 +7,8 @@ import {
 } from "@shopify/polaris";
 import axios from 'axios'
 import NavMenu from "app/component/navMenu";
-import webhookSubscription from "./webhook";
+import webhookSubscription from "./webhook.server";
+import { constants } from "buffer";
 
 export const action = async ({ request }) => {
   const formData = await request.formData();
@@ -35,14 +36,11 @@ export const action = async ({ request }) => {
   }
   
   const response = await axios.post(url, credential);
-
   if (response.status !== 200) {
     return {msg: response.error , status : 404};
   }
-
   const access_token = response.data.access_token
 
-  // Shop detail from graphql
   const query = `
   query ShopName {
   shop {
@@ -100,7 +98,6 @@ export const action = async ({ request }) => {
   }
 
   const json = await shopResponse.json();
-  
   const userData = json.data
 
  // Shop detail store to database
@@ -125,7 +122,6 @@ export const action = async ({ request }) => {
   }
 
     const res = await axios.post("http://localhost:8001/user/add-shop", data)
-
     if(res.status !== 200){
       return {msg: shopResponse.error , status : 404};
     }
@@ -133,48 +129,73 @@ export const action = async ({ request }) => {
     if(!shop || !access_token || !res.data.userData._id){
       throw new Error("Shop, access token or user ID is missing or null!");
     }
-
     const result = await webhookSubscription(shop, access_token, res.data.userData._id )
     console.log("result : " , result);
-
-    // const ScriptData = await axios.post(`https://${shop}/admin/api/2025-04/script_tags.json`, {
-    //   script_tag: {
-    //     event: 'onload',
-    //     src: `https://${shop}/app/routes/age-verification.js`
-    //   }
-    // }, {
-    //   headers: {
-    //     'X-Shopify-Access-Token': access_token,
-    //     'Content-Type': 'application/json'
-    //   }
-    // });
-
-    // console.log("Script Data : ", ScriptData.data);
-    
-    
 
   return {data:res.data, access_token: access_token}
 };
 
 export default function Index() {
   const startTime = performance.now();
+  const fetcher = useFetcher();
 
   const [message, setMessage] = useState(null);
+  const submitted = useRef(false);
+
+ useEffect(() => {
+  console.log("inside first useEffect");
+  
+    if (!submitted.current) {
+      submitted.current = true;
+      (async () => {
+        try {
+          const idToken = await shopify.idToken();
+          const url = new URL(window.location.href);
+          const shop = url.searchParams.get("shop");
+
+          const { granted } = await shopify.scopes.query();
+
+          const requiredScopesString = import.meta.env.VITE_OPTIONAL_SCOPES;
+          const requiredScopes = requiredScopesString.split(",");
+          const scopeArray = requiredScopes.filter((scope) => !granted.includes(scope));
+
+          if (scopeArray.length > 0) {
+            const response = await shopify.scopes.request(scopeArray);
+
+            if (response.result === "granted-all") {
+              window.location.reload();
+            } else if (response.result === 'declined-all') {}
+          } else {
+            if (idToken && shop) {
+              fetcher.submit(
+                { id_token: idToken, shop },
+                { method: "post", action: "/app?index" },
+              );
+            }
+          }
+        } catch (error) {
+          console.error("Error getting ID token:", error);
+        }
+      })();
+    }
+
+    requestAnimationFrame(() => {
+      const endTime = performance.now();
+      const renderDuration = endTime - startTime;
+      console.log(
+        `UI design load/render time index page: ${renderDuration.toFixed(2)} ms`,
+      );
+    });
+  }, []);
 
   useEffect(() => {
+      console.log("inside 2ND useEffect");
+
     const timer = setTimeout(() => {
       setMessage('Updated after 5 seconds!');
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      const endTime = performance.now();
-      const renderDuration = endTime - startTime;
-      console.log(`UI design load/render time index page: ${renderDuration.toFixed(2)} ms`);
-    });
   }, []);
 
   console.log("hiiiiiiiiiiiiii app index");

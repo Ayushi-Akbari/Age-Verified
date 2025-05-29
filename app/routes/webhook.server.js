@@ -1,4 +1,4 @@
-import {encrypt, decrypt} from "./crypto";
+import {encrypt, decrypt} from "./crypto.server";
 import axios from "axios";
 
 const webhookSubscription = async (store_name, token, store_user_id) => {
@@ -56,8 +56,6 @@ const webhookSubscription = async (store_name, token, store_user_id) => {
     }
 
     const data = await shopResponse.json();
-    // console.log("Shopify Webhooks:", data);
-
     const webhookSubscriptions = data.data.webhookSubscriptions.edges;
 
   // Create webhook subscription
@@ -66,10 +64,8 @@ const webhookSubscription = async (store_name, token, store_user_id) => {
         const encryptedStoreUserId = encrypt(store_user_id);
         console.log("encryptedStoreUserId : " , encryptedStoreUserId);
         
-
         for (const topic of webhookEvents) {
         const fileName = `${topic.replace('/', '-')}?suid=${encodeURIComponent(encryptedStoreUserId)}`;
-        console.log("fileName : " , fileName);
         
         let topicData;
         switch (topic) {
@@ -88,7 +84,7 @@ const webhookSubscription = async (store_name, token, store_user_id) => {
 
         console.log('Registering webhook for topic:', topic, 'as', topicData, '->', fileName);
 
-        const callbackUrl = `https://64b9-2405-201-200d-173-d96b-41d0-c03b-28b.ngrok-free.app/hooks/${fileName}`;
+        const callbackUrl = `https://4a8c-2405-201-200d-173-6487-cbd4-8793-893.ngrok-free.app/hooks/${fileName}`;
 
         console.log("callbackUrl : " , callbackUrl);
 
@@ -121,8 +117,6 @@ const webhookSubscription = async (store_name, token, store_user_id) => {
             format: "JSON"
             }
         };
-
-        console.log("variables : " , variables);
         
         try {
             const response = await fetch(`https://${store_name}/admin/api/2025-04/graphql.json`, {

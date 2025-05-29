@@ -3,7 +3,7 @@
 client_id = "6473332dff158d7aab8327543871590a"
 name = "age-verification"
 handle = "age-verification-58"
-application_url = "https://softball-mysterious-it-uses.trycloudflare.com"
+application_url = "https://deck-kent-tours-doctors.trycloudflare.com"
 embedded = true
 
 [build]
@@ -21,21 +21,24 @@ api_version = "2025-04"
   topics = [ "app/uninstalled" ]
   uri = "https://imaging-reproductive-new-members.trycloudflare.com/webhooks/app/uninstalled"
 
+  [[webhooks.subscriptions]]
+  topics = [ "shop/update" ]
+  uri = "https://imaging-reproductive-new-members.trycloudflare.com/webhooks/shop/update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "themes/publish" ]
+  uri = "https://imaging-reproductive-new-members.trycloudflare.com/webhooks/themes/publish"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = ""
-optional_scopes = [
-  "read_themes",
-  "read_locales",
-  "write_themes",
-  "write_script_tags"
-]
+scopes = "read_themes"
+optional_scopes = [ "read_locales", "write_themes" ]
 
 [auth]
 redirect_urls = [
-  "https://softball-mysterious-it-uses.trycloudflare.com/auth/callback",
-  "https://softball-mysterious-it-uses.trycloudflare.com/auth/shopify/callback",
-  "https://softball-mysterious-it-uses.trycloudflare.com/api/auth/callback"
+  "https://deck-kent-tours-doctors.trycloudflare.com/auth/callback",
+  "https://deck-kent-tours-doctors.trycloudflare.com/auth/shopify/callback",
+  "https://deck-kent-tours-doctors.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

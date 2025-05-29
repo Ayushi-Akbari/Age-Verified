@@ -15,11 +15,11 @@ import {
   Thumbnail,
 } from "@shopify/polaris";
 
-const VerificationPage = forwardRef((props, ref) => {
+const Template1 = forwardRef((props, ref) => {
 
   const previewRef = useRef(null);
 
-  const {image, customization, title, description, acceptButton, rejectButton, popUp, popUpBackground, outerPopUpBackground, popUpLogo, policy, advanced, addSetting} = props
+  const {image, customization, title, description, acceptButton, rejectButton, popUp, popUpBackground, outerPopUpBackground, popUpLogo, policy, advanced, addSetting} = props.data
 
   useImperativeHandle(ref, () => ({
     getHtmlContent: () => {
@@ -100,7 +100,7 @@ const VerificationPage = forwardRef((props, ref) => {
                 backgroundRepeat: "no-repeat",
               }),
               width: "100%",
-              padding: "4rem 5rem",
+              padding: "3rem 3rem",
             }}
           >
             <div
@@ -116,14 +116,13 @@ const VerificationPage = forwardRef((props, ref) => {
                   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                   display: "flex",
                   flexDirection: "row",
-                  padding: "1rem",
                   width: `${popUp.width}px`,
                   height: `${popUp.height}px`,
                   border: "2px solid white",
                   borderWidth: `${popUp.border_width}px`,
                   borderRadius: `${popUp.border_radius}px`,
-                  paddingLeft: `${popUp.top_bottom_padding}px`,
-                  paddingRight: `${popUp.left_right_padding}px`,
+                  // paddingLeft: `${popUp.top_bottom_padding}px`,
+                  // paddingRight: `${popUp.left_right_padding}px`,
                   backgroundColor: popUpBackground.background_color,
                   borderColor: popUpBackground.border_color,
                   opacity: popUpBackground.background_opacity,
@@ -132,19 +131,19 @@ const VerificationPage = forwardRef((props, ref) => {
                 {popUpBackground.image_enabale && (
                   <div
                     style={{
-                      width: "40%",
+                      width: "45%",
                       display: "flex",
                       justifyContent: "center",
                       alignItems: "center",
-                      padding: "1rem",
+                      // padding: "1rem",
                     }}
                   >
                     {popUpBackground.image ? (
                       <img
                         src={popUpBackground.image}
                         style={{
-                          width: "100px",
-                          height: "100px",
+                          width: "100%",
+                          height: "100%",
                           objectFit: "cover",
                         }}
                         alt="Popup background"
@@ -155,12 +154,15 @@ const VerificationPage = forwardRef((props, ref) => {
 
                 <div
                   style={{
-                    width: popUpBackground.image_enabale ? "60%" : "100%",
+                    width: popUpBackground.image_enabale ? "55%" : "100%",
                     padding: "1rem",
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "center",
+                    paddingTop: "2.5rem",
+                    // justifyContent: "center",
                     alignItems: "center",
+                    marginLeft: "1rem",
+                    textAlign: "center",
                   }}
                 >
                   {popUpLogo.show_logo && (
@@ -213,89 +215,113 @@ const VerificationPage = forwardRef((props, ref) => {
 
                   <span
                     style={{
+                      display: "inline-block",
                       fontWeight: Number(description.text_weight),
                       fontSize: `${description.text_size}px`,
                       fontFamily: description.fonts,
                       color: description.text_color,
+                      // maxWidth: "90%",
+                      lineHeight: "1.5",
                     }}
                   >
                     {description.text}
                   </span>
 
-                  {customization.verify_method === 'via-birthdate' && (
-                    <div style={{ display: "flex", alignItems: "center", marginTop: "8px", padding: "5px" }}>
-                    <div style={{display: "flex", flexDirection: customization.date_fromat === 'european_date' ? "row" : "row-reverse" }}>
-                    <select
-                      id="dateSelect"
-                      style={{
-                        padding: "5px 3px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                        color: "#000",
-                        fontSize: "14px",
-                        marginRight: "8px",
-                        cursor: "pointer",
-                      }}
-                      value={selectedDay}
-                      onChange={(e) => setDay(e.target.value)}
-                    >
-                      {range(31).map((day) => (
-                        <option key={day} value={day}>
-                          {day}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      id="monthSelect"
-                      style={{
-                        padding: "5px 8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                        color: "#000",
-                        fontSize: "14px",
-                        marginRight: "8px",
-                        cursor: "pointer",
-                      }}
-                      value={selectedMonth}
-                      onChange={(e) => setMonth(e.target.value)}
-                    >
-                      {range(12).map((month) => (
-                        <option key={month} value={month}>
-                          {month}
-                        </option>
-                      ))}
-                    </select>
-                    </div>
-                    <select
-                      id="yearSelect"
-                      style={{
-                        padding: "5px 8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                        color: "#000",
-                        fontSize: "14px",
-                        marginRight: "8px",
-                        cursor: "pointer",
-                      }}
-                      value={selectedYear}
-                      onChange={(e) => setYear(e.target.value)}
-                    >
-                      {range(100, 0, true).map((year) => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                    </div>
-                  )}
-
-                  <div style={{ marginTop: "1rem", width: "100%" }}>
+                  {customization.verify_method === "via-birthdate" && (
                     <div
                       style={{
                         display: "flex",
-                        flexDirection: "column",
-                        rowGap: "1rem",
+                        alignItems: "center",
+                        marginTop: "8px",
+                        padding: "5px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection:
+                            customization.date_fromat === "european_date"
+                              ? "row"
+                              : "row-reverse",
+                        }}
+                      >
+                        <select
+                          id="dateSelect"
+                          style={{
+                            padding: "7px 12px",
+                            borderRadius: "4px",
+                            border: "1px solid #ccc",
+                            color: "#000",
+                            fontSize: "14px",
+                            marginRight: "8px",
+                            cursor: "pointer",
+                          }}
+                          value={selectedDay}
+                          onChange={(e) => setDay(e.target.value)}
+                        >
+                          {range(31).map((day) => (
+                            <option key={day} value={day}>
+                              {day}
+                            </option>
+                          ))}
+                        </select>
+
+                        <select
+                          id="monthSelect"
+                          style={{
+                            padding: "7px 20px",
+                            borderRadius: "4px",
+                            border: "1px solid #ccc",
+                            color: "#000",
+                            fontSize: "14px",
+                            marginRight: "8px",
+                            cursor: "pointer",
+                          }}
+                          value={selectedMonth}
+                          onChange={(e) => setMonth(e.target.value)}
+                        >
+                          {range(12).map((month) => (
+                            <option key={month} value={month}>
+                              {month}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <select
+                        id="yearSelect"
+                        style={{
+                          padding: "7px 20px",
+                          borderRadius: "4px",
+                          border: "1px solid #ccc",
+                          color: "#000",
+                          fontSize: "14px",
+                          marginRight: "8px",
+                          cursor: "pointer",
+                        }}
+                        value={selectedYear}
+                        onChange={(e) => setYear(e.target.value)}
+                      >
+                        {range(100, 0, true).map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      marginTop: "1rem",
+                      width: "100%",
+                      display: "flex",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        columnGap: "1rem",
+                        justifyContent: "center",
                         alignItems: "center",
                         width: "100%",
                       }}
@@ -303,11 +329,8 @@ const VerificationPage = forwardRef((props, ref) => {
                       <button
                         id="rejectButton"
                         style={{
-                          paddingTop: "0.375rem",
-                          paddingBottom: "0.375rem",
                           transform: "scale(1)",
                           transition: "transform 0.1s",
-                          width: popUpBackground.image_enabale ? "100%" : "60%",
                           fontSize: `${rejectButton.text_size}px`,
                           color: rejectButton.text_color,
                           backgroundColor: rejectButton.background_color,
@@ -316,6 +339,8 @@ const VerificationPage = forwardRef((props, ref) => {
                           borderRadius: `${rejectButton.border_radius}px`,
                           fontWeight: Number(rejectButton.text_weight),
                           fontFamily: rejectButton.fonts,
+                          padding: "0.6rem 1.5rem",
+                          width: "fit-content",
                         }}
                       >
                         {rejectButton.text}
@@ -324,11 +349,8 @@ const VerificationPage = forwardRef((props, ref) => {
                       <button
                         id="acceptButton"
                         style={{
-                          paddingTop: "0.375rem",
-                          paddingBottom: "0.375rem",
                           transform: "scale(1)",
                           transition: "transform 0.1s",
-                          width: popUpBackground.image_enabale ? "100%" : "60%",
                           fontSize: `${acceptButton.text_size}px`,
                           color: acceptButton.text_color,
                           backgroundColor: acceptButton.background_color,
@@ -337,6 +359,8 @@ const VerificationPage = forwardRef((props, ref) => {
                           borderRadius: `${acceptButton.border_radius}px`,
                           fontWeight: Number(acceptButton.text_weight),
                           fontFamily: acceptButton.fonts,
+                          padding: "0.6rem 1.5rem",
+                          width: "fit-content",
                         }}
                       >
                         {acceptButton.text}
@@ -359,6 +383,6 @@ const VerificationPage = forwardRef((props, ref) => {
   
 });
 
-export default VerificationPage;
+export default Template1;
 
  

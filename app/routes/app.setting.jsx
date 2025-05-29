@@ -15,25 +15,27 @@ import {
   AppProvider
 } from "@shopify/polaris";
 import { useEffect, useState, useCallback, useRef  } from "react";
-import VerificationCard from "./app.verificationCard";
+import Template1 from "./app.template1";
 import Template2 from "./app.template2";
+import Template3 from "./app.template3";
+import Template4 from "./app.template4";
+import Template5 from "./app.template5";
 import { Trash2, Info, AlertCircle  } from "lucide-react";
 import { authenticate } from "../shopify.server";
 import { useLoaderData } from "@remix-run/react";
 import axios from 'axios';
 
 export async function loader({ request }) {
-  const { admin } = await authenticate.admin(request);
-  const shopParam = new URL(request.url).searchParams.get("shop");
+  const { admin } = await authenticate.admin(request);  
+  const shop = new URL(request.url).searchParams.get("shop");
   
-  return {admin, shopParam}
+  return {admin, shop}
 }
 
 export default function Setting() {
   const startTime = performance.now(); 
   const verificationRef = useRef(null);
-
-  const {shopParam} = useLoaderData()
+  const {shop} = useLoaderData()
   const [hasChanges, setHasChanges] = useState(false);
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null)
@@ -152,7 +154,7 @@ export default function Setting() {
     return () => {
       isCancelled = true;
     };
-  }, [shopParam]);
+  }, [shop]);
 
   useEffect(() => {
     import("react-quill").then((mod) => {
@@ -160,7 +162,7 @@ export default function Setting() {
       import("react-quill/dist/quill.snow.css");
     });
 
-    console.log("store Name : ", shopParam);
+    console.log("store Name : ", shop);
 
     console.log("outerPopUpBackground : " , outerPopUpBackground);
     
@@ -289,7 +291,7 @@ export default function Setting() {
   };
 
   const fetchData = async () => {
-    const data = await axios.get(`http://localhost:8001/setting/get-setting?shop=${shopParam}`)
+    const data = await axios.get(`http://localhost:8001/setting/get-setting?shop=${shop}`)
     if(data){
       const settingData = data.data.data.settings
       const parsedSetting = {
@@ -310,7 +312,7 @@ export default function Setting() {
         market: settingData.market ? settingData.market: null
       };
 
-      console.log("parsedSetting : ", parsedSetting);
+      // console.log("parsedSetting : ", parsedSetting);
        
       parsedSetting.customization && setCustomization(parsedSetting.customization);
       parsedSetting.title && setTitle(parsedSetting.title);
@@ -327,8 +329,19 @@ export default function Setting() {
       parsedSetting.monthlyAnalysis && setMonthlyAnalysis(parsedSetting.monthlyAnalysis);
       parsedSetting.market && setMarket(parsedSetting.market);
 
+      console.log("..............................................");
+      
 
-      console.log("outerPopUpBackground inside fetch : " , popUpLogo);
+      console.log("popup logo inside fetch : ", popUpLogo);
+
+      console.log("PopUpBackground inside fetch : ", popUpBackground);
+
+      console.log("outerPopUpBackground inside fetch : ", outerPopUpBackground);
+
+
+        console.log("..............................................");
+
+
       
 
       if (parsedSetting.popUpBackground.image) {
@@ -365,11 +378,7 @@ export default function Setting() {
 
   const addSetting = async () => {
 
-    console.log("shopParam : ", shopParam);
-    console.log("outerPopUpBackground : " , outerPopUpBackground);
-
     const htmlContent = verificationRef.current?.getHtmlContent();
-    console.log("htmlContent:", htmlContent);
     
     const removeImages = (obj) => {
       console.log("obj : ", obj);
@@ -384,26 +393,23 @@ export default function Setting() {
     };    
     const formData = new FormData();
 
-    console.log("customization",customization)
-    console.log("title",title)
-    console.log("description",description)
-    console.log("acceptButton",acceptButton)
-    console.log("rejectButton",rejectButton)
-    console.log("popUp",popUp)
+    console.log("----------------------------------");
+    
     console.log("outerPopUpBackground", outerPopUpBackground)
-    console.log("popUpLogo", popUpLogo)
-    console.log("popUpBackground", popUpBackground)
-    console.log("policy",policy)
-    console.log("advanced",advanced)
-    console.log("displayCriteria",displayCriteria)
-    // console.log("market",market)
-    // console.log("monthlyAnalysis",monthlyAnalysis)
 
+    console.log("popUpBackground", popUpBackground)
+
+    console.log("popUpLogo", popUpLogo);
+
+    formData.append("popUpLogoImage", popUpLogo.imageFile)
     formData.append("popUpBackgroundImage", popUpBackground.imageFile)
     formData.append("outerPopUpBackgroundImage", outerPopUpBackground.imageFile)
-    formData.append("popUpLogoImage", popUpLogo.imageFile)
+
 
     console.log("popUpLogo.imageFile : ", popUpLogo.imageFile);
+
+        console.log("----------------------------------");
+
     
     formData.append("customization", JSON.stringify(customization));
     formData.append("title", JSON.stringify(title));
@@ -426,7 +432,7 @@ export default function Setting() {
     }
 
     const response = await axios.post(
-      `http://localhost:8001/setting/add-setting?shop=${shopParam}`,
+      `http://localhost:8001/setting/add-setting?shop=${shop}`,
       formData,
     );
 
@@ -439,13 +445,30 @@ export default function Setting() {
   const removeSetting = async () =>{
     window.location.reload();
   }
+
+  const data = {
+  image,
+  customization,
+  title,
+  description,
+  acceptButton,
+  rejectButton,
+  popUp,
+  popUpBackground,
+  outerPopUpBackground,
+  popUpLogo,
+  policy,
+  advanced,
+  ref: verificationRef,
+};
   
   return (
     <AppProvider>
       <Page fullWidth>
-        <div className="flex flex-col-reverse lg:flex-row w-full min-h-screen">
+        {/* in first 3 div change sm to lg */}
+        <div className="flex flex-col-reverse sm:flex-row w-full min-h-screen">
           {/* Left Section */}
-          <div className="w-full lg:w-[38%] p-2 space-y-8">
+          <div className="w-full sm:w-[38%] p-2 space-y-8">
             <Text variant="headingXl" as="h1">
               Settings
             </Text>
@@ -585,25 +608,33 @@ export default function Setting() {
                       inputMode="numeric"
                       value={customization.age}
                       onChange={(value) => {
-
                         console.log("customization.age : ", customization.age);
-                        const age = customization.age
-                        
-                        console.log("value : " , value);
-                        
+                        const age = customization.age;
+
+                        console.log("value : ", value);
+
                         setRejectButton((prev) => ({
                           ...prev,
-                          text: rejectButtonText.replace("{{minimum_age}}", value)
+                          text: rejectButtonText.replace(
+                            "{{minimum_age}}",
+                            value,
+                          ),
                         }));
 
                         setAcceptButton((prev) => ({
                           ...prev,
-                          text: acceptButtonText.replace("{{minimum_age}}", value)
+                          text: acceptButtonText.replace(
+                            "{{minimum_age}}",
+                            value,
+                          ),
                         }));
 
                         setDescription((prev) => ({
                           ...prev,
-                          text: descriptionText.replace("{{minimum_age}}", value)
+                          text: descriptionText.replace(
+                            "{{minimum_age}}",
+                            value,
+                          ),
                         }));
 
                         handleSectionChange("customization", "age", value);
@@ -612,7 +643,6 @@ export default function Setting() {
                         console.log("acceptButton.text : ", acceptButton.text);
                         console.log("description.text : ", description.text);
                         console.log("customization.age : ", customization.age);
-                        
                       }}
                       suffix="Year(s)"
                     />
@@ -920,8 +950,8 @@ export default function Setting() {
                         const text = value.replace(
                           "{{minimum_age}}",
                           customization.age,
-                        )
-                          handleSectionChange("acceptButton", "text", text);
+                        );
+                        handleSectionChange("acceptButton", "text", text);
                         setAcceptButtonText(value);
                       }}
                     />
@@ -1130,8 +1160,8 @@ export default function Setting() {
                         const text = value.replace(
                           "{{minimum_age}}",
                           customization.age,
-                        )
-                          handleSectionChange("rejectButton", "text", text);
+                        );
+                        handleSectionChange("rejectButton", "text", text);
                         setRejectButtonText(value);
                       }}
                     />
@@ -1395,7 +1425,7 @@ export default function Setting() {
                       <TextField
                         // label="Border Width"
                         label={
-                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]"> 
+                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
                             Border Width
                           </span>
                         }
@@ -1412,7 +1442,7 @@ export default function Setting() {
                       <TextField
                         // label="Top And Bottom Padding"
                         label={
-                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px] "> 
+                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px] ">
                             Top And Bottom Padding
                           </span>
                         }
@@ -1433,7 +1463,7 @@ export default function Setting() {
                       <TextField
                         // label="Left And Right Padding"
                         label={
-                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]"> 
+                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
                             Left And Right Padding
                           </span>
                         }
@@ -1460,11 +1490,10 @@ export default function Setting() {
                   <div className="flex gap-2 mt-2 items-start">
                     {/* Background Color */}
                     <div className="flex flex-col ">
-                      
                       <div className="flex items-center gap-1">
                         <TextField
                           label={
-                            <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]"> 
+                            <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
                               Background Color
                             </span>
                           }
@@ -1530,23 +1559,23 @@ export default function Setting() {
                     </div>
 
                     {/* Background Layer Opacity */}
-                      <TextField
-                        label={
-                          <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
-                            Background Layer Opacity
-                          </span>
-                        }
-                        value={popUpBackground.background_opacity}
-                        onChange={(value) =>
-                          handleSectionChange(
-                            "popUpBackground",
-                            "background_opacity",
-                            value,
-                          )
-                        }
-                        suffix="Px"
-                      />
-                    </div>
+                    <TextField
+                      label={
+                        <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
+                          Background Layer Opacity
+                        </span>
+                      }
+                      value={popUpBackground.background_opacity}
+                      onChange={(value) =>
+                        handleSectionChange(
+                          "popUpBackground",
+                          "background_opacity",
+                          value,
+                        )
+                      }
+                      suffix="Px"
+                    />
+                  </div>
 
                   <div>
                     <div className="w-[200px] mt-3">
@@ -1778,44 +1807,52 @@ export default function Setting() {
                         handleDropZoneDrop(acceptedFiles, "popUpLogo", "image")
                       }
                       allowMultiple={false}
+                      type="file"
+                      openFileDialogOnClick={false} // disables default click behavior
                     >
-                      <div className="relative p-[10px] flex justify-center items-center h-[100px]">
-                        {popUpLogo.image ? (
-                          <>
-                            <div
-                              className={
-                                popUpLogo.logo_square
-                                  ? "rounded-none overflow-hidden"
-                                  : "rounded-full overflow-hidden"
-                              }
-                            >
-                              <Thumbnail
-                                source={popUpLogo.image}
-                                alt="Uploaded image preview"
-                                size="large"
-                              />
-                            </div>
+                      {({ openFileDialog }) => (
+                        <div className="relative p-[10px] flex justify-center items-center h-[100px]">
+                          {popUpLogo.image ? (
+                            <>
+                              <div
+                                className={
+                                  popUpLogo.logo_square
+                                    ? "rounded-none overflow-hidden"
+                                    : "rounded-full overflow-hidden"
+                                }
+                              >
+                                <Thumbnail
+                                  source={popUpLogo.image}
+                                  alt="Uploaded image preview"
+                                  size="large"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPopUpLogo((prev) => ({
+                                    ...prev,
+                                    image: null,
+                                    imageFile: null,
+                                  }));
+                                }}
+                                className="absolute top-0 right-0 bg-white hover:bg-red-100 text-red-600 rounded-full p-1 shadow"
+                                title="Remove image"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </>
+                          ) : (
                             <button
                               type="button"
-                              onClick={() => {
-                                setPopUpLogo((prev) => ({
-                                  ...prev,
-                                  image: null,
-                                  imageFile: null,
-                                }));
-                              }}
-                              className="absolute top-0 right-0 bg-white hover:bg-red-100 text-red-600 rounded-full p-1 shadow"
-                              title="Remove image"
+                              onClick={openFileDialog}
+                              className="text-subdued text-sm"
                             >
-                              <Trash2 size={16} />
+                              Upload an image
                             </button>
-                          </>
-                        ) : (
-                          <Text variant="bodyMd" color="subdued">
-                            Upload an image
-                          </Text>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
                     </DropZone>
                   </Box>
                 )}
@@ -1861,7 +1898,7 @@ export default function Setting() {
                       variant="primary"
                       onClick={() =>
                         // console.log("coint : ", displayCriteria + 1),
-                        
+
                         handleSectionChange(
                           "displayCriteria",
                           "count",
@@ -2059,7 +2096,7 @@ export default function Setting() {
 
           {/* Right Section */}
           <div
-            className="flex flex-col w-full mb-5 lg:mt-0 lg:mb-0 lg:w-[62%] lg:h-screen lg:fixed lg:right-0 lg:top-0 lg:p-1 overflow-y-auto scrollbar-hide"
+            className="flex flex-col w-full mb-5 sm:mt-0 sm:mb-0 sm:w-[62%] sm:h-screen sm:fixed sm:right-0 sm:top-0 sm:p-1 overflow-y-auto scrollbar-hide"
             // style={{ overflowY: "auto" }}
           >
             <ui-save-bar id="my-save-bar">
@@ -2081,52 +2118,28 @@ export default function Setting() {
                 Save
               </Button>
               <Button
-              variant="primary"
-              onClick={() => {
-                console.log("Discarding...");
-                removeSetting();
-                document.getElementById("discard-button").click();
-              }}
-            >
-              Discard
-            </Button>
+                variant="primary"
+                onClick={() => {
+                  console.log("Discarding...");
+                  removeSetting();
+                  document.getElementById("discard-button").click();
+                }}
+              >
+                Discard
+              </Button>
             </div>
             <div className="px-4 pb-8">
-            {customization.layout === 'template1' ? (
-              <VerificationCard
-              image={image}
-              customization={customization}
-              title={title}
-              description={description}
-              acceptButton={acceptButton}
-              rejectButton={rejectButton}
-              popUp={popUp}
-              popUpBackground={popUpBackground}
-              outerPopUpBackground={outerPopUpBackground}
-              popUpLogo={popUpLogo}
-              policy={policy}
-              advanced={advanced}
-              ref={verificationRef}
-            />
-            ) : customization.layout === 'template2' ? (
-              <Template2
-              image={image}
-              customization={customization}
-              title={title}
-              description={description}
-              acceptButton={acceptButton}
-              rejectButton={rejectButton}
-              popUp={popUp}
-              popUpBackground={popUpBackground}
-              outerPopUpBackground={outerPopUpBackground}
-              popUpLogo={popUpLogo}
-              policy={policy}
-              advanced={advanced}
-              ref={verificationRef}
-            />
-            ) : null
-            }
-            
+              {customization.layout === "template1" ? (
+                <Template1 data={data} />
+              ) : customization.layout === "template2" ? (
+                <Template2 data={data} />
+              ) : customization.layout === "template3" ? (
+                <Template3 data={data} />
+              ) : customization.layout === "template4" ? (
+                <Template4 data={data} />
+              ) : customization.layout === "template5" ? (
+                <Template5 data={data} />
+              ) : null}
             </div>
           </div>
         </div>

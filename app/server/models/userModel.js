@@ -52,7 +52,14 @@ const UserSchema = new mongoose.Schema({
   },
   theme_id: {
     type: String
-  }
+  },
+  app_uninstall: {
+    type: Boolean,
+    default: false
+  },
+  app_uninstall_time: {
+    type: Date
+  },
 });
 
 const UserModel = mongoose.model("User", UserSchema);
