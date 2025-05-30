@@ -1,11 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useFetcher } from "@remix-run/react";
-import {
-  Button,
-  AppProvider,
-  Page,
-} from "@shopify/polaris";
-import axios from 'axios'
+import { Button, AppProvider, Page, Text, Box, Card, List } from "@shopify/polaris";
+import axios from "axios";
 import NavMenu from "app/component/navMenu";
 import webhookSubscription from "./webhook.server";
 import { constants } from "buffer";
@@ -25,7 +21,7 @@ export const action = async ({ request }) => {
       "urn:shopify:params:oauth:token-type:offline-access-token",
   };
 
-  if(!shop || !credential){
+  if (!shop || !credential) {
     throw new Error("Store name is missing or null!");
   }
 
@@ -34,12 +30,12 @@ export const action = async ({ request }) => {
   if (!url) {
     throw new Error("URL is missing or null!");
   }
-  
+
   const response = await axios.post(url, credential);
   if (response.status !== 200) {
-    return {msg: response.error , status : 404};
+    return { msg: response.error, status: 404 };
   }
-  const access_token = response.data.access_token
+  const access_token = response.data.access_token;
 
   const query = `
   query ShopName {
@@ -90,17 +86,17 @@ export const action = async ({ request }) => {
       body: JSON.stringify({
         query: query,
       }),
-    }
+    },
   );
 
   if (shopResponse.status !== 200) {
-    return {msg: shopResponse.error , status : 404};
+    return { msg: shopResponse.error, status: 404 };
   }
 
   const json = await shopResponse.json();
-  const userData = json.data
+  const userData = json.data;
 
- // Shop detail store to database
+  // Shop detail store to database
   const data = {
     email: userData.shop.email,
     token_id: id_token,
@@ -119,20 +115,24 @@ export const action = async ({ request }) => {
     shopLocales_primary: userData.shopLocales[0].primary,
     shopLocales_locale: userData.shopLocales[0].locale,
     theme_id: userData.themes.nodes[0].id,
+  };
+
+  const res = await axios.post("http://localhost:8001/user/add-shop", data);
+  if (res.status !== 200) {
+    return { msg: shopResponse.error, status: 404 };
   }
 
-    const res = await axios.post("http://localhost:8001/user/add-shop", data)
-    if(res.status !== 200){
-      return {msg: shopResponse.error , status : 404};
-    }
-    
-    if(!shop || !access_token || !res.data.userData._id){
-      throw new Error("Shop, access token or user ID is missing or null!");
-    }
-    const result = await webhookSubscription(shop, access_token, res.data.userData._id )
-    console.log("result : " , result);
+  if (!shop || !access_token || !res.data.userData._id) {
+    throw new Error("Shop, access token or user ID is missing or null!");
+  }
+  const result = await webhookSubscription(
+    shop,
+    access_token,
+    res.data.userData._id,
+  );
+  console.log("result : ", result);
 
-  return {data:res.data, access_token: access_token}
+  return { data: res.data, access_token: access_token };
 };
 
 export default function Index() {
@@ -142,9 +142,7 @@ export default function Index() {
   const [message, setMessage] = useState(null);
   const submitted = useRef(false);
 
- useEffect(() => {
-  console.log("inside first useEffect");
-  
+  useEffect(() => {
     if (!submitted.current) {
       submitted.current = true;
       (async () => {
@@ -157,14 +155,17 @@ export default function Index() {
 
           const requiredScopesString = import.meta.env.VITE_OPTIONAL_SCOPES;
           const requiredScopes = requiredScopesString.split(",");
-          const scopeArray = requiredScopes.filter((scope) => !granted.includes(scope));
+          const scopeArray = requiredScopes.filter(
+            (scope) => !granted.includes(scope),
+          );
 
           if (scopeArray.length > 0) {
             const response = await shopify.scopes.request(scopeArray);
 
             if (response.result === "granted-all") {
               window.location.reload();
-            } else if (response.result === 'declined-all') {}
+            } else if (response.result === "declined-all") {
+            }
           } else {
             if (idToken && shop) {
               fetcher.submit(
@@ -189,10 +190,8 @@ export default function Index() {
   }, []);
 
   useEffect(() => {
-      console.log("inside 2ND useEffect");
-
     const timer = setTimeout(() => {
-      setMessage('Updated after 5 seconds!');
+      setMessage("Updated after 5 seconds!");
     }, 5000);
 
     return () => clearTimeout(timer);
@@ -203,13 +202,39 @@ export default function Index() {
   return (
     <AppProvider>
       <Page>
-        <Button>
-          {message ? message : "Loding ...."}
-        </Button>
-        Dashboard content here...
+        <div className="p-4 space-y-8">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold text-gray-700 font-sans">
+              Dashboard
+            </h1>
+            <button className="px-4 py-2 bg-white text-black rounded-md border border-gray-300 hover:bg-gray-100 transition">
+              Support
+            </button>
+          </div>
+
+          <div>
+            <Box>
+              <Card padding="0">
+                <div className="bg-green-800 text-white p-2.5">
+                  AgeX is Enabled
+                </div>
+
+                <div className="px-4 py-3">
+                  <List>
+                    <List.Item>
+                      AgeX is Currently Enabled on Your Store.
+                    </List.Item>
+                  </List>
+                  <div className="mt-3">
+                      <Button large>Disable App</Button>
+                  </div>
+                  
+                </div>
+              </Card>
+            </Box>
+          </div>
+        </div>
       </Page>
     </AppProvider>
   );
 }
-
-

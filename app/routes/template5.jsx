@@ -25,7 +25,6 @@ const Template5 = forwardRef((props, ref) => {
   const previewRef = useRef(null);
 
   const {
-    image,
     customization,
     title,
     description,
@@ -60,9 +59,9 @@ const Template5 = forwardRef((props, ref) => {
   const [selectedMonth, setMonth] = useState("1");
   const [selectedYear, setYear] = useState(`${currentYear}`);
 
-  console.log("popUpLogo : ", popUpLogo);
-  console.log("popUpBackground : ", popUpBackground);
-  console.log("popUpOuter : ", outerPopUpBackground);
+  // console.log("popUpLogo : ", popUpLogo);
+  // console.log("popUpBackground : ", popUpBackground);
+  // console.log("popUpOuter : ", outerPopUpBackground);
 
   const selectStyle = {
     padding: "5px 12px",
@@ -326,26 +325,6 @@ const Template5 = forwardRef((props, ref) => {
                         }}
                       >
                         <button
-                          id="rejectButton"
-                          style={{
-                            transform: "scale(1)",
-                            transition: "transform 0.1s",
-                            fontSize: `${rejectButton.text_size}px`,
-                            color: rejectButton.text_color,
-                            backgroundColor: rejectButton.background_color,
-                            borderWidth: `${rejectButton.border_width}px`,
-                            borderColor: rejectButton.border_color,
-                            borderRadius: `${rejectButton.border_radius}px`,
-                            fontWeight: Number(rejectButton.text_weight),
-                            fontFamily: rejectButton.fonts,
-                            padding: "0.6rem 1.5rem",
-                            width: "fit-content",
-                          }}
-                        >
-                          {rejectButton.text}
-                        </button>
-
-                        <button
                           id="acceptButton"
                           style={{
                             transform: "scale(1)",
@@ -364,15 +343,35 @@ const Template5 = forwardRef((props, ref) => {
                         >
                           {acceptButton.text}
                         </button>
+                        
+                        <button
+                          id="rejectButton"
+                          style={{
+                            transform: "scale(1)",
+                            transition: "transform 0.1s",
+                            fontSize: `${rejectButton.text_size}px`,
+                            color: rejectButton.text_color,
+                            backgroundColor: rejectButton.background_color,
+                            borderWidth: `${rejectButton.border_width}px`,
+                            borderColor: rejectButton.border_color,
+                            borderRadius: `${rejectButton.border_radius}px`,
+                            fontWeight: Number(rejectButton.text_weight),
+                            fontFamily: rejectButton.fonts,
+                            padding: "0.6rem 1.5rem",
+                            width: "fit-content",
+                          }}
+                        >
+                          {rejectButton.text}
+                        </button>
                       </div>
                     </div>
 
-                    <div
-                      dangerouslySetInnerHTML={{ __html: policy.text }}
-                      style={{
-                        marginTop: "1.25rem",
-                      }}
-                    />
+                    {policy.checked && (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: policy.text }}
+                        style={{ marginTop: "1.25rem" }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

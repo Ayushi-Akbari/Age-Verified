@@ -39,10 +39,6 @@ const addSettingData = async (req, res) => {
     if (req?.files?.[fileKey]?.[0]) {
       setting[key].image = `/image/${req.files[fileKey][0].filename}`;
       // setting[key].imageFile = null
-    }else{
-      setting[key].image = null
-      // setting[key].imageFile = null
-
     }
     setting[key] = JSON.stringify(setting[key]);
 
@@ -53,11 +49,14 @@ const addSettingData = async (req, res) => {
   parseAndAttachImage("outerPopUpBackground", "outerPopUpBackgroundImage");
   parseAndAttachImage("popUpLogo", "popUpLogoImage");
 
+    console.log("isPresent : " , setting.popUpBackground);
+    console.log("isPresent : " , setting.outerPopUpBackground);
+        console.log("isPresent : " , setting.popUpLogo);
+
   // console.log("htmlontent : " , htmlContent);
   
   const isPresent = await Setting.findOne({ shop_name: shop });
-  console.log("isPresent : " , isPresent.settings.popUpBackground);
-    console.log("isPresent : " , isPresent.settings.outerPopUpBackground);
+
   let settingData;
   if (isPresent) {
     settingData = await Setting.updateOne(

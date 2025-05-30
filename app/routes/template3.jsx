@@ -15,11 +15,11 @@ import {
   Thumbnail,
 } from "@shopify/polaris";
 
-const Template2 = forwardRef((props, ref) => {
+const Template3 = forwardRef((props, ref) => {
 
   const previewRef = useRef(null);
 
-  const {image, customization, title, description, acceptButton, rejectButton, popUp, popUpBackground, outerPopUpBackground, popUpLogo, policy, advanced, addSetting} = props.data
+  const { customization, title, description, acceptButton, rejectButton, popUp, popUpBackground, outerPopUpBackground, popUpLogo, policy, advanced, addSetting} = props.data
 
   useImperativeHandle(ref, () => ({
     getHtmlContent: () => {
@@ -41,9 +41,9 @@ const Template2 = forwardRef((props, ref) => {
   const [selectedMonth, setMonth] = useState('1');
   const [selectedYear, setYear] = useState(`${currentYear}`);
 
-    console.log("popUpLogo : ", popUpLogo);
-  console.log("popUpBackground : ", popUpBackground);
-  console.log("popUpOuter : ", outerPopUpBackground);
+  //   console.log("popUpLogo : ", popUpLogo);
+  // console.log("popUpBackground : ", popUpBackground);
+  // console.log("popUpOuter : ", outerPopUpBackground);
 
   const selectStyle = {
     padding: '5px 12px',
@@ -104,8 +104,7 @@ const Template2 = forwardRef((props, ref) => {
                   backgroundRepeat: "no-repeat",
                 }),
                 width: "100%",
-                padding: "2rem 3rem",
-                paddingTop: "5rem",
+                padding: "3rem 3rem",
               }}
             >
               <div
@@ -114,47 +113,15 @@ const Template2 = forwardRef((props, ref) => {
                   justifyContent: "center",
                   alignItems: "center",
                   width: "100%",
-                  position: "relative",
                 }}
               >
-                {popUpLogo.image && popUpLogo.show_logo && !popUpBackground.image_enabale && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "-50px",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      width: "100px",
-                      height: "100px",
-                      borderRadius: popUpLogo.logo_square ? "0" : "50%",
-                      overflow: "hidden",
-                      zIndex: 10,
-                      boxShadow: "0 0 4px rgba(0,0,0,0.2)",
-                    }}
-                  >
-                    <img
-                      src={popUpLogo.image}
-                    // src="http://localhost:8001/image/1748424761385-322912408.png"
-                      alt="Popup Logo"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        borderRadius: popUpLogo.logo_square ? "0" : "9999px",
-                      }}
-                    />
-                  </div>
-                )}
                 <div
                   style={{
                     boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                     display: "flex",
                     flexDirection: "column",
                     width: `${popUp.width}px`,
-                    height: popUpBackground?.image_enabale
-                      ? `${parseFloat(popUp.height) * 1.4}px`
-                      : `${popUp.height}px`,
-
+                    height: `${popUp.height}px`,
                     border: "2px solid white",
                     borderWidth: `${popUp.border_width}px`, //630
                     borderRadius: `${popUp.border_radius}px`,
@@ -163,56 +130,53 @@ const Template2 = forwardRef((props, ref) => {
                     opacity: popUpBackground.background_opacity,
                     justifyContent: "center",
                     alignItems: "center",
+                    ...(popUpBackground.image_enabale && {
+                    backgroundImage: `url(${popUpBackground.image})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                    }),
                   }}
                 >
-                  {popUpBackground.image_enabale && (
-                    <>
-                      {/* Background Image Section */}
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "35%",
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                        }}
-                      >
-                        {popUpBackground.image ? (
-                          <img
-                            src={popUpBackground.image}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                            alt="Popup background"
-                          />
-                        ) : null}
-                      </div>
-
-                      {/* Logo in between */}
-                      {popUpLogo.image && popUpLogo.show_logo && (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxSizing: "border-box",
+                      padding: `${Number(popUp.top_bottom_padding)}px ${Number(popUp.left_right_padding)}px`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        justifyContent: "flex-start",
+                        width: "100%",
+                        textAlign: "left",
+                        height: "130px",
+                        boxSizing: "border-box",
+                        padding: popUpLogo.show_logo ? "0 1rem" : "0 4rem"
+                      }}
+                    >
+                      {popUpLogo.show_logo && (
                         <div
                           style={{
                             display: "flex",
                             justifyContent: "center",
                             alignItems: "center",
-                            marginTop: "-45px",
-                            zIndex: 10,
+                            padding: "1rem",
+                            width: "130px",
+                            height: "130px",
+                            flexShrink: 0,
                           }}
                         >
-                          <div
-                            style={{
-                              width: "100px",
-                              height: "100px",
-                              borderRadius: popUpLogo.logo_square ? "0" : "50%",
-                              overflow: "hidden",
-                              boxShadow: "0 0 4px rgba(0,0,0,0.2)",
-                            }}
-                          >
+                          {popUpLogo.image ? (
                             <img
                               src={popUpLogo.image}
-                              alt="Popup Logo"
                               style={{
                                 width: "100%",
                                 height: "100%",
@@ -221,53 +185,51 @@ const Template2 = forwardRef((props, ref) => {
                                   ? "0"
                                   : "9999px",
                               }}
+                              alt="Popup Logo"
                             />
-                          </div>
+                          ) : (
+                            <div style={{ width: "100%", height: "100%" }} />
+                          )}
                         </div>
                       )}
-                    </>
-                  )}
 
-                  <div
-                    style={{
-                      width: "100%",
-                      minHeight: popUpBackground.image_enabale ? "65%" : "100%",
-                      height: "auto",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      boxSizing: "border-box",
-                      padding: `${Number(popUp.top_bottom_padding)}px ${Number(popUp.left_right_padding)}px`,
-                    }}
-                  >
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                          alignItems: "flex-start",
+                          maxWidth: "600px",
+                          boxSizing: "border-box",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: Number(title.text_weight),
+                            fontSize: `${title.text_size}px`,
+                            fontFamily: title.fonts,
+                            color: title.text_color,
+                            marginBottom: "25px",
+                            display: "block",
+                          }}
+                        >
+                          {title.text}
+                        </span>
 
-                    <span
-                      style={{
-                        display: "block",
-                        fontWeight: Number(title.text_weight),
-                        fontSize: `${title.text_size}px`,
-                        fontFamily: title.fonts,
-                        color: title.text_color,
-                        marginBottom: "20px",
-                        ...((!popUpBackground.image_enabale && {marginTop: "3rem"}))
-                      }}
-                    >
-                      {title.text}
-                    </span>
-
-                    <span
-                      style={{
-                        fontWeight: Number(description.text_weight),
-                        fontSize: `${description.text_size}px`,
-                        fontFamily: description.fonts,
-                        color: description.text_color,
-                        paddingInline: "2rem",
-                        marginBottom: "8px",
-                        textAlign: "center",
-                      }}
-                    >
-                      {description.text}
-                    </span>
+                        <span
+                          style={{
+                            fontWeight: Number(description.text_weight),
+                            fontSize: `${description.text_size}px`,
+                            fontFamily: description.fonts,
+                            color: description.text_color,
+                            marginBottom: "0px",
+                            display: "block",
+                          }}
+                        >
+                          {description.text}
+                        </span>
+                      </div>
+                    </div>
 
                     {customization.verify_method === "via-birthdate" && (
                       <div
@@ -369,24 +331,6 @@ const Template2 = forwardRef((props, ref) => {
                           width: "100%",
                         }}
                       >
-                        <button
-                          id="rejectButton"
-                          style={{
-                            transform: "scale(1)",
-                            transition: "transform 0.1s",
-                            fontSize: `${rejectButton.text_size}px`,
-                            color: rejectButton.text_color,
-                            backgroundColor: rejectButton.background_color,
-                            borderWidth: `${rejectButton.border_width}px`,
-                            borderColor: rejectButton.border_color,
-                            borderRadius: `${rejectButton.border_radius}px`,
-                            fontWeight: Number(rejectButton.text_weight),
-                            fontFamily: rejectButton.fonts,
-                            padding: "0.6rem 1.5rem",
-                          }}
-                        >
-                          {rejectButton.text}
-                        </button>
 
                         <button
                           id="acceptButton"
@@ -406,13 +350,41 @@ const Template2 = forwardRef((props, ref) => {
                         >
                           {acceptButton.text}
                         </button>
+                        
+                        <button
+                          id="rejectButton"
+                          style={{
+                            transform: "scale(1)",
+                            transition: "transform 0.1s",
+                            fontSize: `${rejectButton.text_size}px`,
+                            color: rejectButton.text_color,
+                            backgroundColor: rejectButton.background_color,
+                            borderWidth: `${rejectButton.border_width}px`,
+                            borderColor: rejectButton.border_color,
+                            borderRadius: `${rejectButton.border_radius}px`,
+                            fontWeight: Number(rejectButton.text_weight),
+                            fontFamily: rejectButton.fonts,
+                            padding: "0.6rem 1.5rem",
+                          }}
+                        >
+                          {rejectButton.text}
+                        </button>
                       </div>
                     </div>
-
-                    <div
-                      dangerouslySetInnerHTML={{ __html: policy.text }}
-                      style={{ marginTop: "1.25rem" }}
-                    />
+                    {policy.checked && (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: policy.text }}
+                        style={{
+                          marginTop: "1.25rem",
+                          textAlign: "left",
+                          alignSelf: "flex-start",
+                          padding: popUpLogo.show_logo ? "0 3rem" : "0 4rem",
+                          boxSizing: "border-box",
+                          width: "100%",
+                          maxWidth: "600px",
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -425,6 +397,4 @@ const Template2 = forwardRef((props, ref) => {
   
 });
 
-export default Template2;
-
- 
+export default Template3;
