@@ -1,10 +1,20 @@
-import { useEffect, useState, useRef } from "react";
-import { useFetcher } from "@remix-run/react";
-import { Button, AppProvider, Page, Text, Box, Card, List } from "@shopify/polaris";
+import { useEffect, useState, useRef  } from "react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import axios from "axios";
 import NavMenu from "app/component/navMenu";
 import webhookSubscription from "./webhook.server";
-import { constants } from "buffer";
+import { Icon } from "@shopify/polaris";
+import * as icons from "@shopify/polaris-icons";
+import { AppProvider, Card, Page, Box, Link, List, Button, ProgressBar } from '@shopify/polaris';
+import en from '@shopify/polaris/locales/en.json';
+
+
+import { authenticate } from "../shopify.server";
+
+export const loader = async ({ request }) => {
+    const { session } = await authenticate.admin(request);
+    return { shop: session.shop };
+};
 
 export const action = async ({ request }) => {
   const formData = await request.formData();
@@ -142,6 +152,8 @@ export default function Index() {
   const [message, setMessage] = useState(null);
   const submitted = useRef(false);
 
+  const value = 65;
+
   useEffect(() => {
     if (!submitted.current) {
       submitted.current = true;
@@ -189,24 +201,15 @@ export default function Index() {
     });
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMessage("Updated after 5 seconds!");
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   console.log("hiiiiiiiiiiiiii app index");
 
+  
   return (
     <AppProvider>
       <Page>
-        <div className="p-4 space-y-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-gray-700 font-sans">
-              Dashboard
-            </h1>
+        <div className="p-4 space-y-6">
+          <div className="flex items-end justify-between">
+            <h1 className="text-2xl font-custom text-gray-700">Dashboard</h1>
             <button className="px-4 py-2 bg-white text-black rounded-md border border-gray-300 hover:bg-gray-100 transition">
               Support
             </button>
@@ -214,25 +217,66 @@ export default function Index() {
 
           <div>
             <Box>
-              <Card padding="0">
-                <div className="bg-green-800 text-white p-2.5">
-                  AgeX is Enabled
-                </div>
-
-                <div className="px-4 py-3">
-                  <List>
-                    <List.Item>
-                      AgeX is Currently Enabled on Your Store.
-                    </List.Item>
-                  </List>
-                  <div className="mt-3">
-                      <Button large>Disable App</Button>
+              <div className="shadow-md rounded-xl overflow-hidden">
+                <Card padding="0">
+                  <div className="bg-green-800 text-white font-custom font-medium text-[13px] p-2.5 ">
+                    AgeX is Enabled
                   </div>
-                  
-                </div>
-              </Card>
+
+                  <div className="px-4 py-3">
+                    <List>
+                      <List.Item>
+                        <div className="text-[13px] font-custom font-light text-gray-800">
+                          AgeX is Currently Enabled on Your Store.
+                        </div>
+                      </List.Item>
+                    </List>
+
+                    <div className="mt-3">
+                      <Button size="large">Disable App</Button>
+                    </div>
+                  </div>
+                </Card>
+              </div>
             </Box>
           </div>
+
+          <Box>
+            <Card>
+              <div className="font-medium mb-3">Setup Guide</div>
+              <div className="flex">
+                <div className="text-[12px] font-custom font-light text-black ">
+                  1 of 2 Tasks Completed{" "}
+                  <span className="font-semibold ml-3">100%</span>
+                </div>
+                <div className="w-1/2 my-auto ml-3">
+                  <ProgressBar progress={value} size="small" />
+                </div>
+              </div>
+              <div className="px-3 py-1 font-custom font-light text-black">
+                <div className="flex items-center space-x-2 mt-6">
+                  <span className="font-bold">✓</span>
+                  <div className="text-[12px] ">
+                    Enable App
+                    <span className="bg-green-300 ml-2 py-[2px] px-[7px] rounded-xl text-[12px] ">
+                      on
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 mt-6">
+                  <span className="font-bold">✓</span>
+                  <div className="text-[12px] ">Customize Settings</div>
+                </div>
+
+                <div className="flex items-center space-x-2 mt-6">
+                  <Link url="https://agex.tawk.help/category/getting-started" external>
+                    Read App Setup Tutorials
+                  </Link>
+                </div>
+              </div>
+            </Card>
+          </Box>
         </div>
       </Page>
     </AppProvider>

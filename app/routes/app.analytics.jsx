@@ -1,7 +1,5 @@
 import React, {useEffect} from 'react';
 // import { AppProvider, Button } from '@shopify/polaris';
-import '@shopify/polaris/build/esm/styles.css';
-import Button from "./app.plans"
 import { useLoaderData } from "@remix-run/react";
 
 export default function AdditionalPage() {
@@ -21,7 +19,7 @@ export default function AdditionalPage() {
       }, []);
   
     return (
-      <Button onClick={handleClick} />
+      <div>Hello analytics</div>
     );
   }
 

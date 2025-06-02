@@ -15,6 +15,7 @@ import {
   AppProvider
 } from "@shopify/polaris";
 import { useEffect, useState, useCallback, useRef  } from "react";
+import { HexColorPicker } from "react-colorful";
 import Template1 from "./template1";
 import Template2 from "./template2";
 import Template3 from "./template3";
@@ -50,26 +51,26 @@ export default function Setting() {
     },
     title: {
       text: "Welcome!",
-      text_weight: "700",
-      fonts: "sans-serif",
-      text_size: 20,
-      text_color: "#505050",
+      text_weight: "400",
+      fonts: "serif",
+      text_size: 35,
+      text_color: "#535050",
     },
     description: {
       text: "Please verify that you are 18 years of age or older to enter this site.",
-      text_weight: "400",
+      text_weight: "100",
       fonts: "sans-serif",
-      text_size: 12,
-      text_color: "#505050",
+      text_size: 14,
+      text_color: "#8d8686",
     },
     rejectButton: {
       text: "No, I’m under 18",
       fonts: "sans-serif",
-      text_weight: "100",
+      text_weight: "500",
       text_size: 14,
-      text_color: "#000000",
-      background_color: "#ffffff",
-      border_color: "#cccccc",
+      text_color: "#ffffff",
+      background_color: "#007f5f",
+      border_color: "#007f5f",
       border_width: 1,
       border_radius: 6,
       redirect_url: "",
@@ -80,29 +81,29 @@ export default function Setting() {
       text_weight: "100",
       text_size: 14,
       text_color: "#000000",
-      background_color: "#ffffff",
+      background_color: "#cccccc",
       border_color: "#cccccc",
       border_width: 1,
       border_radius: 6,
     },
     popUp: {
-      height: "550",
-      width: "420",
-      border_radius: "0",
+      height: "400",
+      width: "620",
+      border_radius: "20",
       border_width: "1",
       top_bottom_padding: "25",
       left_right_padding: "30",
     },
     popUpBackground: {
-      background_color: "#2c2929",
-      border_color: "#2c2929",
-      background_opacity: "0.8",
+      background_color: "#ffffff",
+      border_color: "#4e1818",
+      background_opacity: "1",
       image_enabale: true,
       image: null,
       imageFile: null,
     },
     outerPopUpBackground: {
-      background_color: "#2c2929",
+      background_color: "#959aa3",
       outer_opacity: "0.8",
       image_enabale: true,
       image: null,
@@ -183,6 +184,8 @@ export default function Setting() {
   const [value, setValue] = useState("");
 
   useEffect(() => {
+    console.log("hello from setting useEffect");
+    
     requestAnimationFrame(() => {
       const endTime = performance.now();
       const renderDuration = endTime - startTime;
@@ -193,6 +196,12 @@ export default function Setting() {
       setReactQuill(() => mod.default);
       import("react-quill/dist/quill.snow.css");
     });
+
+    if(!shop){
+      const url = new URL(window.location.href);
+          const shop = url.searchParams.get("shop");
+          setHeapSnapshotNearHeapLimit(shop)
+    }
   }, []);
 
   useEffect(() => {
@@ -202,8 +211,8 @@ export default function Setting() {
   useEffect(() => {
     let isCancelled = false;
   
-    if (!isCancelled) {
-      fetchData();
+    if (!isCancelled && shop) {
+      // fetchData();
       isCancelled = true;
     }
   
@@ -228,11 +237,12 @@ export default function Setting() {
       saveBar?.hide();
     };
 
-    const handleDiscard = () => {
-      console.log('Discarding');
-      removeSetting()
-      setHasChanges(false);
-      saveBar?.hide();
+    const handleDiscard = async() => {
+      const res = await removeSetting()
+      if(res){
+       setHasChanges(false);
+       saveBar?.hide();
+      }
     };
 
     saveBtn?.addEventListener('click', handleSave);
@@ -338,6 +348,9 @@ export default function Setting() {
   };
 
   const fetchData = async () => {
+
+    console.log("hello from fetch data", shop);
+    
     try {
       const { data } = await axios.get(`http://localhost:8001/setting/get-setting?shop=${shop}`);
       const settingData = data?.data?.settings;
@@ -400,11 +413,6 @@ export default function Setting() {
     formData.append("popUpBackgroundImage", latestState.popUpBackground.imageFile)
     formData.append("outerPopUpBackgroundImage", latestState.outerPopUpBackground.imageFile)    
 
-    console.log("latestState.outerPopUpBackgrou : " , latestState.outerPopUpBackground.imageFile ? JSON.stringify(removeImages(latestState.outerPopUpBackground)) : JSON.stringify(latestState.outerPopUpBackground));
-    console.log("latestState.popup logo: " , latestState.popUpLogo.imageFile ? JSON.stringify(removeImages(latestState.popUpLogo)) : JSON.stringify(latestState.popUpLogo));
-    console.log("latestState.popUpBackground : " , latestState.popUpBackground.imageFile ? JSON.stringify(removeImages(latestState.popUpBackground)) : JSON.stringify(latestState.popUpBackground));
-
-
     formData.append("customization", JSON.stringify(latestState.customization));
     formData.append("title", JSON.stringify(latestState.title));
     formData.append("description", JSON.stringify(latestState.description));
@@ -437,7 +445,9 @@ export default function Setting() {
   };
 
   const removeSetting = async () =>{
-    window.location.reload();
+    await setState(initialState)
+    
+    return true
   }
 
   const data = {
@@ -784,6 +794,8 @@ export default function Setting() {
                       <TextField
                         label="Text Size"
                         value={state.title.text_size}
+                        type="number"
+                        inputMode="numeric"
                         onChange={(value) => {
                           const data = parseInt(value, 10)
                           if (isNaN(data) || data < 26 || data > 60) {
@@ -847,7 +859,47 @@ export default function Setting() {
                           }}
                         />
                       </div>
+                      
                     </div>
+
+                    <div className="flex flex-1 flex-col mr-3 w-1/3">
+                <div className="text-[13px] text-[#333333] mb-1">Text Color</div>
+                <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md">
+                  <input
+                    type="text"
+                    name="text_color"
+                    value={state.title.text_color}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                      //   setTitle({
+                      //     ...title,
+                      //     [e.target.name]: val,
+                      //   });
+                      // }
+                    }}
+                    className="w-full text-sm focus:outline-none ml-2"
+                  />
+                  <div ref={pickerRef} style={{ position: "absolute", top: 35, zIndex: 10 }}>
+          <HexColorPicker color={color} onChange={setColor} />
+        </div>
+                  {/* <input
+                    type="color"
+                    name="text_color"
+                    value={state.title.text_color}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                      //   setTitle({
+                      //     ...title,
+                      //     [e.target.name]: val,
+                      //   });
+                      // }
+                    }}
+                    className="w-10 h-[30px] ml-auto mr-1.5 border bg-blue-200 cursor-pointer"
+                  /> */}
+                </div>
+                  </div>
                   </div>
                 </Box>
 
@@ -903,6 +955,8 @@ export default function Setting() {
                     <div className="flex-1">
                       <TextField
                         label="Text Size"
+                        type="number"
+                        inputMode="numeric"
                         value={state.description.text_size}
                         onChange={(value) =>{
                           const data = parseInt(value, 10) 
@@ -999,6 +1053,8 @@ export default function Setting() {
                     <div className="flex-1">
                       <TextField
                         label="Border Radius"
+                        type="number"
+                        inputMode="numeric"
                         value={state.acceptButton.border_radius}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1025,6 +1081,8 @@ export default function Setting() {
                     <div className="flex-1">
                       <TextField
                         label="Border Width"
+                        type="number"
+                        inputMode="numeric"
                         value={state.acceptButton.border_width}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1075,6 +1133,8 @@ export default function Setting() {
                     <div className="flex-1">
                       <TextField
                         label="Text Size"
+                        type="number"
+                        inputMode="numeric"
                         value={state.acceptButton.text_size}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1235,6 +1295,8 @@ export default function Setting() {
                     <div className="flex-1">
                       <TextField
                         label="Border Radius"
+                        type="number"
+                        inputMode="numeric"
                         value={state.rejectButton.border_radius}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1261,6 +1323,8 @@ export default function Setting() {
                     <div className="flex-1">
                       <TextField
                         label="Border Width"
+                        type="number"
+                        inputMode="numeric"
                         value={state.rejectButton.border_width}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1314,6 +1378,8 @@ export default function Setting() {
                     <div className="flex-1">
                       <TextField
                         label="Text Size"
+                        type="number"
+                        inputMode="numeric"
                         value={state.rejectButton.text_size}
                          onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1480,6 +1546,8 @@ export default function Setting() {
                     <div className="flex-1">
                       <TextField
                         label="Heights"
+                        type="number"
+                        inputMode="numeric"
                         value={state.popUp.height}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1506,6 +1574,8 @@ export default function Setting() {
                     <div className="flex-1">
                       <TextField
                         label="Width"
+                        type="number"
+                        inputMode="numeric"
                         value={state.popUp.width}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1532,6 +1602,8 @@ export default function Setting() {
                     <div className="flex-1">
                       <TextField
                         label="Border Radius"
+                        type="number"
+                        inputMode="numeric"
                         value={state.popUp.border_radius}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1559,12 +1631,13 @@ export default function Setting() {
                   <div className="flex gap-3 mb-4 mt-2">
                     <div className="flex-1">
                       <TextField
-                        // label="Border Width"
                         label={
                           <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
                             Border Width
                           </span>
                         }
+                        type="number"
+                        inputMode="numeric"
                         value={state.popUp.border_width}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1596,6 +1669,8 @@ export default function Setting() {
                             Top And Bottom Padding
                           </span>
                         }
+                        type="number"
+                        inputMode="numeric"
                         value={state.popUp.top_bottom_padding}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1627,6 +1702,8 @@ export default function Setting() {
                             Left And Right Padding
                           </span>
                         }
+                        type="number"
+                        inputMode="numeric"
                         value={state.popUp.left_right_padding}
                         onChange={(value) => {
                           const data = parseInt(value, 10)
@@ -1659,7 +1736,7 @@ export default function Setting() {
 
                   <div className="flex gap-2 mt-2 items-start">
                     {/* Background Color */}
-                    <div className="flex flex-col ">
+                    <div className="flex-1 flex-col ">
                       <div className="flex items-center gap-1">
                         <TextField
                           label={
@@ -1694,7 +1771,7 @@ export default function Setting() {
                     </div>
 
                     {/* Border Color */}
-                    <div className="flex flex-col">
+                    <div className="flex-1 flex-col">
                       <div className="flex items-center gap-1">
                         <TextField
                           label={
@@ -1876,13 +1953,6 @@ export default function Setting() {
                             </span>
                           }
                           value={state.outerPopUpBackground.outer_opacity}
-                          onChange={(value) =>
-                            handleSectionChange(
-                              "outerPopUpBackground",
-                              "outer_opacity",
-                              value,
-                            )
-                          }
                           onChange={(value) => {
                             const data = parseFloat(value);
                             if (isNaN(data) || data < 0 || data > 1) {
@@ -2303,23 +2373,13 @@ export default function Setting() {
             <div className="mt-5 mb-10 right-4 flex justify-end space-x-4">
               <Button
                 variant="primary"
+                disabled={!hasChanges} 
                 onClick={() => {
-                  // console.log("Saving...");
                   addSetting();
                   document.getElementById("save-button").click();
                 }}
               >
                 Save
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  // console.log("Discarding...");
-                  removeSetting();
-                  document.getElementById("discard-button").click();
-                }}
-              >
-                Discard
               </Button>
             </div>
             <div className="px-4 pb-8">

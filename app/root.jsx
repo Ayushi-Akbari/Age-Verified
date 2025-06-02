@@ -6,18 +6,18 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import tailwindStylesheetUrl from "./tailwind.css?url";
-import NavMenu from "./component/navMenu";
-import { useLocation } from "@remix-run/react";
-import { useLoaderData } from "@remix-run/react";
-import { useFetcher } from "@remix-run/react";
-import { useEffect, useRef, useState } from "react";
+import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
 export const links = () => {
-  return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
+  return [
+    { rel: "stylesheet", href: tailwindStylesheetUrl },
+    { rel: "stylesheet", href: polarisStyles }, // ✅ Polaris CSS loaded via Remix
+  ];
 };
 
+
 export default function App() {
-  console.log("hiiiiiiiiiiiiii");
+  // console.log("hiiiiiiiiiiiiii");
 
   return (
     <html>

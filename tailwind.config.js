@@ -4,7 +4,11 @@ module.exports = {
     '!./server/node_modules/**/*',
   ],
   theme: {
-    extend: {},
+    extend: {
+       fontFamily: {
+        custom: ['Inter', 'sans-serif'],
+      },
+    },
   },
   plugins: [
     require('tailwind-scrollbar-hide'),
