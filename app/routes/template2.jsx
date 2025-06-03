@@ -5,47 +5,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import axios from "axios";
-import Select from "react-select";
-
-const customStyles = {
-  menu: (base) => ({
-    ...base,
-    backgroundColor: "#0f172a",
-    borderRadius: "6px",
-    boxShadow: "0 4px 12px rgba(15, 23, 42, 0.3)",
-    zIndex: 9999,
-  }),
-  menuList: (base) => ({
-    ...base,
-    maxHeight: "150px",
-    overflowY: "auto",
-  }),
-  option: (base, { isFocused, isSelected }) => ({
-    ...base,
-    backgroundColor: isSelected
-      ? "#6366f1"
-      : isFocused
-        ? "#4f46e5"
-        : "transparent",
-    color: isSelected || isFocused ? "#fff" : "#f1f5f9",
-    cursor: "pointer",
-    padding: "10px 12px",
-  }),
-  control: (base) => ({
-    ...base,
-    backgroundColor: "#1e293b",
-    color: "#fff",
-    border: "1px solid #ccc",
-    fontSize: "14px",
-    minWidth: "80px",
-    marginRight: "8px",
-  }),
-  singleValue: (base) => ({
-    ...base,
-    color: "#fff",
-  }),
-};
 
 const Template2 = forwardRef((props, ref) => {
   const previewRef = useRef(null);

@@ -1,6 +1,4 @@
 import React, {useEffect} from 'react';
-// import { AppProvider, Button } from '@shopify/polaris';
-import { useLoaderData } from "@remix-run/react";
 
 export default function AdditionalPage() {
   const startTime = performance.now(); 

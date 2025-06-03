@@ -1,19 +1,4 @@
 import { forwardRef, useRef, useImperativeHandle, useEffect, useState } from "react";
-import axios from "axios";
-
-import {
-  Page,
-  Layout,
-  Text,
-  TextField,
-  Select,
-  ColorPicker,
-  Card,
-  FormLayout,
-  Box,
-  Button,
-  Thumbnail,
-} from "@shopify/polaris";
 
 const Template3 = forwardRef((props, ref) => {
 

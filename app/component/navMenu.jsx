@@ -1,19 +1,22 @@
-import { Outlet } from "@remix-run/react";
-import { StrictMode } from "react";
+import { Link, Outlet, useNavigation } from "@remix-run/react";
+import { useEffect, lazy, Suspense } from "react";
 
 export default function AppLayout() {
+  const navigation = useNavigation();
+
   return (
     <>
       <ui-nav-menu>
-        <a href="/app" rel="home">Home</a>
-        <a href="/app/analytics">Analytics</a>
-        <a href="/app/plans">Plans</a>
-        <a href="/app/setting">Settings</a>
+        <Link to="/app" rel="home" prefetch="intent">Home</Link>
+        <Link to="/app/analytics" prefetch="intent">Analytics</Link>
+        <Link to="/app/plans" prefetch="intent">Plans</Link>
+        <Link to="/app/setting" prefetch="intent">Settings</Link>
       </ui-nav-menu>
-
-      <main>
-        <Outlet />
-      </main>
+      {navigation.state === "loading" ? null : (
+        <main>
+          <Outlet />
+        </main>
+      )}
     </>
   );
 }

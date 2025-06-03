@@ -1,20 +1,9 @@
-import { useEffect, useState, useRef  } from "react";
-import { useFetcher, useLoaderData } from "@remix-run/react";
+import { useEffect, useState, useRef } from "react";
+import { useFetcher } from "@remix-run/react";
 import axios from "axios";
 import NavMenu from "app/component/navMenu";
-import webhookSubscription from "./webhook.server";
-import { Icon } from "@shopify/polaris";
-import * as icons from "@shopify/polaris-icons";
-import { AppProvider, Card, Page, Box, Link, List, Button, ProgressBar } from '@shopify/polaris';
-import en from '@shopify/polaris/locales/en.json';
-
-
-import { authenticate } from "../shopify.server";
-
-export const loader = async ({ request }) => {
-    const { session } = await authenticate.admin(request);
-    return { shop: session.shop };
-};
+import webhookSubscription from "./webhook";
+import { AppProvider, Card, Page, Box, Link, List, Button, ProgressBar, Spinner } from '@shopify/polaris';
 
 export const action = async ({ request }) => {
   const formData = await request.formData();
@@ -178,6 +167,7 @@ export default function Index() {
               window.location.reload();
             } else if (response.result === "declined-all") {
             }
+            // If declined, do nothing, just stop loading
           } else {
             if (idToken && shop) {
               fetcher.submit(
@@ -190,20 +180,33 @@ export default function Index() {
           console.error("Error getting ID token:", error);
         }
       })();
+    } else {
+      setLoading(false);
     }
-
-    requestAnimationFrame(() => {
-      const endTime = performance.now();
-      const renderDuration = endTime - startTime;
-      console.log(
-        `UI design load/render time index page: ${renderDuration.toFixed(2)} ms`,
-      );
-    });
+    return () => { isMounted = false; };
   }, []);
 
-  console.log("hiiiiiiiiiiiiii app index");
+  // Show loading spinner while async logic runs
+  if (loading) {
+    return (
+      <AppProvider>
+        <Page>
+          <Box
+            padding="8"
+            style={{
+              justifyContent: "center",
+              display: "flex",
+              alignItems: "center",
+              minHeight: "60vh",
+            }}
+          >
+            <Spinner accessibilityLabel="Loading" size="large" />
+          </Box>
+        </Page>
+      </AppProvider>
+    );
+  }
 
-  
   return (
     <AppProvider>
       <Page>

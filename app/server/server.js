@@ -24,6 +24,8 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/',(Req,res) => res.send("Hello from 8001"))
+
 const db = require('./models/Config/config.js');; 
  
   app.listen(PORT, () => {

@@ -3,7 +3,7 @@
 client_id = "6473332dff158d7aab8327543871590a"
 name = "age-verification"
 handle = "age-verification-58"
-application_url = "https://victory-gmt-cow-lighting.trycloudflare.com"
+application_url = "https://decision-citizenship-advertisement-flags.trycloudflare.com"
 embedded = true
 
 [build]
@@ -36,9 +36,9 @@ optional_scopes = [ "read_locales", "write_themes" ]
 
 [auth]
 redirect_urls = [
-  "https://victory-gmt-cow-lighting.trycloudflare.com/auth/callback",
-  "https://victory-gmt-cow-lighting.trycloudflare.com/auth/shopify/callback",
-  "https://victory-gmt-cow-lighting.trycloudflare.com/api/auth/callback"
+  "https://decision-citizenship-advertisement-flags.trycloudflare.com/auth/callback",
+  "https://decision-citizenship-advertisement-flags.trycloudflare.com/auth/shopify/callback",
+  "https://decision-citizenship-advertisement-flags.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

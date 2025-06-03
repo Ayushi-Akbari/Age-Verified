@@ -13,10 +13,26 @@ export default async function handleRequest(
   responseHeaders,
   remixContext,
 ) {
+  // console.log("hello");
+  // const url = new URL(request.url);
+  // const pathname = url.pathname;
+
+  // let pathAfterApp
+
+  // if (pathname.startsWith("/app/")) {
+  //   pathAfterApp = pathname.replace("/app/", "");
+  // }
+
+  // console.log("pathAfterApp : ", pathAfterApp);
+  
+
+  // if (pathAfterApp === "null") {
+  //  return new Response(null, { status: 204 });
+  // }
+
   addDocumentResponseHeaders(request, responseHeaders);
   const userAgent = request.headers.get("user-agent");
   const callbackName = isbot(userAgent ?? "") ? "onAllReady" : "onShellReady";
-
   return new Promise((resolve, reject) => {
     const { pipe, abort } = renderToPipeableStream(
       <RemixServer context={remixContext} url={request.url} />,
@@ -38,8 +54,10 @@ export default async function handleRequest(
           reject(error);
         },
         onError(error) {
-          responseStatusCode = 500;
-          console.error(error);
+          // responseStatusCode = 500;
+          // console.log("hello");
+          
+          // console.error(error);
         },
       },
     );

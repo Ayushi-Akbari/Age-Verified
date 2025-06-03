@@ -1,19 +1,18 @@
-import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server"; 
 import NavMenu from "../component/navMenu"
+import { PrefetchPageLinks, useRouteError } from "@remix-run/react";
 
 export default function App() {
-  // const { apiKey } = useLoaderData();
-
   return (
-    <NavMenu />
-    // <><Outlet />
-    // </>
+    <>
+      <NavMenu />
+    </>
   );
 }
 
-// Shopify needs Remix to catch some thrown responses, so that their headers are included in the response.
-export function ErrorBoundary() {
+export function ErrorBoundary() {  
+  console.log("hello");
+  
   return boundary.error(useRouteError());
 }
 

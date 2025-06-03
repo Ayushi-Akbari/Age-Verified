@@ -55,7 +55,8 @@ const addSettingData = async (req, res) => {
 
   // console.log("htmlontent : " , htmlContent);
   
-  const isPresent = await Setting.findOne({ shop_name: shop });
+  // const isPresent = await Setting.findOne({ shop_name: shop, language: req.body.language, country: req.body.country });
+  const isPresent = await Setting.findOne({ shop_name: shop});
 
   let settingData;
   if (isPresent) {
@@ -73,7 +74,10 @@ const addSettingData = async (req, res) => {
       shop_id: isUser._id,
       shop_name: shop,
       settings: setting,
-      html_content: htmlContent
+      html_content: htmlContent,
+      // language: req.body.language, 
+      // country: req.body.country,
+      // primary: req.body.primary
     });
   }
 
@@ -108,10 +112,18 @@ const getSettingData = async (req, res) => {
     }
 
     const settingData = await Setting.findOne({ shop_id: isUser._id });
-
     if (!settingData) {
       return res.status(404).send({ message: "Setting not found." });
     }
+    
+    // let settingDetail = await Setting.findOne({ shop_id: isUser._id, language: req.body.language, country: req.body.country});
+
+    // if(!settingDetail){
+    //   settingDetail = await Setting.findOne({ shop_id: isUser._id, primary: true});
+    // }
+
+
+    
 
     return res.status(200).send({
       message: "Setting data fetched successfully.",

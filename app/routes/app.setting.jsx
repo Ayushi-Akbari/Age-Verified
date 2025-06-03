@@ -1,6 +1,5 @@
 import {
   Page,
-  Layout,
   Text,
   TextField,
   Select,
@@ -8,38 +7,31 @@ import {
   Box,
   DropZone,
   Thumbnail,
-  ChoiceList,
   RadioButton,
   Checkbox,
   Button,
-  AppProvider
+  AppProvider,
 } from "@shopify/polaris";
-import { useEffect, useState, useCallback, useRef  } from "react";
-import { HexColorPicker } from "react-colorful";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Template1 from "./template1";
 import Template2 from "./template2";
 import Template3 from "./template3";
 import Template4 from "./template4";
 import Template5 from "./template5";
-import { Trash2, Info, AlertCircle  } from "lucide-react";
-import { authenticate } from "../shopify.server";
+import { Trash2, Info, AlertCircle } from "lucide-react";
 import { useLoaderData } from "@remix-run/react";
-import axios from 'axios';
-
-export async function loader({ request }) {
-  const { admin } = await authenticate.admin(request);  
-  const shop = new URL(request.url).searchParams.get("shop");
-  
-  return {admin, shop}
-}
+import axios from "axios";
+// import { authenticate } from "../shopify.server";
 
 export default function Setting() {
-  const startTime = performance.now(); 
+    console.log("setting df 123 fghgh");
+
+  const startTime = performance.now();
   const verificationRef = useRef(null);
-  const {shop} = useLoaderData()
   const [hasChanges, setHasChanges] = useState(false);
   const [future, setFuture] = useState([]);
   const [history, setHistory] = useState([]);
+  const [shop, setShop] = useState()
 
   const initialState = {
     customization: {
@@ -137,13 +129,13 @@ export default function Setting() {
 
   const errorMessage = {
     customization: {
-      age: ""
+      age: "",
     },
     title: {
-      text_size: ""
+      text_size: "",
     },
     description: {
-      text_size: ""
+      text_size: "",
     },
     acceptButton: {
       border_radius: "",
@@ -164,32 +156,40 @@ export default function Setting() {
       left_right_padding: "",
     },
     popUpBackground: {
-      opacity: ""
+      opacity: "",
     },
     outerPopUpBackground: {
-      opacity: ""
+      opacity: "",
     },
     displayCriteria: {
-      url: "Please add a valid URL for the specific page."
-    }
-  }
+      url: "Please add a valid URL for the specific page.",
+    },
+  };
   const [error, setError] = useState(errorMessage);
   // const stateRef = useRef(state);
 
-  const [descriptionText, setDescriptionText] = useState("Please verify that you are {{minimum_age}} years of age or older to enter this site.",);
-  const [acceptButtonText, setAcceptButtonText] = useState("Yes, I’m over {{minimum_age}}");
-  const [rejectButtonText, setRejectButtonText] = useState("No, I’m under {{minimum_age}}");
+  const [descriptionText, setDescriptionText] = useState(
+    "Please verify that you are {{minimum_age}} years of age or older to enter this site.",
+  );
+  const [acceptButtonText, setAcceptButtonText] = useState(
+    "Yes, I’m over {{minimum_age}}",
+  );
+  const [rejectButtonText, setRejectButtonText] = useState(
+    "No, I’m under {{minimum_age}}",
+  );
 
   const [ReactQuill, setReactQuill] = useState(null);
   const [value, setValue] = useState("");
 
   useEffect(() => {
     console.log("hello from setting useEffect");
-    
+
     requestAnimationFrame(() => {
       const endTime = performance.now();
       const renderDuration = endTime - startTime;
-      console.log(`UI design load/render time setting page: ${renderDuration.toFixed(2)} ms`,);
+      console.log(
+        `UI design load/render time setting page: ${renderDuration.toFixed(2)} ms`,
+      );
     });
 
     import("react-quill").then((mod) => {
@@ -197,10 +197,15 @@ export default function Setting() {
       import("react-quill/dist/quill.snow.css");
     });
 
-    if(!shop){
+  }, []);
+
+  useEffect(() => {
+    if (!shop) {
       const url = new URL(window.location.href);
-          const shop = url.searchParams.get("shop");
-          setHeapSnapshotNearHeapLimit(shop)
+      const shopParam = url.searchParams.get("shop");
+      if (shopParam) {
+        setShop(shopParam);
+      }
     }
   }, []);
 
@@ -209,51 +214,44 @@ export default function Setting() {
   }, [state]);
 
   useEffect(() => {
-    let isCancelled = false;
-  
-    if (!isCancelled && shop) {
-      // fetchData();
-      isCancelled = true;
+    if (shop) {
+      fetchData();
     }
-  
-    return () => {
-      isCancelled = true;
-    };
   }, [shop]);
 
   useEffect(() => {
     if (!hasChanges) return;
 
-    const saveBar = document.getElementById('my-save-bar');
+    const saveBar = document.getElementById("my-save-bar");
     saveBar?.show();
 
-    const saveBtn = document.getElementById('save-button');
-    const discardBtn = document.getElementById('discard-button');
+    const saveBtn = document.getElementById("save-button");
+    const discardBtn = document.getElementById("discard-button");
 
     const handleSave = () => {
-      console.log('Saving');
-      addSetting()
+      console.log("Saving");
+      addSetting();
       setHasChanges(false);
       saveBar?.hide();
     };
 
-    const handleDiscard = async() => {
-      const res = await removeSetting()
-      if(res){
-       setHasChanges(false);
-       saveBar?.hide();
+    const handleDiscard = async () => {
+      const res = await removeSetting();
+      if (res) {
+        setHasChanges(false);
+        saveBar?.hide();
       }
     };
 
-    saveBtn?.addEventListener('click', handleSave);
-    discardBtn?.addEventListener('click', handleDiscard);
+    saveBtn?.addEventListener("click", handleSave);
+    discardBtn?.addEventListener("click", handleDiscard);
 
     return () => {
-      saveBtn?.removeEventListener('click', handleSave);
-      discardBtn?.removeEventListener('click', handleDiscard);
+      saveBtn?.removeEventListener("click", handleSave);
+      discardBtn?.removeEventListener("click", handleDiscard);
     };
   }, [hasChanges]);
-  
+
   const weightOptions = [
     { label: "Thin", value: "100" },
     { label: "Extra Light", value: "200" },
@@ -273,24 +271,24 @@ export default function Setting() {
     { label: "Poppins", value: "'Poppins', sans-serif" },
     { label: "Roboto", value: "'Roboto', sans-serif" },
   ];
-  const marketOptions= [
-    { label: "India (English) (Primary)", value: "india"}
-  ]
-    
+  const marketOptions = [
+    { label: "India (English) (Primary)", value: "india" },
+  ];
+
   const handleDropZoneDrop = useCallback((acceptedFiles, section, key) => {
     const uploadedFile = acceptedFiles[0];
     const reader = new FileReader();
-  
+
     reader.onload = () => {
       const base64 = reader.result;
-  
+
       if (section === "popUpLogo") {
         setState((prev) => ({
           ...prev,
           popUpLogo: {
             ...prev.popUpLogo,
             [key]: base64,
-            [`${key}File`]: uploadedFile
+            [`${key}File`]: uploadedFile,
           },
         }));
       } else if (section === "popUpBackground") {
@@ -299,7 +297,7 @@ export default function Setting() {
           popUpBackground: {
             ...prev.popUpBackground,
             [key]: base64,
-            [`${key}File`]: uploadedFile
+            [`${key}File`]: uploadedFile,
           },
         }));
       } else if (section === "outerPopUpBackground") {
@@ -308,13 +306,13 @@ export default function Setting() {
           outerPopUpBackground: {
             ...prev.outerPopUpBackground,
             [key]: base64,
-            [`${key}File`]: uploadedFile
+            [`${key}File`]: uploadedFile,
           },
         }));
       }
       setHasChanges(true);
     };
-  
+
     reader.readAsDataURL(uploadedFile);
   }, []);
 
@@ -348,41 +346,81 @@ export default function Setting() {
   };
 
   const fetchData = async () => {
+    if (!shop) {
+      console.warn("No shop parameter, skipping fetchData");
+      return;
+    }
 
-    console.log("hello from fetch data", shop);
-    
     try {
-      const { data } = await axios.get(`http://localhost:8001/setting/get-setting?shop=${shop}`);
+      const { data } = await axios.get(
+        `http://localhost:8001/setting/get-setting?shop=${shop}`,
+      );
       const settingData = data?.data?.settings;
 
       if (!settingData) return;
 
       const parsedSetting = {
-        customization: settingData.customization ? JSON.parse(settingData.customization) : initialState.customization,
-        title: settingData.title ? JSON.parse(settingData.title) : initialState.title,
-        description: settingData.description ? JSON.parse(settingData.description) : initialState.description,
-        acceptButton: settingData.acceptButton ? JSON.parse(settingData.acceptButton) : initialState.acceptButton,
-        rejectButton: settingData.rejectButton ? JSON.parse(settingData.rejectButton) : initialState.rejectButton,
-        popUp: settingData.popUp ? JSON.parse(settingData.popUp) : initialState.popUp,
-        popUpBackground: settingData.popUpBackground ? JSON.parse(settingData.popUpBackground) : initialState.popUpBackground,
-        outerPopUpBackground: settingData.outerPopUpBackground ? JSON.parse(settingData.outerPopUpBackground) : initialState.outerPopUpBackground,
-        popUpLogo: settingData.popUpLogo ? JSON.parse(settingData.popUpLogo) : initialState.popUpLogo,
-        policy: settingData.policy ? JSON.parse(settingData.policy) : initialState.policy,
-        advanced: settingData.advanced ? JSON.parse(settingData.advanced) : initialState.advanced,
-        displayCriteria: settingData.displayCriteria ? JSON.parse(settingData.displayCriteria) : initialState.displayCriteria,
-        monthlyAnalysis: settingData.monthlyAnalysis ?? initialState.monthlyAnalysis,
+        customization: settingData.customization
+          ? JSON.parse(settingData.customization)
+          : initialState.customization,
+        title: settingData.title
+          ? JSON.parse(settingData.title)
+          : initialState.title,
+        description: settingData.description
+          ? JSON.parse(settingData.description)
+          : initialState.description,
+        acceptButton: settingData.acceptButton
+          ? JSON.parse(settingData.acceptButton)
+          : initialState.acceptButton,
+        rejectButton: settingData.rejectButton
+          ? JSON.parse(settingData.rejectButton)
+          : initialState.rejectButton,
+        popUp: settingData.popUp
+          ? JSON.parse(settingData.popUp)
+          : initialState.popUp,
+        popUpBackground: settingData.popUpBackground
+          ? JSON.parse(settingData.popUpBackground)
+          : initialState.popUpBackground,
+        outerPopUpBackground: settingData.outerPopUpBackground
+          ? JSON.parse(settingData.outerPopUpBackground)
+          : initialState.outerPopUpBackground,
+        popUpLogo: settingData.popUpLogo
+          ? JSON.parse(settingData.popUpLogo)
+          : initialState.popUpLogo,
+        policy: settingData.policy
+          ? JSON.parse(settingData.policy)
+          : initialState.policy,
+        advanced: settingData.advanced
+          ? JSON.parse(settingData.advanced)
+          : initialState.advanced,
+        displayCriteria: settingData.displayCriteria
+          ? JSON.parse(settingData.displayCriteria)
+          : initialState.displayCriteria,
+        monthlyAnalysis:
+          settingData.monthlyAnalysis ?? initialState.monthlyAnalysis,
         market: settingData.market ?? initialState.market,
       };
 
-      if (parsedSetting.popUpBackground?.image && !parsedSetting.popUpBackground.image.startsWith("http://localhost:8001")) {
+      if (
+        parsedSetting.popUpBackground?.image &&
+        !parsedSetting.popUpBackground.image.startsWith("http://localhost:8001")
+      ) {
         parsedSetting.popUpBackground.image = `http://localhost:8001${parsedSetting.popUpBackground.image}`;
       }
 
-      if (parsedSetting.outerPopUpBackground?.image && !parsedSetting.outerPopUpBackground.image.startsWith("http://localhost:8001")) {
+      if (
+        parsedSetting.outerPopUpBackground?.image &&
+        !parsedSetting.outerPopUpBackground.image.startsWith(
+          "http://localhost:8001",
+        )
+      ) {
         parsedSetting.outerPopUpBackground.image = `http://localhost:8001${parsedSetting.outerPopUpBackground.image}`;
       }
 
-      if (parsedSetting.popUpLogo?.image && !parsedSetting.popUpLogo.image.startsWith("http://localhost:8001")) {
+      if (
+        parsedSetting.popUpLogo?.image &&
+        !parsedSetting.popUpLogo.image.startsWith("http://localhost:8001")
+      ) {
         parsedSetting.popUpLogo.image = `http://localhost:8001${parsedSetting.popUpLogo.image}`;
       }
 
@@ -390,7 +428,6 @@ export default function Setting() {
 
       setHistory([]);
       setFuture([]);
-
     } catch (error) {
       console.error("Failed to fetch settings:", error);
     }
@@ -399,19 +436,25 @@ export default function Setting() {
   const addSetting = async () => {
     const latestState = stateRef.current;
     const htmlContent = verificationRef.current?.getHtmlContent();
-    
+
     const removeImages = (obj) => {
       const { image, ...rest } = obj;
       rest.imageFile = null;
       return rest;
-    };    
+    };
     const formData = new FormData();
 
-    console.log("state : " , latestState);
-    
-    formData.append("popUpLogoImage", latestState.popUpLogo.imageFile)
-    formData.append("popUpBackgroundImage", latestState.popUpBackground.imageFile)
-    formData.append("outerPopUpBackgroundImage", latestState.outerPopUpBackground.imageFile)    
+    console.log("state : ", latestState);
+
+    formData.append("popUpLogoImage", latestState.popUpLogo.imageFile);
+    formData.append(
+      "popUpBackgroundImage",
+      latestState.popUpBackground.imageFile,
+    );
+    formData.append(
+      "outerPopUpBackgroundImage",
+      latestState.outerPopUpBackground.imageFile,
+    );
 
     formData.append("customization", JSON.stringify(latestState.customization));
     formData.append("title", JSON.stringify(latestState.title));
@@ -419,15 +462,33 @@ export default function Setting() {
     formData.append("acceptButton", JSON.stringify(latestState.acceptButton));
     formData.append("rejectButton", JSON.stringify(latestState.rejectButton));
     formData.append("popUp", JSON.stringify(latestState.popUp));
-    formData.append("outerPopUpBackground", latestState.outerPopUpBackground.imageFile ? JSON.stringify(removeImages(latestState.outerPopUpBackground)) : JSON.stringify(latestState.outerPopUpBackground));
-    formData.append("popUpLogo", latestState.popUpLogo.imageFile ? JSON.stringify(removeImages(latestState.popUpLogo)) : JSON.stringify(latestState.popUpLogo) );
-    formData.append("popUpBackground", latestState.popUpBackground.imageFile ? JSON.stringify(removeImages(latestState.popUpBackground)) : JSON.stringify(latestState.popUpBackground));
+    formData.append(
+      "outerPopUpBackground",
+      latestState.outerPopUpBackground.imageFile
+        ? JSON.stringify(removeImages(latestState.outerPopUpBackground))
+        : JSON.stringify(latestState.outerPopUpBackground),
+    );
+    formData.append(
+      "popUpLogo",
+      latestState.popUpLogo.imageFile
+        ? JSON.stringify(removeImages(latestState.popUpLogo))
+        : JSON.stringify(latestState.popUpLogo),
+    );
+    formData.append(
+      "popUpBackground",
+      latestState.popUpBackground.imageFile
+        ? JSON.stringify(removeImages(latestState.popUpBackground))
+        : JSON.stringify(latestState.popUpBackground),
+    );
     formData.append("policy", JSON.stringify(latestState.policy));
     formData.append("advanced", JSON.stringify(latestState.advanced));
-    formData.append("displayCriteria", JSON.stringify(latestState.displayCriteria));
+    formData.append(
+      "displayCriteria",
+      JSON.stringify(latestState.displayCriteria),
+    );
     formData.append("market", latestState.market);
     formData.append("monthlyAnalysis", latestState.monthlyAnalysis);
-    formData.append("htmlContent", htmlContent)
+    formData.append("htmlContent", htmlContent);
 
     for (let pair of formData.entries()) {
       console.log(`${pair[0]}:`, pair[1]);
@@ -439,16 +500,16 @@ export default function Setting() {
     );
 
     console.log("response : ", response);
-    if(response.status === 200){
-      fetchData()
+    if (response.status === 200) {
+      fetchData();
     }
   };
 
-  const removeSetting = async () =>{
-    await setState(initialState)
-    
-    return true
-  }
+  const removeSetting = async () => {
+    await setState(initialState);
+
+    return true;
+  };
 
   const data = {
     customization: state.customization,
@@ -469,9 +530,9 @@ export default function Setting() {
     <AppProvider>
       <Page fullWidth>
         {/* in first 3 div change sm to lg */}
-        <div className="flex flex-col-reverse sm:flex-row w-full min-h-screen">
+        <div className="flex flex-col-reverse lg:flex-row w-full min-h-screen">
           {/* Left Section */}
-          <div className="w-full sm:w-[38%] p-2 space-y-8">
+          <div className="w-full lg:w-[38%] p-2 space-y-8">
             <Text variant="headingXl" as="h1">
               Settings
             </Text>
@@ -614,7 +675,11 @@ export default function Setting() {
                       value={state.customization.age}
                       onChange={(value) => {
                         if (value < 18 || value > 75) {
-                          handleErrorMessage("customization","age","Age Value must be Between 18 to 75.");
+                          handleErrorMessage(
+                            "customization",
+                            "age",
+                            "Age Value must be Between 18 to 75.",
+                          );
                         } else {
                           handleErrorMessage("customization", "age", "");
                         }
@@ -797,9 +862,13 @@ export default function Setting() {
                         type="number"
                         inputMode="numeric"
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 26 || data > 60) {
-                            handleErrorMessage("title", "text_size", "Text size Value must be Between 26 to 60.");
+                            handleErrorMessage(
+                              "title",
+                              "text_size",
+                              "Text size Value must be Between 26 to 60.",
+                            );
                           } else {
                             handleErrorMessage("title", "text_size", "");
                           }
@@ -820,86 +889,35 @@ export default function Setting() {
                   </div>
 
                   {/* Part 3 - Size & Color */}
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <TextField
-                          label="Text Color"
+                  <div className="flex gap-3">
+                    <div className="flex-1 flex-col">
+                      <div className="text-[13px] text-[#333333] mb-1">
+                        Text Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
+                          name="text_color"
                           value={state.title.text_color}
-                          onChange={(value) => {
+                          onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              // console.log("value : " ,value);
-                              // console.log("value : " ,title.text_color)
-                              handleSectionChange("title", "text_color", value);
-                              // console.log("value : " ,title.text_color)
+                              handleSectionChange("title", "text_color", e.target.value);
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.title.text_color}
-                          onChange={
-                            (e) =>
-                              // {console.log("value : " ,e.target.value)
-                              // console.log("value : " ,title.text_color)
-
-                              handleSectionChange(
-                                "title",
-                                "text_color",
-                                e.target.value,
-                              )
-                            // console.log("value : " ,title.text_color)}
-                          }
-                          style={{
-                            width: 30,
-                            height: 30,
-                            border: "none",
-                            background: "transparent",
-                            marginTop: "22px",
+                          onChange={(e) => {
+                            handleSectionChange("title", "text_color", e.target.value);
                           }}
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
-                      
                     </div>
-
-                    <div className="flex flex-1 flex-col mr-3 w-1/3">
-                <div className="text-[13px] text-[#333333] mb-1">Text Color</div>
-                <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md">
-                  <input
-                    type="text"
-                    name="text_color"
-                    value={state.title.text_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      // if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                      //   setTitle({
-                      //     ...title,
-                      //     [e.target.name]: val,
-                      //   });
-                      // }
-                    }}
-                    className="w-full text-sm focus:outline-none ml-2"
-                  />
-                  <div ref={pickerRef} style={{ position: "absolute", top: 35, zIndex: 10 }}>
-          <HexColorPicker color={color} onChange={setColor} />
-        </div>
-                  {/* <input
-                    type="color"
-                    name="text_color"
-                    value={state.title.text_color}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      // if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                      //   setTitle({
-                      //     ...title,
-                      //     [e.target.name]: val,
-                      //   });
-                      // }
-                    }}
-                    className="w-10 h-[30px] ml-auto mr-1.5 border bg-blue-200 cursor-pointer"
-                  /> */}
-                </div>
-                  </div>
+                    <div className="flex-1"></div>
+                    <div className="flex-1"></div>
                   </div>
                 </Box>
 
@@ -958,66 +976,67 @@ export default function Setting() {
                         type="number"
                         inputMode="numeric"
                         value={state.description.text_size}
-                        onChange={(value) =>{
-                          const data = parseInt(value, 10) 
+                        onChange={(value) => {
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 13 || data > 25) {
-                            handleErrorMessage("description", "text_size", "Text size Value must be Between 13 to 25.");
+                            handleErrorMessage(
+                              "description",
+                              "text_size",
+                              "Text size Value must be Between 13 to 25.",
+                            );
                           } else {
                             handleErrorMessage("description", "text_size", "");
                           }
-                          handleSectionChange("description", "text_size", value)
+                          handleSectionChange(
+                            "description",
+                            "text_size",
+                            value,
+                          );
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
                       />
                       {error.description.text_size && (
-                      <div className="flex items-start gap-2 text-red-800 mt-1 w-full">
-                        <AlertCircle size={15} className="mt-0.5 shrink-0" />
-                        <span className="break-words text-xs">
-                          {error.description.text_size}
-                        </span>
-                      </div>
-                    )}
+                        <div className="flex items-start gap-2 text-red-800 mt-1 w-full">
+                          <AlertCircle size={15} className="mt-0.5 shrink-0" />
+                          <span className="break-words text-xs">
+                            {error.description.text_size}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Part 3 - Size & Color */}
                   <div className="flex gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <TextField
-                          label="Text Color"
+                    <div className="flex-1 flex-col">
+                      <div className="text-[13px] text-[#333333] mb-1">
+                        Text Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
+                          name="text_color"
                           value={state.description.text_color}
-                          onChange={(value) => {
+                          onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange(
-                                "description",
-                                "text_color",
-                                value,
-                              );
+                              handleSectionChange("description", "text_color",  e.target.value)
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.description.text_color}
-                          onChange={(e) =>
-                            handleSectionChange(
-                              "description",
-                              "text_color",
-                              e.target.value,
-                            )
-                          }
-                          style={{
-                            width: 30,
-                            height: 30,
-                            border: "none",
-                            background: "transparent",
-                            marginTop: "22px",
+                          onChange={(e) => {
+                            handleSectionChange("description", "text_color",  e.target.value)
                           }}
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
                     </div>
+                    <div className="flex-1"></div>
+                    <div className="flex-1"></div>
                   </div>
                 </Box>
               </Card>
@@ -1057,13 +1076,25 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.acceptButton.border_radius}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 0 || data > 30) {
-                            handleErrorMessage("acceptButton","border_radius", "Border radius Value must be Between 0 to 30.");
+                            handleErrorMessage(
+                              "acceptButton",
+                              "border_radius",
+                              "Border radius Value must be Between 0 to 30.",
+                            );
                           } else {
-                            handleErrorMessage("acceptButton","border_radius", "");
+                            handleErrorMessage(
+                              "acceptButton",
+                              "border_radius",
+                              "",
+                            );
                           }
-                         handleSectionChange("acceptButton","border_radius",value)
+                          handleSectionChange(
+                            "acceptButton",
+                            "border_radius",
+                            value,
+                          );
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1085,13 +1116,25 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.acceptButton.border_width}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 0 || data > 10) {
-                            handleErrorMessage("acceptButton","border_width", "Border width Value must be Between 0 to 10.");
+                            handleErrorMessage(
+                              "acceptButton",
+                              "border_width",
+                              "Border width Value must be Between 0 to 10.",
+                            );
                           } else {
-                            handleErrorMessage("acceptButton","border_width", "");
+                            handleErrorMessage(
+                              "acceptButton",
+                              "border_width",
+                              "",
+                            );
                           }
-                         handleSectionChange("acceptButton","border_width",value)
+                          handleSectionChange(
+                            "acceptButton",
+                            "border_width",
+                            value,
+                          );
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1111,8 +1154,12 @@ export default function Setting() {
                         label="Text Weight"
                         options={weightOptions}
                         value={state.acceptButton.text_weight}
-                        onChange={(value) => 
-                         handleSectionChange("acceptButton","text_weight",value)
+                        onChange={(value) =>
+                          handleSectionChange(
+                            "acceptButton",
+                            "text_weight",
+                            value,
+                          )
                         }
                       />
                     </div>
@@ -1137,13 +1184,21 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.acceptButton.text_size}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 14 || data > 25) {
-                            handleErrorMessage("acceptButton","text_size", "Text size Value must be Between 14 to 25.");
+                            handleErrorMessage(
+                              "acceptButton",
+                              "text_size",
+                              "Text size Value must be Between 14 to 25.",
+                            );
                           } else {
-                            handleErrorMessage("acceptButton","text_size", "");
+                            handleErrorMessage("acceptButton", "text_size", "");
                           }
-                         handleSectionChange("acceptButton","text_size",value)
+                          handleSectionChange(
+                            "acceptButton",
+                            "text_size",
+                            value,
+                          );
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1158,115 +1213,89 @@ export default function Setting() {
                       )}
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center">
-                        <TextField
-                          label="Text Color"
+                    <div className="flex-1 flex-col">
+                      <div className="text-[13px] text-[#333333] mb-1">
+                        Text Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
+                          name="text_color"
                           value={state.acceptButton.text_color}
-                          onChange={(value) => {
+                          onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange(
-                                "acceptButton",
-                                "text_color",
-                                value,
-                              );
+                              handleSectionChange("acceptButton", "text_color", e.target.value)
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.acceptButton.text_color}
-                          onChange={(e) =>
-                            handleSectionChange(
-                              "acceptButton",
-                              "text_color",
-                              e.target.value,
-                            )
-                          }
-                          style={{
-                            width: 50,
-                            height: 30,
-                            border: "none",
-                            background: "transparent",
-                            marginTop: "22px",
+                          onChange={(e) => {
+                            handleSectionChange("acceptButton", "text_color", e.target.value)
                           }}
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="flex gap-3 mb-4 mt-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1">
-                        <TextField
-                          label="Background Color"
+                    <div className="flex-1 flex-col">
+                      <div className="text-[13px] text-[#333333] mb-1">
+                        Background Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
+                          name="text_color"
                           value={state.acceptButton.background_color}
-                          onChange={(value) => {
+                          onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange(
-                                "acceptButton",
-                                "background_color",
-                                value,
-                              );
+                              handleSectionChange("acceptButton", "background_color", e.target.value)
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.acceptButton.background_color}
                           onChange={(e) =>
-                            handleSectionChange(
-                              "acceptButton",
-                              "background_color",
-                              e.target.value,
-                            )
+                            handleSectionChange("acceptButton", "background_color", e.target.value)
                           }
-                          style={{
-                            width: 50,
-                            height: 30,
-                            border: "none",
-                            background: "transparent",
-                            marginTop: "22px",
-                          }}
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1">
-                        <TextField
-                          label="Border Color"
+                    <div className="flex-1 flex-col">
+                      <div className="text-[13px] text-[#333333] mb-1">
+                        Border Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
                           value={state.acceptButton.border_color}
-                          onChange={(value) => {
-                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange(
-                                "acceptButton",
-                                "border_color",
-                                value,
-                              );
+                          onChange={(e) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) {
+                              handleSectionChange("acceptButton", "border_color", e.target.value);
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.acceptButton.border_color}
                           onChange={(e) =>
-                            handleSectionChange(
-                              "acceptButton",
-                              "border_color",
-                              e.target.value,
-                            )
+                            handleSectionChange("acceptButton", "border_color", e.target.value)
                           }
-                          style={{
-                            width: 50,
-                            height: 30,
-                            border: "none",
-                            background: "transparent",
-                            marginTop: "22px",
-                          }}
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
                     </div>
+
+                    <div className="flex-1"></div>
                   </div>
                 </Box>
 
@@ -1299,13 +1328,25 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.rejectButton.border_radius}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 0 || data > 30) {
-                            handleErrorMessage("rejectButton","border_radius", "Border radius Value must be Between 0 to 30.");
+                            handleErrorMessage(
+                              "rejectButton",
+                              "border_radius",
+                              "Border radius Value must be Between 0 to 30.",
+                            );
                           } else {
-                            handleErrorMessage("rejectButton","border_radius", "");
+                            handleErrorMessage(
+                              "rejectButton",
+                              "border_radius",
+                              "",
+                            );
                           }
-                         handleSectionChange("rejectButton","border_radius",value)
+                          handleSectionChange(
+                            "rejectButton",
+                            "border_radius",
+                            value,
+                          );
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1327,13 +1368,25 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.rejectButton.border_width}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 0 || data > 10) {
-                            handleErrorMessage("rejectButton","border_width", "Border width Value must be Between 0 to 10.");
+                            handleErrorMessage(
+                              "rejectButton",
+                              "border_width",
+                              "Border width Value must be Between 0 to 10.",
+                            );
                           } else {
-                            handleErrorMessage("rejectButton","border_width", "");
+                            handleErrorMessage(
+                              "rejectButton",
+                              "border_width",
+                              "",
+                            );
                           }
-                         handleSectionChange("rejectButton","border_width",value)
+                          handleSectionChange(
+                            "rejectButton",
+                            "border_width",
+                            value,
+                          );
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1363,6 +1416,7 @@ export default function Setting() {
                       />
                     </div>
                   </div>
+
                   <div className="flex gap-3 mb-4 mt-2">
                     <div className="flex-1">
                       <Select
@@ -1381,14 +1435,22 @@ export default function Setting() {
                         type="number"
                         inputMode="numeric"
                         value={state.rejectButton.text_size}
-                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                        onChange={(value) => {
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 14 || data > 25) {
-                            handleErrorMessage("rejectButton","text_size", "Text size Value must be Between 14 to 25.");
+                            handleErrorMessage(
+                              "rejectButton",
+                              "text_size",
+                              "Text size Value must be Between 14 to 25.",
+                            );
                           } else {
-                            handleErrorMessage("rejectButton","text_size", "");
+                            handleErrorMessage("rejectButton", "text_size", "");
                           }
-                         handleSectionChange("rejectButton","text_size",value)
+                          handleSectionChange(
+                            "rejectButton",
+                            "text_size",
+                            value,
+                          );
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1403,115 +1465,89 @@ export default function Setting() {
                       )}
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center">
-                        <TextField
-                          label="Text Color"
+                    <div className="flex-1 flex-col">
+                      <div className="text-[13px] text-[#333333] mb-1">
+                        Text Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
+                          name="text_color"
                           value={state.rejectButton.text_color}
-                          onChange={(value) => {
+                          onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange(
-                                "rejectButton",
-                                "text_color",
-                                value,
-                              );
+                              handleSectionChange("rejectButton", "text_color", e.target.value)
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.rejectButton.text_color}
-                          onChange={(e) =>
-                            handleSectionChange(
-                              "rejectButton",
-                              "text_color",
-                              e.target.value,
-                            )
-                          }
-                          style={{
-                            width: 50,
-                            height: 30,
-                            border: "none",
-                            background: "transparent",
-                            marginTop: "22px",
+                          onChange={(e) => {
+                            handleSectionChange("rejectButton", "text_color", e.target.value)
                           }}
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="flex gap-3 mb-4 mt-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1">
-                        <TextField
-                          label="Background Color"
+                    <div className="flex-1 flex-col">
+                      <div className="text-[13px] text-[#333333] mb-1">
+                        Background Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
+                          name="text_color"
                           value={state.rejectButton.background_color}
-                          onChange={(value) => {
+                          onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange(
-                                "rejectButton",
-                                "background_color",
-                                value,
-                              );
+                              handleSectionChange("rejectButton", "background_color", e.target.value)
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.rejectButton.background_color}
                           onChange={(e) =>
-                            handleSectionChange(
-                              "rejectButton",
-                              "background_color",
-                              e.target.value,
-                            )
+                            handleSectionChange("rejectButton", "background_color", e.target.value)
                           }
-                          style={{
-                            width: 50,
-                            height: 30,
-                            border: "none",
-                            background: "transparent",
-                            marginTop: "22px",
-                          }}
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1">
-                        <TextField
-                          label="Border Color"
+                    <div className="flex-1 flex-col">
+                      <div className="text-[13px] text-[#333333] mb-1">
+                        Border Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
                           value={state.rejectButton.border_color}
-                          onChange={(value) => {
-                            if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange(
-                                "rejectButton",
-                                "border_color",
-                                value,
-                              );
+                          onChange={(e) => {
+                            if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) {
+                              handleSectionChange("rejectButton", "border_color", e.target.value);
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.rejectButton.border_color}
                           onChange={(e) =>
-                            handleSectionChange(
-                              "rejectButton",
-                              "border_color",
-                              e.target.value,
-                            )
+                            handleSectionChange("rejectButton", "border_color", e.target.value)
                           }
-                          style={{
-                            width: 50,
-                            height: 30,
-                            border: "none",
-                            background: "transparent",
-                            marginTop: "22px",
-                          }}
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
                     </div>
+
+                    <div className="flex-1"></div>
                   </div>
 
                   <div className=" mt-2">
@@ -1550,13 +1586,17 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.popUp.height}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 50 || data > 650) {
-                            handleErrorMessage("popUp","height", "Heights Value must be Between 50 to 650.");
+                            handleErrorMessage(
+                              "popUp",
+                              "height",
+                              "Heights Value must be Between 50 to 650.",
+                            );
                           } else {
-                            handleErrorMessage("popUp","height", "");
+                            handleErrorMessage("popUp", "height", "");
                           }
-                         handleSectionChange("popUp","height",value)
+                          handleSectionChange("popUp", "height", value);
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1578,13 +1618,17 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.popUp.width}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 100 || data > 650) {
-                            handleErrorMessage("popUp","width", "Width Value must be Between 0 to 650.");
+                            handleErrorMessage(
+                              "popUp",
+                              "width",
+                              "Width Value must be Between 0 to 650.",
+                            );
                           } else {
-                            handleErrorMessage("popUp","width", "");
+                            handleErrorMessage("popUp", "width", "");
                           }
-                         handleSectionChange("popUp","width",value)
+                          handleSectionChange("popUp", "width", value);
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1606,13 +1650,17 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.popUp.border_radius}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 1 || data > 20) {
-                            handleErrorMessage("popUp","border_radius", "Border radius Value must be Between 1 to 20.");
+                            handleErrorMessage(
+                              "popUp",
+                              "border_radius",
+                              "Border radius Value must be Between 1 to 20.",
+                            );
                           } else {
-                            handleErrorMessage("popUp","border_radius", "");
+                            handleErrorMessage("popUp", "border_radius", "");
                           }
-                         handleSectionChange("popUp","border_radius",value)
+                          handleSectionChange("popUp", "border_radius", value);
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1640,13 +1688,17 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.popUp.border_width}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 0 || data > 10) {
-                            handleErrorMessage("popUp","border_width", "Border width Value must be Between 0 to 10.");
+                            handleErrorMessage(
+                              "popUp",
+                              "border_width",
+                              "Border width Value must be Between 0 to 10.",
+                            );
                           } else {
-                            handleErrorMessage("popUp","border_width", "");
+                            handleErrorMessage("popUp", "border_width", "");
                           }
-                         handleSectionChange("popUp","border_width",value)
+                          handleSectionChange("popUp", "border_width", value);
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1673,13 +1725,25 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.popUp.top_bottom_padding}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 0 || data > 50) {
-                            handleErrorMessage("popUp","top_bottom_padding", "Top and bottom padding Value must be Between 0 to 50")
-                          }else{
-                            handleErrorMessage("popUp","top_bottom_padding", "");
+                            handleErrorMessage(
+                              "popUp",
+                              "top_bottom_padding",
+                              "Top and bottom padding Value must be Between 0 to 50",
+                            );
+                          } else {
+                            handleErrorMessage(
+                              "popUp",
+                              "top_bottom_padding",
+                              "",
+                            );
                           }
-                         handleSectionChange("popUp","top_bottom_padding",value)
+                          handleSectionChange(
+                            "popUp",
+                            "top_bottom_padding",
+                            value,
+                          );
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1706,13 +1770,25 @@ export default function Setting() {
                         inputMode="numeric"
                         value={state.popUp.left_right_padding}
                         onChange={(value) => {
-                          const data = parseInt(value, 10)
+                          const data = parseInt(value, 10);
                           if (isNaN(data) || data < 0 || data > 50) {
-                            handleErrorMessage("popUp","left_right_padding", "Left and right padding Value must be Between 0 to 50.");
+                            handleErrorMessage(
+                              "popUp",
+                              "left_right_padding",
+                              "Left and right padding Value must be Between 0 to 50.",
+                            );
                           } else {
-                            handleErrorMessage("popUp","left_right_padding", "");
+                            handleErrorMessage(
+                              "popUp",
+                              "left_right_padding",
+                              "",
+                            );
                           }
-                         handleSectionChange("popUp","left_right_padding",value)
+                          handleSectionChange(
+                            "popUp",
+                            "left_right_padding",
+                            value,
+                          );
                         }}
                         placeholder="e.g., 26"
                         suffix="Px"
@@ -1736,77 +1812,63 @@ export default function Setting() {
 
                   <div className="flex gap-2 mt-2 items-start">
                     {/* Background Color */}
-                    <div className="flex-1 flex-col ">
-                      <div className="flex items-center gap-1">
-                        <TextField
-                          label={
-                            <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
-                              Background Color
-                            </span>
-                          }
+                    <div className="flex-1 flex-col">
+                      <div className="text-[13px] text-[#333333] mb-1 block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
+                        Background Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
+                          name="text_color"
                           value={state.popUpBackground.background_color}
-                          onChange={(value) => {
+                          onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange(
-                                "popUpBackground",
-                                "background_color",
-                                value,
-                              );
+                              handleSectionChange("popUpBackground", "background_color", e.target.value)
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.popUpBackground.background_color}
                           onChange={(e) =>
-                            handleSectionChange(
-                              "popUpBackground",
-                              "background_color",
-                              e.target.value,
-                            )
+                            handleSectionChange("popUpBackground", "background_color", e.target.value)
                           }
-                          className="w-[36px] h-[36px] mt-[40px] sm:mt-[20px] lg:mt-[40px] border border-gray-300 rounded"
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
                     </div>
 
                     {/* Border Color */}
                     <div className="flex-1 flex-col">
-                      <div className="flex items-center gap-1">
-                        <TextField
-                          label={
-                            <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
-                              Border Color
-                            </span>
-                          }
+                      <div className="text-[13px] text-[#333333] mb-1 block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
+                        Border Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
+                          name="text_color"
                           value={state.popUpBackground.border_color}
-                          onChange={(value) => {
+                          onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange(
-                                "popUpBackground",
-                                "border_color",
-                                value,
-                              );
+                              handleSectionChange("popUpBackground", "border_color", e.target.value)
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.popUpBackground.border_color}
                           onChange={(e) =>
-                            handleSectionChange(
-                              "popUpBackground",
-                              "border_color",
-                              e.target.value,
-                            )
+                            handleSectionChange("popUpBackground", "border_color", e.target.value)
                           }
-                          className="w-[36px] h-[36px] mt-[40px] sm:mt-[20px] lg:mt-[40px] border border-gray-300 rounded"
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
                     </div>
 
                     <div className="flex-1">
-                    {/* Background Layer Opacity */}
+                      {/* Background Layer Opacity */}
                       <TextField
                         label={
                           <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
@@ -1815,24 +1877,36 @@ export default function Setting() {
                         }
                         value={state.popUpBackground.background_opacity}
                         onChange={(value) => {
-                            const data = parseFloat(value);
-                            if (isNaN(data) || data < 0 || data > 1) {
-                              handleErrorMessage("popUpBackground","background_opacity", "Opacity value is between 0 to 1.");
-                            } else {
-                              handleErrorMessage("popUpBackground","background_opacity", "");
-                            }
-                          handleSectionChange("popUpBackground","background_opacity",value)
-                          }}
+                          const data = parseFloat(value);
+                          if (isNaN(data) || data < 0 || data > 1) {
+                            handleErrorMessage(
+                              "popUpBackground",
+                              "background_opacity",
+                              "Opacity value is between 0 to 1.",
+                            );
+                          } else {
+                            handleErrorMessage(
+                              "popUpBackground",
+                              "background_opacity",
+                              "",
+                            );
+                          }
+                          handleSectionChange(
+                            "popUpBackground",
+                            "background_opacity",
+                            value,
+                          );
+                        }}
                         suffix="Px"
                       />
                       {error.popUpBackground.background_opacity && (
-                          <div className="flex items-start gap-2 text-red-800 mt-1 w-full">
-                            <AlertCircle size={15} className="mt-0.5 shrink-0" />
-                            <span className="break-words text-xs">
-                              {error.popUpBackground.background_opacity}
-                            </span>
-                          </div>
-                        )}
+                        <div className="flex items-start gap-2 text-red-800 mt-1 w-full">
+                          <AlertCircle size={15} className="mt-0.5 shrink-0" />
+                          <span className="break-words text-xs">
+                            {error.popUpBackground.background_opacity}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1909,36 +1983,29 @@ export default function Setting() {
                   <Text variant="headingMd">Outer Pop-up Background</Text>
 
                   <div className="flex gap-3 mb-4 mt-2">
-                    <div className="flex-1">
-                      <div className="flex gap-1">
-                        <TextField
-                          label={
-                            <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
-                              Outer Layer Color
-                            </span>
-                          }
+                    <div className="flex-1 flex-col">
+                      <div className="text-[13px] text-[#333333] mb-1 block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
+                        Outer Layer Color
+                      </div>
+                      <div className="flex flex-1 items-center border border-[#8a8a8a] focus:border-[#303030] rounded-md ">
+                        <input
+                          type="text"
+                          name="text_color"
                           value={state.outerPopUpBackground.background_color}
-                          onChange={(value) => {
+                          onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange(
-                                "outerPopUpBackground",
-                                "background_color",
-                                value,
-                              );
+                              handleSectionChange("outerPopUpBackground", "background_color", e.target.value)
                             }
                           }}
+                          className="w-full text-sm focus:outline-none ml-2"
                         />
                         <input
                           type="color"
                           value={state.outerPopUpBackground.background_color}
                           onChange={(e) =>
-                            handleSectionChange(
-                              "outerPopUpBackground",
-                              "background_color",
-                              e.target.value,
-                            )
+                            handleSectionChange("outerPopUpBackground", "background_color", e.target.value)
                           }
-                          className="w-[36px] h-[36px] mt-[40px] sm:mt-[20px] lg:mt-[40px] border border-gray-300 rounded"
+                          className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
                       </div>
                     </div>
@@ -1946,7 +2013,6 @@ export default function Setting() {
                     <div className="flex-1">
                       <div className="flex-1">
                         <TextField
-                          // label="Background Layer Opacity"
                           label={
                             <span className="block min-h-[40px] sm:min-h-[0px] lg:min-h-[40px]">
                               Background Layer Opacity
@@ -1956,18 +2022,33 @@ export default function Setting() {
                           onChange={(value) => {
                             const data = parseFloat(value);
                             if (isNaN(data) || data < 0 || data > 1) {
-                              handleErrorMessage("outerPopUpBackground","outer_opacity", "Opacity value is between 0 to 1.");
+                              handleErrorMessage(
+                                "outerPopUpBackground",
+                                "outer_opacity",
+                                "Opacity value is between 0 to 1.",
+                              );
                             } else {
-                              handleErrorMessage("outerPopUpBackground","outer_opacity", "");
+                              handleErrorMessage(
+                                "outerPopUpBackground",
+                                "outer_opacity",
+                                "",
+                              );
                             }
-                          handleSectionChange("outerPopUpBackground","outer_opacity",value)
+                            handleSectionChange(
+                              "outerPopUpBackground",
+                              "outer_opacity",
+                              value,
+                            );
                           }}
                           placeholder="e.g., 26"
                           suffix="Px"
                         />
                         {error.outerPopUpBackground.outer_opacity && (
                           <div className="flex items-start gap-2 text-red-800 mt-1 w-full">
-                            <AlertCircle size={15} className="mt-0.5 shrink-0" />
+                            <AlertCircle
+                              size={15}
+                              className="mt-0.5 shrink-0"
+                            />
                             <span className="break-words text-xs">
                               {error.outerPopUpBackground.outer_opacity}
                             </span>
@@ -2153,7 +2234,11 @@ export default function Setting() {
                     id="specific-pages"
                     name="page"
                     onChange={() =>
-                      handleSectionChange("displayCriteria","page","specific-pages",)
+                      handleSectionChange(
+                        "displayCriteria",
+                        "page",
+                        "specific-pages",
+                      )
                     }
                   />
 
@@ -2185,7 +2270,11 @@ export default function Setting() {
                         onChange={(value) => {
                           const newUrls = [...state.displayCriteria.url];
                           newUrls[0] = value;
-                          handleSectionChange( "displayCriteria","url",newUrls,);
+                          handleSectionChange(
+                            "displayCriteria",
+                            "url",
+                            newUrls,
+                          );
                         }}
                         autoComplete="off"
                       />
@@ -2249,7 +2338,10 @@ export default function Setting() {
                           </div>
                           {!state.displayCriteria.url[index + 1] && (
                             <div className="flex items-start gap-2 text-red-800 mt-1 w-full">
-                              <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                              <AlertCircle
+                                size={18}
+                                className="mt-0.5 shrink-0"
+                              />
                               <span className="break-words">
                                 {error.displayCriteria.url}
                               </span>
@@ -2362,7 +2454,7 @@ export default function Setting() {
           </div>
 
           {/* Right Section */}
-          <div className="flex flex-col w-full mb-5 sm:mt-0 sm:mb-0 sm:w-[62%] sm:h-screen sm:fixed sm:right-0 sm:top-0 sm:p-1 overflow-y-auto scrollbar-hide">
+          <div className="flex flex-col w-full mb-5 lg:mt-0 lg:mb-0 lg:w-[62%] lg:h-screen lg:fixed lg:right-0 lg:top-0 lg:p-1 overflow-y-auto scrollbar-hide">
             <ui-save-bar id="my-save-bar">
               <button variant="primary" id="save-button">
                 Save
@@ -2373,7 +2465,7 @@ export default function Setting() {
             <div className="mt-5 mb-10 right-4 flex justify-end space-x-4">
               <Button
                 variant="primary"
-                disabled={!hasChanges} 
+                disabled={!hasChanges}
                 onClick={() => {
                   addSetting();
                   document.getElementById("save-button").click();
@@ -2400,4 +2492,4 @@ export default function Setting() {
       </Page>
     </AppProvider>
   );
-} 
+}

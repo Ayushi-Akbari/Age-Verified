@@ -1,4 +1,4 @@
-import {encrypt, decrypt} from "./crypto.server";
+import {encrypt, decrypt} from "./crypto";
 import axios from "axios";
 
 const webhookSubscription = async (store_name, token, store_user_id) => {
@@ -146,5 +146,74 @@ const webhookSubscription = async (store_name, token, store_user_id) => {
 
   return { msg: "done", status: 200 };
 }
+
+export const addSetting = async () => {
+    const latestState = stateRef.current;
+    const htmlContent = verificationRef.current?.getHtmlContent();
+
+    const removeImages = (obj) => {
+      const { image, ...rest } = obj;
+      rest.imageFile = null;
+      return rest;
+    };
+    const formData = new FormData();
+
+    console.log("state : ", latestState);
+
+    formData.append("popUpLogoImage", latestState.popUpLogo.imageFile);
+    formData.append(
+      "popUpBackgroundImage",
+      latestState.popUpBackground.imageFile,
+    );
+    formData.append(
+      "outerPopUpBackgroundImage",
+      latestState.outerPopUpBackground.imageFile,
+    );
+
+    formData.append("customization", JSON.stringify(latestState.customization));
+    formData.append("title", JSON.stringify(latestState.title));
+    formData.append("description", JSON.stringify(latestState.description));
+    formData.append("acceptButton", JSON.stringify(latestState.acceptButton));
+    formData.append("rejectButton", JSON.stringify(latestState.rejectButton));
+    formData.append("popUp", JSON.stringify(latestState.popUp));
+    formData.append(
+      "outerPopUpBackground",
+      latestState.outerPopUpBackground.imageFile
+        ? JSON.stringify(removeImages(latestState.outerPopUpBackground))
+        : JSON.stringify(latestState.outerPopUpBackground),
+    );
+    formData.append(
+      "popUpLogo",
+      latestState.popUpLogo.imageFile
+        ? JSON.stringify(removeImages(latestState.popUpLogo))
+        : JSON.stringify(latestState.popUpLogo),
+    );
+    formData.append(
+      "popUpBackground",
+      latestState.popUpBackground.imageFile
+        ? JSON.stringify(removeImages(latestState.popUpBackground))
+        : JSON.stringify(latestState.popUpBackground),
+    );
+    formData.append("policy", JSON.stringify(latestState.policy));
+    formData.append("advanced", JSON.stringify(latestState.advanced));
+    formData.append(
+      "displayCriteria",
+      JSON.stringify(latestState.displayCriteria),
+    );
+    formData.append("market", latestState.market);
+    formData.append("monthlyAnalysis", latestState.monthlyAnalysis);
+    formData.append("htmlContent", htmlContent);
+
+    for (let pair of formData.entries()) {
+      console.log(`${pair[0]}:`, pair[1]);
+    }
+
+    const response = await axios.post(
+      `http://localhost:8001/setting/add-setting?shop=${shop}`,
+      formData,
+    );
+
+    console.log("response : ", response);
+};
 
 export default webhookSubscription

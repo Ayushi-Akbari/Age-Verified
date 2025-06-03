@@ -11,7 +11,7 @@ import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 export const links = () => {
   return [
     { rel: "stylesheet", href: tailwindStylesheetUrl },
-    { rel: "stylesheet", href: polarisStyles }, // ✅ Polaris CSS loaded via Remix
+    { rel: "stylesheet", href: polarisStyles },
   ];
 };
 
