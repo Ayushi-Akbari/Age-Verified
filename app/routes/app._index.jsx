@@ -167,7 +167,6 @@ export default function Index() {
               window.location.reload();
             } else if (response.result === "declined-all") {
             }
-            // If declined, do nothing, just stop loading
           } else {
             if (idToken && shop) {
               fetcher.submit(
@@ -180,32 +179,16 @@ export default function Index() {
           console.error("Error getting ID token:", error);
         }
       })();
-    } else {
-      setLoading(false);
     }
-    return () => { isMounted = false; };
-  }, []);
 
-  // Show loading spinner while async logic runs
-  if (loading) {
-    return (
-      <AppProvider>
-        <Page>
-          <Box
-            padding="8"
-            style={{
-              justifyContent: "center",
-              display: "flex",
-              alignItems: "center",
-              minHeight: "60vh",
-            }}
-          >
-            <Spinner accessibilityLabel="Loading" size="large" />
-          </Box>
-        </Page>
-      </AppProvider>
-    );
-  }
+    requestAnimationFrame(() => {
+      const endTime = performance.now();
+      const renderDuration = endTime - startTime;
+      console.log(
+        `UI design load/render time index page: ${renderDuration.toFixed(2)} ms`,
+      );
+    });
+  }, []);
 
   return (
     <AppProvider>

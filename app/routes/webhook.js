@@ -1,4 +1,4 @@
-import {encrypt, decrypt} from "./crypto";
+import {encrypt, decrypt} from "./encyption.server";
 import axios from "axios";
 
 const webhookSubscription = async (store_name, token, store_user_id) => {
@@ -147,8 +147,8 @@ const webhookSubscription = async (store_name, token, store_user_id) => {
   return { msg: "done", status: 200 };
 }
 
-export const addSetting = async () => {
-    const latestState = stateRef.current;
+export const addSetting = async (state) => {
+    const latestState = state
     const htmlContent = verificationRef.current?.getHtmlContent();
 
     const removeImages = (obj) => {

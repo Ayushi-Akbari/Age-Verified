@@ -101,9 +101,9 @@ const getAnalytics = async (req, res) => {
         startDate = new Date(today.getFullYear(), today.getMonth(), 1);
         break;
 
-        case 'next_month':
-        startDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+        case 'last_month':
+        startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        endDate = new Date(today.getFullYear(), today.getMonth(), 0);
         break;
 
         default:
@@ -123,31 +123,50 @@ const getAnalytics = async (req, res) => {
 
     let analyticsData;
 
-    if(startDate && endDate) {
         const VerifiedTimes = analyticsDetail.verified.filter((date) => date.time >=startDate && date.time <= endDate)
         const UnverifiedTimes = analyticsDetail.unverified.filter((date) => date.time >=startDate && date.time <= endDate)
         const verifiedCount = VerifiedTimes.reduce((total, entery) => total + entery.count, 0)
         const unverifiedCount = UnverifiedTimes.reduce((total, entery) => total + entery.count, 0)
+
+        const verified = VerifiedTimes || [];
+        const unverified = UnverifiedTimes || [];
+
+        const resultMap = {};
+
+        verified.forEach(({ time, count }) => {
+        const date = new Date(time);
+        const dateStr = `${date.getDate().toString().padStart(2, "0")}-${date.toLocaleString("en-US", { month: "short" })}`;
+        if (!resultMap[dateStr]) resultMap[dateStr] = { date: dateStr, Verified: 0, Unverified: 0 };
+        resultMap[dateStr].Verified += count;
+        });
+
+        unverified.forEach(({ time, count }) => {
+        const date = new Date(time);
+        const dateStr = `${date.getDate().toString().padStart(2, "0")}-${date.toLocaleString("en-US", { month: "short" })}`;
+        if (!resultMap[dateStr]) resultMap[dateStr] = { date: dateStr, Verified: 0, Unverified: 0 };
+        resultMap[dateStr].Unverified += count;
+        });
+
+        while (startDate <= endDate) {
+        const date = new Date(startDate);
+        const dateStr = `${date.getDate().toString().padStart(2, "0")}-${date.toLocaleString("en-US", { month: "short" })}`;
+        if (!resultMap[dateStr]) {
+            resultMap[dateStr] = { date: dateStr, Verified: 0, Unverified: 0 };
+        }
+        startDate.setDate(startDate.getDate() + 1);
+        }
+
+        const combinedData = Object.values(resultMap).sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+        );
+
         analyticsData = {
             shop_id: analyticsDetail.shop_id,
             verified_count: verifiedCount,
-            verified_times: VerifiedTimes,
             unverified_count: unverifiedCount,
-            unverified_times: UnverifiedTimes,
+            data: combinedData,
             total_verification: verifiedCount + unverifiedCount
         }
-    }else{
-        const verifiedCount = analyticsDetail.verified.reduce((total, entery) => total + entery.count, 0)
-        const unverifiedCount = analyticsDetail.unverified.reduce((total, entery) => total + entery.count, 0)
-        analyticsData = {
-            shop_id: analyticsDetail.shop_id,
-            verified_count: verifiedCount,
-            verified_times: analyticsDetail.verified,
-            unverified_count: unverifiedCount,
-            unverified_times: analyticsDetail.unverified,
-            total_verification: verifiedCount + unverifiedCount
-       }
-    }
     
     res.status(200).json({analyticsData, msg: "Analytics Data Retrieved Successfully." });
 }

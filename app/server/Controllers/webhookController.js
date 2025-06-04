@@ -1,5 +1,5 @@
 const User = require('../models/UserModel')
-const { decrypt } = require('../../routes/crypto.server')
+const { decrypt } = require('../../routes/encyption.server')
 
 const appUninstall = async (req, res) => {
    

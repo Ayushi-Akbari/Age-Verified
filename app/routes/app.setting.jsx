@@ -11,6 +11,7 @@ import {
   Checkbox,
   Button,
   AppProvider,
+  Spinner
 } from "@shopify/polaris";
 import { useEffect, useState, useCallback, useRef } from "react";
 import Template1 from "./template1";
@@ -32,6 +33,7 @@ export default function Setting() {
   const [future, setFuture] = useState([]);
   const [history, setHistory] = useState([]);
   const [shop, setShop] = useState()
+  const [loading, setLoading] =useState(false)
 
   const initialState = {
     customization: {
@@ -236,9 +238,17 @@ export default function Setting() {
     };
 
     const handleDiscard = async () => {
+      setLoading(true)
+      console.log("loading");
+      
       const res = await removeSetting();
+      console.log("res : " , res);
+      
       if (res) {
+        console.log("inside");
+        
         setHasChanges(false);
+        setLoading(false)
         saveBar?.hide();
       }
     };
@@ -357,7 +367,10 @@ export default function Setting() {
       );
       const settingData = data?.data?.settings;
 
-      if (!settingData) return;
+      if (!settingData) {
+        setState(initialState);
+        return true
+      }
 
       const parsedSetting = {
         customization: settingData.customization
@@ -428,8 +441,11 @@ export default function Setting() {
 
       setHistory([]);
       setFuture([]);
+
+      return true
     } catch (error) {
       console.error("Failed to fetch settings:", error);
+      return false
     }
   };
 
@@ -506,10 +522,22 @@ export default function Setting() {
   };
 
   const removeSetting = async () => {
-    await setState(initialState);
+    try {
+      const res = await fetchData();
+      console.log("res : ", res);
+      
+      if (!res) {
+        return false
+      }
 
-    return true;
+      return true;
+    } catch (error) {
+      console.error('Error while removing setting:', error);
+      setState(initialState);
+      return false;
+    }
   };
+
 
   const data = {
     customization: state.customization,
@@ -541,9 +569,8 @@ export default function Setting() {
             <Box paddingBlockStart="8">
               <Card>
                 <Text variant="semibold">Markets</Text>
-                <div className="mt-2 ">
+                <div className="mt-3 ">
                   <Select
-                    label="Font"
                     options={marketOptions}
                     value={state.market}
                     onChange={(value) =>
@@ -901,7 +928,11 @@ export default function Setting() {
                           value={state.title.text_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange("title", "text_color", e.target.value);
+                              handleSectionChange(
+                                "title",
+                                "text_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -910,7 +941,11 @@ export default function Setting() {
                           type="color"
                           value={state.title.text_color}
                           onChange={(e) => {
-                            handleSectionChange("title", "text_color", e.target.value);
+                            handleSectionChange(
+                              "title",
+                              "text_color",
+                              e.target.value,
+                            );
                           }}
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -1020,7 +1055,11 @@ export default function Setting() {
                           value={state.description.text_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange("description", "text_color",  e.target.value)
+                              handleSectionChange(
+                                "description",
+                                "text_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -1029,7 +1068,11 @@ export default function Setting() {
                           type="color"
                           value={state.description.text_color}
                           onChange={(e) => {
-                            handleSectionChange("description", "text_color",  e.target.value)
+                            handleSectionChange(
+                              "description",
+                              "text_color",
+                              e.target.value,
+                            );
                           }}
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -1224,7 +1267,11 @@ export default function Setting() {
                           value={state.acceptButton.text_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange("acceptButton", "text_color", e.target.value)
+                              handleSectionChange(
+                                "acceptButton",
+                                "text_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -1233,7 +1280,11 @@ export default function Setting() {
                           type="color"
                           value={state.acceptButton.text_color}
                           onChange={(e) => {
-                            handleSectionChange("acceptButton", "text_color", e.target.value)
+                            handleSectionChange(
+                              "acceptButton",
+                              "text_color",
+                              e.target.value,
+                            );
                           }}
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -1253,7 +1304,11 @@ export default function Setting() {
                           value={state.acceptButton.background_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange("acceptButton", "background_color", e.target.value)
+                              handleSectionChange(
+                                "acceptButton",
+                                "background_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -1262,7 +1317,11 @@ export default function Setting() {
                           type="color"
                           value={state.acceptButton.background_color}
                           onChange={(e) =>
-                            handleSectionChange("acceptButton", "background_color", e.target.value)
+                            handleSectionChange(
+                              "acceptButton",
+                              "background_color",
+                              e.target.value,
+                            )
                           }
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -1279,7 +1338,11 @@ export default function Setting() {
                           value={state.acceptButton.border_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) {
-                              handleSectionChange("acceptButton", "border_color", e.target.value);
+                              handleSectionChange(
+                                "acceptButton",
+                                "border_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -1288,7 +1351,11 @@ export default function Setting() {
                           type="color"
                           value={state.acceptButton.border_color}
                           onChange={(e) =>
-                            handleSectionChange("acceptButton", "border_color", e.target.value)
+                            handleSectionChange(
+                              "acceptButton",
+                              "border_color",
+                              e.target.value,
+                            )
                           }
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -1476,7 +1543,11 @@ export default function Setting() {
                           value={state.rejectButton.text_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange("rejectButton", "text_color", e.target.value)
+                              handleSectionChange(
+                                "rejectButton",
+                                "text_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -1485,7 +1556,11 @@ export default function Setting() {
                           type="color"
                           value={state.rejectButton.text_color}
                           onChange={(e) => {
-                            handleSectionChange("rejectButton", "text_color", e.target.value)
+                            handleSectionChange(
+                              "rejectButton",
+                              "text_color",
+                              e.target.value,
+                            );
                           }}
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -1505,7 +1580,11 @@ export default function Setting() {
                           value={state.rejectButton.background_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange("rejectButton", "background_color", e.target.value)
+                              handleSectionChange(
+                                "rejectButton",
+                                "background_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -1514,7 +1593,11 @@ export default function Setting() {
                           type="color"
                           value={state.rejectButton.background_color}
                           onChange={(e) =>
-                            handleSectionChange("rejectButton", "background_color", e.target.value)
+                            handleSectionChange(
+                              "rejectButton",
+                              "background_color",
+                              e.target.value,
+                            )
                           }
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -1531,7 +1614,11 @@ export default function Setting() {
                           value={state.rejectButton.border_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) {
-                              handleSectionChange("rejectButton", "border_color", e.target.value);
+                              handleSectionChange(
+                                "rejectButton",
+                                "border_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -1540,7 +1627,11 @@ export default function Setting() {
                           type="color"
                           value={state.rejectButton.border_color}
                           onChange={(e) =>
-                            handleSectionChange("rejectButton", "border_color", e.target.value)
+                            handleSectionChange(
+                              "rejectButton",
+                              "border_color",
+                              e.target.value,
+                            )
                           }
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -1823,7 +1914,11 @@ export default function Setting() {
                           value={state.popUpBackground.background_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange("popUpBackground", "background_color", e.target.value)
+                              handleSectionChange(
+                                "popUpBackground",
+                                "background_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -1832,7 +1927,11 @@ export default function Setting() {
                           type="color"
                           value={state.popUpBackground.background_color}
                           onChange={(e) =>
-                            handleSectionChange("popUpBackground", "background_color", e.target.value)
+                            handleSectionChange(
+                              "popUpBackground",
+                              "background_color",
+                              e.target.value,
+                            )
                           }
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -1851,7 +1950,11 @@ export default function Setting() {
                           value={state.popUpBackground.border_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange("popUpBackground", "border_color", e.target.value)
+                              handleSectionChange(
+                                "popUpBackground",
+                                "border_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -1860,7 +1963,11 @@ export default function Setting() {
                           type="color"
                           value={state.popUpBackground.border_color}
                           onChange={(e) =>
-                            handleSectionChange("popUpBackground", "border_color", e.target.value)
+                            handleSectionChange(
+                              "popUpBackground",
+                              "border_color",
+                              e.target.value,
+                            )
                           }
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -1994,7 +2101,11 @@ export default function Setting() {
                           value={state.outerPopUpBackground.background_color}
                           onChange={(e) => {
                             if (/^#[0-9A-Fa-f]{0,6}$/.test(value)) {
-                              handleSectionChange("outerPopUpBackground", "background_color", e.target.value)
+                              handleSectionChange(
+                                "outerPopUpBackground",
+                                "background_color",
+                                e.target.value,
+                              );
                             }
                           }}
                           className="w-full text-sm focus:outline-none ml-2"
@@ -2003,7 +2114,11 @@ export default function Setting() {
                           type="color"
                           value={state.outerPopUpBackground.background_color}
                           onChange={(e) =>
-                            handleSectionChange("outerPopUpBackground", "background_color", e.target.value)
+                            handleSectionChange(
+                              "outerPopUpBackground",
+                              "background_color",
+                              e.target.value,
+                            )
                           }
                           className="w-9 h-[30px] p-0 border-none rounded-md cursor-pointer"
                         />
@@ -2456,10 +2571,19 @@ export default function Setting() {
           {/* Right Section */}
           <div className="flex flex-col w-full mb-5 lg:mt-0 lg:mb-0 lg:w-[62%] lg:h-screen lg:fixed lg:right-0 lg:top-0 lg:p-1 overflow-y-auto scrollbar-hide">
             <ui-save-bar id="my-save-bar">
-              <button variant="primary" id="save-button">
+              <button
+                variant="primary"
+                id="save-button"
+                disabled={!hasChanges}
+              >
                 Save
               </button>
-              <button id="discard-button">Discard</button>
+              <button
+                id="discard-button"
+                disabled={loading}
+              >
+                {loading ? "Discarding..." : "Discard"}
+              </button>
             </ui-save-bar>
 
             <div className="mt-5 mb-10 right-4 flex justify-end space-x-4">
