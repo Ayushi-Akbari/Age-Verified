@@ -5,7 +5,7 @@ const path = require("path")
 const userModel = require("./models/UserModel.js")
 const settingModel = require("./models/SettingModel.js")
 const analyticsModel = require("./models/AnalyticsModel.js")
-const { settingRoute, userRoute, analyticsRoute, WebhookRoute } = require("./Routes/index.js");
+const { settingRoute, userRoute, analyticsRoute, WebhookRoute, MarketRoute } = require("./Routes/index.js");
 const app = express();
 const PORT = 8001;
 
@@ -18,6 +18,7 @@ app.use("/user", userRoute)
 app.use("/setting", settingRoute)
 app.use("/analytics", analyticsRoute);
 app.use("/hooks", WebhookRoute);
+app.use("/market", MarketRoute)
 
 app.use((req, res, next) => {
   console.log("Request:", req.method, req.url);

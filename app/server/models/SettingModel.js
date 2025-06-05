@@ -18,14 +18,8 @@ const SettingSchema = new mongoose.Schema({
   is_enable: {
     type: Boolean,
   },
-  primary: {
-    type: Boolean,
-  },
-  country: {
-    type: String,
-  },
-  language: {
-    type: String
+  market_id: {
+    type: Schema.Types.ObjectId,
   }
 });
 

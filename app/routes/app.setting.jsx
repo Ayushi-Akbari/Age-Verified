@@ -22,11 +22,11 @@ import Template5 from "./template5";
 import { Trash2, Info, AlertCircle } from "lucide-react";
 import { useLoaderData } from "@remix-run/react";
 import axios from "axios";
+import Cookies from 'js-cookie'
+import {countryOptions, languageOptions} from "../component/market"
 // import { authenticate } from "../shopify.server";
 
 export default function Setting() {
-    console.log("setting df 123 fghgh");
-
   const startTime = performance.now();
   const verificationRef = useRef(null);
   const [hasChanges, setHasChanges] = useState(false);
@@ -34,6 +34,7 @@ export default function Setting() {
   const [history, setHistory] = useState([]);
   const [shop, setShop] = useState()
   const [loading, setLoading] =useState(false)
+  const [marketOptions, setMarketOptions] = useState([])
 
   const initialState = {
     customization: {
@@ -201,15 +202,16 @@ export default function Setting() {
 
   }, []);
 
-  useEffect(() => {
-    if (!shop) {
-      const url = new URL(window.location.href);
-      const shopParam = url.searchParams.get("shop");
-      if (shopParam) {
-        setShop(shopParam);
+    useEffect(() => {
+      if (!shop) {
+        const cookieShop = Cookies.get("shop");
+        console.log("cookieShop : " , cookieShop);
+        
+        if (cookieShop) {
+          setShop(cookieShop);
+        }
       }
-    }
-  }, []);
+    }, [shop]);
 
   useEffect(() => {
     stateRef.current = state;
@@ -218,6 +220,7 @@ export default function Setting() {
   useEffect(() => {
     if (shop) {
       fetchData();
+      fetchMarket()
     }
   }, [shop]);
 
@@ -280,9 +283,6 @@ export default function Setting() {
     { label: "Inter", value: "'Inter', sans-serif" },
     { label: "Poppins", value: "'Poppins', sans-serif" },
     { label: "Roboto", value: "'Roboto', sans-serif" },
-  ];
-  const marketOptions = [
-    { label: "India (English) (Primary)", value: "india" },
   ];
 
   const handleDropZoneDrop = useCallback((acceptedFiles, section, key) => {
@@ -449,7 +449,29 @@ export default function Setting() {
     }
   };
 
+  const fetchMarket = async() => {
+    if(shop){
+      const res = await axios.get(
+        `http://localhost:8001/market/get-market?shop=${shop}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          }
+        }
+      );
+      const market = res.data.market.market
+
+      const marketOptions = market.map((data) => ({
+        label: `${countryOptions.find(opt => opt.value === data.country)?.label || data.country} (${languageOptions.find(opt => opt.value === data.language)?.label || data.language}) ${data.primary ? " (Primary)" : ""}`,
+        value: data._id
+      }));
+      setMarketOptions(marketOptions);
+    }
+  }
+
   const addSetting = async () => {
+    console.log("inside setting : " );
+    
     const latestState = stateRef.current;
     const htmlContent = verificationRef.current?.getHtmlContent();
 
@@ -506,9 +528,9 @@ export default function Setting() {
     formData.append("monthlyAnalysis", latestState.monthlyAnalysis);
     formData.append("htmlContent", htmlContent);
 
-    for (let pair of formData.entries()) {
-      console.log(`${pair[0]}:`, pair[1]);
-    }
+    // for (let pair of formData.entries()) {
+    //   console.log(`${pair[0]}:`, pair[1]);
+    // }
 
     const response = await axios.post(
       `http://localhost:8001/setting/add-setting?shop=${shop}`,
@@ -573,9 +595,9 @@ export default function Setting() {
                   <Select
                     options={marketOptions}
                     value={state.market}
-                    onChange={(value) =>
+                    onChange={(value) =>{
                       handleSectionChange("market", null, value)
-                    }
+                    }}
                   />
                 </div>
               </Card>
@@ -2600,15 +2622,15 @@ export default function Setting() {
             </div>
             <div className="px-4 pb-8">
               {state.customization.layout === "template1" ? (
-                <Template1 data={data} />
+                <Template1 ref={verificationRef} data={data} />
               ) : state.customization.layout === "template2" ? (
-                <Template2 data={data} />
+                <Template2 ref={verificationRef} data={data} />
               ) : state.customization.layout === "template3" ? (
-                <Template3 data={data} />
+                <Template3 ref={verificationRef} data={data} />
               ) : state.customization.layout === "template4" ? (
-                <Template4 data={data} />
+                <Template4 ref={verificationRef} data={data} />
               ) : state.customization.layout === "template5" ? (
-                <Template5 data={data} />
+                <Template5 ref={verificationRef} data={data} />
               ) : null}
             </div>
           </div>

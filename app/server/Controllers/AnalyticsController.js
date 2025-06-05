@@ -1,8 +1,9 @@
 const Analytics = require('../models/AnalyticsModel');
 const User = require('../models/UserModel');
+const Market = require("../models/MarketModel")
 
 const addAnalytics = async (req, res) => {
-    const {verified, shop} = req.body;
+    const {verified, shop, country, language} = req.body;
     if (!shop) {
         return res.status(400).json({ error: "Shop Name is required." });
     }
@@ -11,6 +12,13 @@ const addAnalytics = async (req, res) => {
     if (!UserData) {
         return res.status(404).json({ error: "Shop not found." });
     }
+
+    const market = await Market.findOne({shop_id : UserData._id})
+    const marketIdObj =
+        market.market.find(m => m.country === country && m.language === language) ||
+        market.market.find(m => m.primary);
+
+    const marketId = marketIdObj ? marketIdObj._id : null;
 
     if (verified === undefined ) {
         return res.status(400).json({ error: "Verified and Unverified counts are required." });
@@ -21,34 +29,50 @@ const addAnalytics = async (req, res) => {
 
     const AnalyticsData = await Analytics.findOne({ shop_id: UserData._id });
 
-    let update = {};
     if (!AnalyticsData) {
-        update = {
-          shop_id: UserData._id,
-          [type]: [
-            {
-              time: currentTime,
-              count: 1,
-            },
-          ],
-        };
-
-        await Analytics.create(update);
-    }else{
-        const existingEntry = AnalyticsData[type]?.find((entry) => {
-            const entryDate = new Date(entry.time.toDateString());
-            const currentDateOnly = new Date(currentTime.toDateString());
-          return entryDate.getTime() === currentDateOnly.getTime();
+        await Analytics.create({
+            shop_id: UserData._id,
+            market: {
+                id: marketId,
+                [type]: [
+                    {
+                    time: currentTime,
+                    count: 1,
+                    },
+                ],
+            }
         });
+    }else{
+        const isMarket = AnalyticsData.market.find((market) => market.id.toString() === marketId.toString());
 
-        if(existingEntry){
-            existingEntry.count += 1;
-        }else{
-            AnalyticsData[type].push({
-                time: currentTime,
-                count: 1
+        if(isMarket){
+            const existingEntry = AnalyticsData.market[type]?.find((entry) => {
+                const entryDate = new Date(entry.time.toDateString());
+                const currentDateOnly = new Date(currentTime.toDateString());
+            return entryDate.getTime() === currentDateOnly.getTime();
             });
-        }  
+
+            if(existingEntry){
+                existingEntry.count += 1;
+            }else{
+                isMarket[type].push({
+                    time: currentTime,
+                    count: 1,
+                });
+            }  
+        }else{
+            const data = {
+                id: marketId,
+                [type]: [
+                    {
+                    time: currentTime,
+                    count: 1,
+                    },
+                ],
+            }
+
+            AnalyticsData.market.push(data)
+        }
         
         await AnalyticsData.save();
     }
@@ -57,7 +81,7 @@ const addAnalytics = async (req, res) => {
 }
 
 const getAnalytics = async (req, res) => {
-    const { shop, date_range } = req.query;
+    const { shop, date_range, market_id } = req.query;
 
     if (!shop) {
         return res.status(400).json({ msg: "Shop ID is required." });
@@ -115,14 +139,27 @@ const getAnalytics = async (req, res) => {
     endDate.setHours(23, 59, 59, 999);
     }
 
-    let analyticsDetail = await Analytics.findOne({ shop_id: UserData._id });
+    const market = await Market.findOne({shop_id : UserData._id})
+    const marketIdObj =
+        market.market.find(m => m._id.toString() === market_id.toString())
 
-    if (!analyticsDetail) {
+    const marketId = marketIdObj ? marketIdObj._id : null;
+
+    let analytics = await Analytics.findOne({ shop_id: UserData._id });
+
+    if (!analytics) {
         return res.status(404).json({ msg: "Analytics data not found for this shop." });
     }
 
-    let analyticsData;
+    let analyticsDetail = analytics.market.find((market) => market.id.toString() === marketId.toString())
 
+    // if(!analytics || !analyticsDetail){
+
+    // }else{
+        
+    // }
+
+        let analyticsData;
         const VerifiedTimes = analyticsDetail.verified.filter((date) => date.time >=startDate && date.time <= endDate)
         const UnverifiedTimes = analyticsDetail.unverified.filter((date) => date.time >=startDate && date.time <= endDate)
         const verifiedCount = VerifiedTimes.reduce((total, entery) => total + entery.count, 0)

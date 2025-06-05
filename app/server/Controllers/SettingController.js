@@ -12,7 +12,7 @@ const addSettingData = async (req, res) => {
     return res.status(404).send({ messgae: "Shop Is Not Found." });
   }
 
-  const setting = ({
+  const {
     customization,
     title,
     description,
@@ -25,38 +25,42 @@ const addSettingData = async (req, res) => {
     policy,
     advanced,
     displayCriteria,
-    market,
     monthlyAnalysis,
-  } = req.body);
+  } = req.body;
 
-  const htmlContent = req.body.htmlContent
+  const setting = {
+    customization,
+    title,
+    description,
+    acceptButton,
+    rejectButton,
+    popUp,
+    popUpBackground,
+    outerPopUpBackground,
+    popUpLogo,
+    policy,
+    advanced,
+    displayCriteria,
+    monthlyAnalysis,
+  };
 
-  console.log("req.files : ", req.files);
+  console.log("setting : " , setting);
   
 
+  const htmlContent = req.body.htmlContent
+  const market = req.body.market
   const parseAndAttachImage = (key, fileKey) => {
     setting[key] = JSON.parse(setting[key] || "{}");    
     if (req?.files?.[fileKey]?.[0]) {
       setting[key].image = `/image/${req.files[fileKey][0].filename}`;
-      // setting[key].imageFile = null
     }
     setting[key] = JSON.stringify(setting[key]);
-
-    console.log("Parsed and attached image for key:", key, "Image path:", setting[key]);
-    
   };
   parseAndAttachImage("popUpBackground", "popUpBackgroundImage");
   parseAndAttachImage("outerPopUpBackground", "outerPopUpBackgroundImage");
   parseAndAttachImage("popUpLogo", "popUpLogoImage");
 
-    console.log("isPresent : " , setting.popUpBackground);
-    console.log("isPresent : " , setting.outerPopUpBackground);
-        console.log("isPresent : " , setting.popUpLogo);
-
-  // console.log("htmlontent : " , htmlContent);
-  
-  // const isPresent = await Setting.findOne({ shop_name: shop, language: req.body.language, country: req.body.country });
-  const isPresent = await Setting.findOne({ shop_name: shop});
+  const isPresent = await Setting.findOne({ shop_name: shop, market_id: market});
 
   let settingData;
   if (isPresent) {
@@ -75,9 +79,7 @@ const addSettingData = async (req, res) => {
       shop_name: shop,
       settings: setting,
       html_content: htmlContent,
-      // language: req.body.language, 
-      // country: req.body.country,
-      // primary: req.body.primary
+      market_id: market
     });
   }
 

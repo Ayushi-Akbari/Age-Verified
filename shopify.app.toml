@@ -3,7 +3,7 @@
 client_id = "6473332dff158d7aab8327543871590a"
 name = "age-verification"
 handle = "age-verification-58"
-application_url = "https://olympics-witch-jets-drawing.trycloudflare.com"
+application_url = "https://womens-offers-employ-concept.trycloudflare.com"
 embedded = true
 
 [build]
@@ -36,9 +36,9 @@ optional_scopes = [ "read_locales", "write_themes" ]
 
 [auth]
 redirect_urls = [
-  "https://olympics-witch-jets-drawing.trycloudflare.com/auth/callback",
-  "https://olympics-witch-jets-drawing.trycloudflare.com/auth/shopify/callback",
-  "https://olympics-witch-jets-drawing.trycloudflare.com/api/auth/callback"
+  "https://womens-offers-employ-concept.trycloudflare.com/auth/callback",
+  "https://womens-offers-employ-concept.trycloudflare.com/auth/shopify/callback",
+  "https://womens-offers-employ-concept.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

@@ -4,6 +4,7 @@ import axios from "axios";
 import NavMenu from "app/component/navMenu";
 import webhookSubscription from "./webhook";
 import { AppProvider, Card, Page, Box, Link, List, Button, ProgressBar, Spinner } from '@shopify/polaris';
+import Cookies from 'js-cookie';
 
 export const action = async ({ request }) => {
   const formData = await request.formData();
@@ -116,7 +117,16 @@ export const action = async ({ request }) => {
     theme_id: userData.themes.nodes[0].id,
   };
 
-  const res = await axios.post("http://localhost:8001/user/add-shop", data);
+  const res = await axios.post(
+    "http://localhost:8001/user/add-user",
+    data,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      }
+    }
+  );
+
   if (res.status !== 200) {
     return { msg: shopResponse.error, status: 404 };
   }
@@ -129,7 +139,6 @@ export const action = async ({ request }) => {
     access_token,
     res.data.userData._id,
   );
-  console.log("result : ", result);
 
   return { data: res.data, access_token: access_token };
 };
@@ -151,6 +160,13 @@ export default function Index() {
           const idToken = await shopify.idToken();
           const url = new URL(window.location.href);
           const shop = url.searchParams.get("shop");
+          console.log("shop : " , shop);
+
+          Cookies.set('shop', shop, { expires: 7, secure: true, sameSite: 'None' });
+          const cookie = Cookies.get('shop')
+          console.log("cookie : " , cookie);
+          
+          
 
           const { granted } = await shopify.scopes.query();
 

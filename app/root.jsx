@@ -15,10 +15,7 @@ export const links = () => {
   ];
 };
 
-
 export default function App() {
-  // console.log("hiiiiiiiiiiiiii");
-
   return (
     <html>
       <head>

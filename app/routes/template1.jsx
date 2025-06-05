@@ -9,7 +9,7 @@ const Template1 = forwardRef((props, ref) => {
 
   useImperativeHandle(ref, () => ({
     getHtmlContent: () => {
-      if (previewRef.current) {
+      if (previewRef.current) {        
         return previewRef.current.innerHTML;
       }
       return "";

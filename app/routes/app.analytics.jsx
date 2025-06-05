@@ -34,34 +34,53 @@ import axios from 'axios'
 import {  
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import Cookies from 'js-cookie'
+import {countryOptions, languageOptions} from "../component/market"
 
 const marketOptions = [{ label: "India (English) (Primary)", value: "india" }];
 
-function formattedDateRange(date_range) {
+function formattedDateRange(date_range, date) {
   const today = new Date();
   let startDate, endDate;
+  console.log("date  inside function: ", date);
 
   switch (date_range) {
-    case 'last_7_days':
+    case "last_7_days":
       startDate = new Date(today);
       startDate.setDate(today.getDate() - 7);
       endDate = new Date(today);
       break;
 
-    case 'last_30_days':
+    case "last_30_days":
       startDate = new Date(today);
       startDate.setDate(today.getDate() - 30);
       endDate = new Date(today);
       break;
 
-    case 'this_month':
+    case "this_month":
       startDate = new Date(today.getFullYear(), today.getMonth(), 1);
       endDate = new Date(today);
       break;
 
-    case 'last_month':
+    case "last_month":
       startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      endDate = new Date(today.getFullYear(), today.getMonth() , 0);
+      endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+      break;
+
+    case "custom_range":
+      if (date && date[0] && date[0].startDate && date[0].endDate) {
+        console.log("date in side switch ", date);
+
+        const selection = date[0];
+        startDate = selection.startDate;
+        endDate = selection.endDate;
+
+        console.log("startDate : ", startDate);
+        console.log("endDate : ", endDate);
+      } else {
+        startDate = today;
+        endDate = today;
+      }
       break;
 
     default:
@@ -71,8 +90,19 @@ function formattedDateRange(date_range) {
   }
 
   // Strip time part
-  startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-  endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  startDate = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate(),
+  );
+  endDate = new Date(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate(),
+  );
+
+  console.log("startDate : ", startDate);
+  console.log("endDate : ", endDate);
 
   // Format function
   function formatDateMMDDYYYY(date) {
@@ -85,6 +115,13 @@ function formattedDateRange(date_range) {
   return `${formatDateMMDDYYYY(startDate)} - ${formatDateMMDDYYYY(endDate)}`;
 }
 
+function convertDateRangeFormat(dateRangeStr) {
+  const [start, end] = dateRangeStr.split(" - ");
+  const startFormatted = start.replace(/\//g, "-");
+  const endFormatted = end.replace(/\//g, "-");
+  return `${startFormatted} / ${endFormatted}`;
+}
+
 export default function AnalyticsPage() {
   const [value, setValue] = useState("");
   const [shop, setShop] = useState()
@@ -93,10 +130,8 @@ export default function AnalyticsPage() {
   const [customPickerOpen, setCustomPickerOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState("last_7_days");
   const [dateRange, setDateRange] = useState(formattedDateRange("last_7_days"))
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [marketOptions, setMarketOptions] = useState([])
+  const [market, setMarket] = useState()
 
   const [range, setRange] = useState([
     {
@@ -107,16 +142,68 @@ export default function AnalyticsPage() {
   ]);
   const togglePopover = () => setPopoverActive((open) => !open);
 
-  const handleSelect = (value) => {
+  const handleSelect = (value, date) => {      
       setSelectedValue(value);
-      setDateRange(formattedDateRange(value));
+      setDateRange(formattedDateRange(value, date));
     if (value === "custom_range") {
       setCustomPickerOpen(true);
     } else {
       setCustomPickerOpen(false);
       setPopoverActive(false);
     }
+
+    if (
+      (value === "custom_range" && date && date[0] && date[0].startDate && date[0].endDate) ||
+      (value !== "custom_range")
+    ) {
+      if (shop) {
+        fetchData(value, formattedDateRange(value, date) );
+      }
+}
   };
+
+  const handleDateRangeInput = (value) => {
+    setSelectedValue("custom_range");
+    setDateRange(value);
+
+    const [start, end] = value.split(" - ");
+    if (start && end) {
+      const [sm, sd, sy] = start.split("/");
+      const [em, ed, ey] = end.split("/");
+      const startDate = new Date(`${sy}-${sm}-${sd}`);
+      const endDate = new Date(`${ey}-${em}-${ed}`);
+      if (!isNaN(startDate) && !isNaN(endDate)) {
+        setRange([
+          {
+            startDate,
+            endDate,
+            key: "selection",
+          },
+        ]);
+      }
+    }
+  };
+
+  const fetchMarket = async() => {
+      if(shop){
+        const res = await axios.get(
+          `http://localhost:8001/market/get-market?shop=${shop}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            }
+          }
+        );
+        const market = res.data.market.market
+  
+        const marketOptions = market.map((data) => ({
+          label: `${countryOptions.find(opt => opt.value === data.country)?.label || data.country} (${languageOptions.find(opt => opt.value === data.language)?.label || data.language}) ${data.primary ? " (Primary)" : ""}`,
+          value: data._id
+        }));
+        setMarketOptions(marketOptions);
+        setMarket(marketOptions[0].value)
+      }
+  }
 
   const dateRanges = [
   { label: "Last 7 Days", value: "last_7_days" },
@@ -128,70 +215,82 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (!shop) {
-      const url = new URL(window.location.href);
-      const shopParam = url.searchParams.get("shop");
-      if (shopParam) {
-        setShop(shopParam);
-
-        (async () => {
-          const { data } = await axios.get(
-            `http://localhost:8001/analytics/get-analytics?shop=${shopParam}&date_range=last_30_days`,
-          );
-
-          console.log("data : ", data);
-          setAnalyticsData(data.analyticsData);
-        })();
+      const cookieShop = Cookies.get("shop");
+      if (cookieShop) {
+        setShop(cookieShop);
       }
     }
   }, [shop]);
+
+  useEffect(() => {
+    if(shop){
+      fetchData(selectedValue, null)
+      fetchMarket()
+    }
+  }, [shop]);
+
+  const fetchData = async(value, date) => {
+    (async () => {
+
+      if(value === 'custom_range'){
+        value = convertDateRangeFormat(date)  
+      }
+      try {
+        const { data } = await axios.get(
+          `http://localhost:8001/analytics/get-analytics?shop=${shop}&date_range=${value}&market_id=${market}`
+        );
+        setAnalyticsData(data.analyticsData);
+      } catch (err) {
+        console.error("Failed to fetch analytics data:", err);
+      }
+    })();
+  }
 
   return (
     <>
       <style>
         {`
-    .rdrStaticRanges,
-    .rdrDefinedRangesWrapper {
-      display: none !important;
-      width: 0 !important;
-      min-width: 0 !important;
-      max-width: 0 !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
+        .rdrStaticRanges,
+        .rdrDefinedRangesWrapper {
+          display: none !important;
+          width: 0 !important;
+          min-width: 0 !important;
+          max-width: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
       
-    .Polaris-Popover__Popover {
-  min-width: 900px !important;   /* Increase width */
-  width: 900px !important;
-  max-width: 98vw !important;
+        .Polaris-Popover__Popover {
+          min-width: 900px !important;   /* Increase width */
+          width: 900px !important;
+          max-width: 98vw !important;
 
-  min-height: 600px !important;  /* Increase height */
-  height: 600px !important;
-  max-height: 90vh !important;
+          min-height: 600px !important;  /* Increase height */
+          height: 600px !important;
+          max-height: 90vh !important;
 
-  overflow: hidden !important;   /* Hide scrollbars and content overflow */
-  box-sizing: border-box;
-  left: 10% !important;          /* Shift to left if needed */
-  top: unset !important;         /* Remove top override if any */
-  bottom: unset !important;
-  transform: none !important;
-  z-index: 9999 !important;
-}
+          overflow: hidden !important;   /* Hide scrollbars and content overflow */
+          box-sizing: border-box;
+          left: 10% !important;          /* Shift to left if needed */
+          top: unset !important;         /* Remove top override if any */
+          bottom: unset !important;
+          transform: none !important;
+          z-index: 9999 !important;
+        }
 
-    .rdrDateRangePickerWrapper {
-      min-width: 0 !important;
-      width: 100% !important;
-      max-width: none !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      gap: 0 !important;
-    }
-    .rdrCalendarWrapper {
-      width: 100% !important;
-      min-width: 320px !important;
-      max-width: none !important;
-    }
-
-    
+        .rdrDateRangePickerWrapper {
+          min-width: 0 !important;
+          width: 100% !important;
+          max-width: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          gap: 0 !important;
+        }
+        .rdrCalendarWrapper {
+          width: 100% !important;
+          min-width: 320px !important;
+          max-width: none !important;
+        }
   `}
       </style>
 
@@ -216,9 +315,10 @@ export default function AnalyticsPage() {
                     <div className="mt-4">
                       <Select
                         options={marketOptions}
-                        value={marketOptions[0].value}
-                        readOnly
-                        // onChange={setSelectedMarket}
+                        value={market}
+                        onChange={(value) =>{
+                          setMarket(value)
+                        }}
                       />
                     </div>
                   </Card>
@@ -286,18 +386,21 @@ export default function AnalyticsPage() {
                   <Text variant="bodyMd" fontWeight="medium" alignment="center">
                     Verification status statistics
                   </Text>
-                  <div style={{width: '250px'}}>
+                  <div className="flex justify-end">
                     <Popover
                       active={popoverActive}
                       activator={
-                        <Button onClick={togglePopover}>
-                          {dateRange}
-                        </Button>
+                        <TextField
+                          label=""
+                          value={dateRange}
+                          onChange={handleDateRangeInput}
+                          onFocus={togglePopover}
+                          autoComplete="off"
+                        />
                       }
                       onClose={() => setPopoverActive(false)}
-                      // preferredAlignment="left"
-                            preferredPosition="below"
-                            fullHeight
+                      preferredPosition="below"
+                      fullHeight
                     >
                       <Popover.Pane fixed>
                       <Box padding="4">
@@ -316,8 +419,8 @@ export default function AnalyticsPage() {
                             ))}
                           </div>
                         ) : (
-                          <div className="flex ">
-                            <div className="space-y-2 w-[810px]">
+                          <div className="flex">
+                            <div className="space-y-5 w-[810px]">
                             {dateRanges.map(({ label, value }) => (
                               <button
                                 key={value}
@@ -330,18 +433,15 @@ export default function AnalyticsPage() {
                               </button>
                             ))}
                           </div>
-                          <div
-                            style={{
-                              width: "100%",
-                              minWidth: "320px",
-                              maxWidth: "100%",
-                              overflow: "hidden",
-                            }}
-                          >
+                          <div className="flex justify-end ml-0 w-full">
                             <DateRangePicker
                               ranges={range}
                               staticRanges={[]}
                               inputRanges={[]}
+                              onChange={item => {
+                                setRange([item.selection]);
+                                handleSelect('custom_range', [item.selection]);
+                              }}
                             />
                           </div>
                           </div>
@@ -352,7 +452,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className="mt-5">
-                   {mounted && (
+                   {/* {mounted && ( */}
                       <div style={{ width: "100%", height: 350 }}>
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart
@@ -379,7 +479,7 @@ export default function AnalyticsPage() {
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
-                    )}
+                    {/* )} */}
                 </div>
                 </div>
               </Card>
@@ -390,54 +490,3 @@ export default function AnalyticsPage() {
     </>
   );
 }
-
-                         //                         <div
-                          //   className="flex flex-col"
-                          //   style={{
-                          //     minWidth: "540px", // slightly wider than internal components
-                          //     minHeight: "460px", // enough height to accommodate
-                          //     overflow: "visible",
-                          //   }}
-                          // >
-                          //                           {/* <div className="space-y-2">
-                          //                           {[
-                          //                             "Last 7 Days",
-                          //                             "Last 30 Days",
-                          //                             "This Month",
-                          //                             "Last Month",
-                          //                             "Custom Range",
-                          //                           ].map((label) => (
-                          //                             <button
-                          //                               key={label}
-                          //                               className={`block w-full text-left px-4 py-1 rounded hover:bg-gray-200 hover:text-black ${
-                          //                                 selectedValue === label
-                          //                                   ? "bg-blue-500 text-white"
-                          //                                   : ""
-                          //                               }`}
-                          //                               onClick={() => handleSelect(label)}
-                          //                             >
-                          //                               {label}
-                          //                             </button>
-                          //                           ))}
-                          //                         </div> */}
-                          //                           <DateRangePicker
-                          //                             // onChange={(item) => setRange([item.selection])}
-                          //                             ranges={range}
-                          //                             staticRanges={customStaticRanges}
-                          //                             inputRanges={[]}
-
-                          //                           />
-                          //                           <div className="flex justify-end gap-2 mt-2">
-                          //                             <Button onClick={() => setPopoverActive(false)}>
-                          //                               Cancel
-                          //                             </Button>
-                          //                             <Button
-                          //                               primary
-                          //                               onClick={() => {
-                          //                                 setPopoverActive(false);
-                          //                               }}
-                          //                             >
-                          //                               Apply
-                          //                             </Button>
-                          //                           </div>
-                          //                         </div>

@@ -1,5 +1,5 @@
 const User = require("../models/UserModel")
-
+const Market = require("../models/MarketModel")
 const addShopData = async (req,res) => {
     const data = req.body
     const updatedData = {};
@@ -18,6 +18,30 @@ const addShopData = async (req,res) => {
     }else {
         console.log("new");
         userData = await User.create(updatedData)
+    }
+
+    let marketData = await Market.findOne({ shop_name: updatedData.shop_name });
+    let market = {
+        language: updatedData.shopLocales_locale.toUpperCase(),
+        country: updatedData.country_code.toUpperCase(),
+        primary: updatedData.shopLocales_primary
+    }
+    
+    if(marketData){
+        const exists = marketData.market.some(
+            (entry) => entry.language === market.language && entry.country === market.country
+        );
+
+        if (!exists) {
+            marketData.market.push({ market });
+            await marketData.save();
+        }
+    }else{
+        marketData = await Market.create({
+            shop_id: userData._id,
+            shop_name: updatedData.shop_name,
+            market: market
+        })
     }
     res.status(200).json({ userData, msg: "App Setings added Successfully." });
 }
