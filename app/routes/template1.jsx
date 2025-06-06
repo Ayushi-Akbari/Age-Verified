@@ -9,7 +9,7 @@ const Template1 = forwardRef((props, ref) => {
 
   useImperativeHandle(ref, () => ({
     getHtmlContent: () => {
-      if (previewRef.current) {        
+      if (previewRef.current) {  
         return previewRef.current.innerHTML;
       }
       return "";
@@ -110,7 +110,6 @@ const Template1 = forwardRef((props, ref) => {
                       display: "flex",
                       justifyContent: "center",
                       alignItems: "center",
-                      // padding: "1rem",
                     }}
                   >
                     {popUpBackground.image ? (
@@ -120,6 +119,8 @@ const Template1 = forwardRef((props, ref) => {
                           width: "100%",
                           height: "100%",
                           objectFit: "cover",
+                          borderTopLeftRadius: `${popUp.border_radius}px`,
+                          borderBottomLeftRadius: `${popUp.border_radius}px`, 
                         }}
                         alt="Popup background"
                       />

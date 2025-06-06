@@ -58,8 +58,8 @@ export default function Setting() {
       text_size: 14,
       text_color: "#8d8686",
     },
-    rejectButton: {
-      text: "No, I’m under 18",
+    acceptButton: {
+      text: "Yes, I’m under 18",
       fonts: "sans-serif",
       text_weight: "500",
       text_size: 14,
@@ -70,8 +70,8 @@ export default function Setting() {
       border_radius: 6,
       redirect_url: "",
     },
-    acceptButton: {
-      text: "Yes, I’m over 18",
+    rejectButton: {
+      text: "No, I’m over 18",
       fonts: "sans-serif",
       text_weight: "100",
       text_size: 14,
@@ -94,21 +94,21 @@ export default function Setting() {
       border_color: "#4e1818",
       background_opacity: "1",
       image_enabale: true,
-      image: null,
-      imageFile: null,
+      image: `http://localhost:8001/image/background_image.png`,
+      imageFile: "",
     },
     outerPopUpBackground: {
       background_color: "#959aa3",
       outer_opacity: "0.8",
-      image_enabale: true,
+      image_enabale: false,
       image: null,
       imageFile: null,
     },
     popUpLogo: {
       show_logo: true,
-      logo_square: true,
-      image: null,
-      imageFile: null,
+      logo_square: false,
+      image: `http://localhost:8001/image/logo.png`,
+      imageFile: "",
     },
     policy: {
       checked: true,
@@ -125,7 +125,7 @@ export default function Setting() {
       url: [],
     },
     imageFile: null,
-    market: "india",
+    market: "",
   };
   const [state, setState] = useState(initialState);
   const stateRef = useRef(state);
@@ -169,7 +169,6 @@ export default function Setting() {
     },
   };
   const [error, setError] = useState(errorMessage);
-  // const stateRef = useRef(state);
 
   const [descriptionText, setDescriptionText] = useState(
     "Please verify that you are {{minimum_age}} years of age or older to enter this site.",
@@ -200,27 +199,24 @@ export default function Setting() {
       import("react-quill/dist/quill.snow.css");
     });
 
-  }, []);
-
-    useEffect(() => {
-      if (!shop) {
-        const cookieShop = Cookies.get("shop");
-        console.log("cookieShop : " , cookieShop);
-        
-        if (cookieShop) {
-          setShop(cookieShop);
-        }
+    if (!shop) {
+      const cookieShop = Cookies.get("shop");
+      console.log("cookieShop : " , cookieShop);
+      
+      if (cookieShop) {
+        setShop(cookieShop);
       }
-    }, [shop]);
+    }
+  }, []);
 
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
-
+  
   useEffect(() => {
     if (shop) {
-      fetchData();
       fetchMarket()
+      fetchData();
     }
   }, [shop]);
 
@@ -264,6 +260,19 @@ export default function Setting() {
       discardBtn?.removeEventListener("click", handleDiscard);
     };
   }, [hasChanges]);
+
+  useEffect(() => {
+    const url = window.location.href;
+    const urlObj = new URL(url);
+    const id = urlObj.searchParams.get('id');
+    if (id) {
+      console.log('ID found in URL:', id);
+      setState((prev) =>({
+        ...prev,
+        market: id
+      }))
+    } 
+  },[])
 
   const weightOptions = [
     { label: "Thin", value: "100" },
@@ -355,20 +364,25 @@ export default function Setting() {
     });
   };
 
-  const fetchData = async () => {
+  const fetchData = async (value) => {
     if (!shop) {
       console.warn("No shop parameter, skipping fetchData");
       return;
     }
-
+    
+    const market = value || state.market;
     try {
       const { data } = await axios.get(
-        `http://localhost:8001/setting/get-setting?shop=${shop}`,
+        `http://localhost:8001/setting/get-setting?shop=${shop}&market_id=${market}`,
       );
       const settingData = data?.data?.settings;
 
       if (!settingData) {
         setState(initialState);
+        setState((prev) => ({
+          ...prev,
+          market: market
+        }));
         return true
       }
 
@@ -411,7 +425,7 @@ export default function Setting() {
           : initialState.displayCriteria,
         monthlyAnalysis:
           settingData.monthlyAnalysis ?? initialState.monthlyAnalysis,
-        market: settingData.market ?? initialState.market,
+        market: market,
       };
 
       if (
@@ -461,11 +475,19 @@ export default function Setting() {
       );
       const market = res.data.market.market
 
-      const marketOptions = market.map((data) => ({
-        label: `${countryOptions.find(opt => opt.value === data.country)?.label || data.country} (${languageOptions.find(opt => opt.value === data.language)?.label || data.language}) ${data.primary ? " (Primary)" : ""}`,
+      const sortedMarket = [...market].sort((a, b) => (b.primary ? 1 : 0) - (a.primary ? 1 : 0));
+      const marketOptions = sortedMarket.map((data) => ({
+        label: `${countryOptions.find(opt => opt.value === data.country)?.label || data.country} (${languageOptions.find(opt => opt.value === data.language)?.label || data.language})${data.primary ? " (Primary)" : ""}`,
         value: data._id
       }));
       setMarketOptions(marketOptions);
+
+      setState((prev) => ({
+        ...prev,
+        market: prev.market !== '' ? prev.market : marketOptions[0]?.value,
+      }));
+
+      return true
     }
   }
 
@@ -481,8 +503,6 @@ export default function Setting() {
       return rest;
     };
     const formData = new FormData();
-
-    console.log("state : ", latestState);
 
     formData.append("popUpLogoImage", latestState.popUpLogo.imageFile);
     formData.append(
@@ -527,6 +547,7 @@ export default function Setting() {
     formData.append("market", latestState.market);
     formData.append("monthlyAnalysis", latestState.monthlyAnalysis);
     formData.append("htmlContent", htmlContent);
+    formData.append("type","setting")
 
     // for (let pair of formData.entries()) {
     //   console.log(`${pair[0]}:`, pair[1]);
@@ -560,6 +581,32 @@ export default function Setting() {
     }
   };
 
+  const handleMarketChnage = async (value) => {
+    setState(prev => ({
+      ...prev,
+      market: value,
+    }));
+    await fetchData(value);
+  }
+
+  const setPrimaryMarket = async() => {
+    try {
+      const data = await axios.put(
+        `http://localhost:8001/market/set-primary-market?shop=${shop}`, {id:state.market},
+      );
+
+
+      if(data.status === 200){
+        fetchMarket()
+      }
+      
+
+      return true
+    } catch (error) {
+      console.error("Failed to fetch settings:", error);
+      return false
+    }
+  }
 
   const data = {
     customization: state.customization,
@@ -596,9 +643,26 @@ export default function Setting() {
                     options={marketOptions}
                     value={state.market}
                     onChange={(value) =>{
-                      handleSectionChange("market", null, value)
+                        handleMarketChnage(value)
                     }}
                   />
+
+                  {(() => {
+                  const selectedMarket = marketOptions.find(
+                    (option) => option.value === state.market
+                  );
+
+                  if (selectedMarket && !selectedMarket.label.includes("(Primary)")) {
+                    return (
+                      <div className="mt-2">
+                          <Button variant="primary" onClick={setPrimaryMarket}>
+                            Make Primary Market
+                          </Button>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 </div>
               </Card>
             </Box>
@@ -840,7 +904,7 @@ export default function Setting() {
                       handleSectionChange(
                         "customization",
                         "popup_show",
-                        !customization.popup_show,
+                        !state.customization.popup_show,
                       );
                     }}
                   />

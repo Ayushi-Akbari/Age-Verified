@@ -140,26 +140,44 @@ const getAnalytics = async (req, res) => {
     }
 
     const market = await Market.findOne({shop_id : UserData._id})
-    const marketIdObj =
-        market.market.find(m => m._id.toString() === market_id.toString())
-
+    if (!market) {
+        return res.status(404).json({ msg: "Market not found for this shop." });
+    }
+    const marketIdObj = market.market.find(m => m._id.toString() === market_id.toString())
     const marketId = marketIdObj ? marketIdObj._id : null;
 
     let analytics = await Analytics.findOne({ shop_id: UserData._id });
 
-    if (!analytics) {
-        return res.status(404).json({ msg: "Analytics data not found for this shop." });
+    let analyticsDetail
+    if (analytics) {
+        analyticsDetail = analytics.market.find((market) => market.id.toString() === marketId.toString())
     }
 
-    let analyticsDetail = analytics.market.find((market) => market.id.toString() === marketId.toString())
+    let analyticsData;
+    if(!analytics || !analyticsDetail){       
+        const resultMap = {};
+        while (startDate <= endDate) {
+        const date = new Date(startDate);
+        const dateStr = `${date.getDate().toString().padStart(2, "0")}-${date.toLocaleString("en-US", { month: "short" })}`;
+        if (!resultMap[dateStr]) {
+            resultMap[dateStr] = { date: dateStr, Verified: 0, Unverified: 0 };
+        }
+        startDate.setDate(startDate.getDate() + 1);
+        }
 
-    // if(!analytics || !analyticsDetail){
+        const combinedData = Object.values(resultMap).sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+        );
 
-    // }else{
+        analyticsData = {
+            shop_id: UserData._id,
+            verified_count: 0,
+            unverified_count: 0,
+            data: combinedData,
+            total_verification: 0
+        }       
+    }else{
         
-    // }
-
-        let analyticsData;
         const VerifiedTimes = analyticsDetail.verified.filter((date) => date.time >=startDate && date.time <= endDate)
         const UnverifiedTimes = analyticsDetail.unverified.filter((date) => date.time >=startDate && date.time <= endDate)
         const verifiedCount = VerifiedTimes.reduce((total, entery) => total + entery.count, 0)
@@ -198,12 +216,13 @@ const getAnalytics = async (req, res) => {
         );
 
         analyticsData = {
-            shop_id: analyticsDetail.shop_id,
+            shop_id: UserData._id,
             verified_count: verifiedCount,
             unverified_count: unverifiedCount,
             data: combinedData,
             total_verification: verifiedCount + unverifiedCount
         }
+    }      
     
     res.status(200).json({analyticsData, msg: "Analytics Data Retrieved Successfully." });
 }

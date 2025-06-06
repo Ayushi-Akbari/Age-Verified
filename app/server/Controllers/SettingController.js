@@ -1,6 +1,7 @@
-const { log } = require("console");
+const mongoose = require('mongoose')
 const Setting = require("../models/SettingModel");
 const User = require("../models/UserModel");
+const Market = require("../models/MarketModel")
 
 const addSettingData = async (req, res) => {
   console.log("req.query : ", req.query);
@@ -26,6 +27,9 @@ const addSettingData = async (req, res) => {
     advanced,
     displayCriteria,
     monthlyAnalysis,
+    htmlContent,
+    market,
+    type
   } = req.body;
 
   const setting = {
@@ -44,24 +48,29 @@ const addSettingData = async (req, res) => {
     monthlyAnalysis,
   };
 
-  console.log("setting : " , setting);
-  
+  if (!market) {
+    return res.status(400).json({ msg: "Market ID is missing or invalid." });
+  }
+ 
+  const isPresent = await Setting.findOne({ shop_name: shop, market_id: market});
 
-  const htmlContent = req.body.htmlContent
-  const market = req.body.market
-  const parseAndAttachImage = (key, fileKey) => {
+  if(type === "index" && isPresent){
+    return res
+      .status(200)
+      .send({ messgae: "Setting Data is Present." });
+  }
+
+   const parseAndAttachImage = (key, fileKey) => {
     setting[key] = JSON.parse(setting[key] || "{}");    
     if (req?.files?.[fileKey]?.[0]) {
-      setting[key].image = `/image/${req.files[fileKey][0].filename}`;
+      setting[key].image = `/image/${isUser._id}/${market}/${req.files[fileKey][0].filename}`;
     }
     setting[key] = JSON.stringify(setting[key]);
   };
   parseAndAttachImage("popUpBackground", "popUpBackgroundImage");
   parseAndAttachImage("outerPopUpBackground", "outerPopUpBackgroundImage");
   parseAndAttachImage("popUpLogo", "popUpLogoImage");
-
-  const isPresent = await Setting.findOne({ shop_name: shop, market_id: market});
-
+  
   let settingData;
   if (isPresent) {
     settingData = await Setting.updateOne(
@@ -79,7 +88,7 @@ const addSettingData = async (req, res) => {
       shop_name: shop,
       settings: setting,
       html_content: htmlContent,
-      market_id: market
+      market_id: new mongoose.Types.ObjectId(market)
     });
   }
 
@@ -99,7 +108,7 @@ const addSettingData = async (req, res) => {
 const getSettingData = async (req, res) => {
   try {
     console.log("req.query:", req.query);
-    const { shop } = req.query;
+    const { shop, market_id } = req.query;
 
     if (!shop) {
       return res
@@ -113,20 +122,26 @@ const getSettingData = async (req, res) => {
       return res.status(404).send({ message: "Shop not found." });
     }
 
-    const settingData = await Setting.findOne({ shop_id: isUser._id });
+    const market = await Market.findOne({shop_id : isUser._id })
+    if (!market) {
+        return res.status(404).json({ msg: "Market not found for this shop." });
+    }
+    let marketId;
+
+    if (market_id) {
+      const marketIdObj = market.market.find(m => m._id.toString() === market_id.toString());
+      marketId = marketIdObj ? marketIdObj._id : null;
+    }
+    if (!marketId) {
+      const primaryMarket = market.market.find(m => m.primary === true);
+      marketId = primaryMarket ? primaryMarket._id : null;
+    }
+
+    const settingData = await Setting.findOne({ shop_id: isUser._id, market_id: marketId });
     if (!settingData) {
       return res.status(200).send({ message: "Setting not found." });
     }
     
-    // let settingDetail = await Setting.findOne({ shop_id: isUser._id, language: req.body.language, country: req.body.country});
-
-    // if(!settingDetail){
-    //   settingDetail = await Setting.findOne({ shop_id: isUser._id, primary: true});
-    // }
-
-
-    
-
     return res.status(200).send({
       message: "Setting data fetched successfully.",
       data: settingData.toObject(),
@@ -136,15 +151,5 @@ const getSettingData = async (req, res) => {
     return res.status(500).send({ message: "Internal server error." });
   }
 };
-
-// const updateSetting = async (req, res) => {
-//   const { shop  } = req.query;
-
-//   if (!shop) {
-//     return res.status(400).send({ message: "Shop name is required." });
-//   }
-
-//   // const isUser = await User.findOne({
-// }
 
 module.exports = { addSettingData, getSettingData };

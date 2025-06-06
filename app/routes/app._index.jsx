@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useFetcher } from "@remix-run/react";
 import axios from "axios";
 import NavMenu from "app/component/navMenu";
-import webhookSubscription from "./webhook";
+import webhookSubscription, {addSetting} from "./webhook";
 import { AppProvider, Card, Page, Box, Link, List, Button, ProgressBar, Spinner } from '@shopify/polaris';
 import Cookies from 'js-cookie';
 
@@ -140,6 +140,15 @@ export const action = async ({ request }) => {
     res.data.userData._id,
   );
 
+  if(result.status !== 200){
+    return { msg: "Error in webhook", status: 404 };
+  }
+
+  const setting = await addSetting(shop)
+  if(setting.status !== 200){
+    return { msg: 'Failed to save your settings.', status: 404 };
+  }
+
   return { data: res.data, access_token: access_token };
 };
 
@@ -158,16 +167,25 @@ export default function Index() {
       (async () => {
         try {
           const idToken = await shopify.idToken();
-          const url = new URL(window.location.href);
-          const shop = url.searchParams.get("shop");
-          console.log("shop : " , shop);
-
-          Cookies.set('shop', shop, { expires: 7, secure: true, sameSite: 'None' });
-          const cookie = Cookies.get('shop')
-          console.log("cookie : " , cookie);
+          const shop = Cookies.get('shop')
           
-          
+          if(!shop){
+            const url = new URL(window.location.href);
+            const shopName = url.searchParams.get("shop");
+            console.log("shop:", shopName);
 
+            if (shopName) {
+              Cookies.set('shop', shopName, { 
+                expires: 7, 
+                secure: true, 
+                sameSite: 'None' 
+              });
+
+              const cookie = Cookies.get('shop');
+              console.log("cookie:", cookie);
+          }
+          }
+          
           const { granted } = await shopify.scopes.query();
 
           const requiredScopesString = import.meta.env.VITE_OPTIONAL_SCOPES;

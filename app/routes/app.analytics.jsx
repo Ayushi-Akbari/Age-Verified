@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Page,
   Card,
@@ -9,27 +9,13 @@ import {
   Select,
   Text,
   Banner,
-  DatePicker,
   TextField,
   Popover,
   ActionList,
+  DatePicker
 } from "@shopify/polaris";
 import { Trash2, Info, AlertCircle } from "lucide-react";
-import { DateRangePicker } from "react-date-range";
-import { format } from "date-fns";
-import {
-  addDays,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  subDays,
-  subWeeks,
-} from "date-fns";
-import { defaultStaticRanges, createStaticRanges } from "react-date-range";
-import "react-date-range/dist/styles.css";
-import "react-date-range/dist/theme/default.css";
-import moment from "moment";
+import en from '@shopify/polaris/locales/en.json';
 import axios from 'axios'
 import {  
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -42,8 +28,10 @@ const marketOptions = [{ label: "India (English) (Primary)", value: "india" }];
 function formattedDateRange(date_range, date) {
   const today = new Date();
   let startDate, endDate;
-  console.log("date  inside function: ", date);
 
+  console.log("date_range : ", date_range);
+  console.log("date : " , date);
+  
   switch (date_range) {
     case "last_7_days":
       startDate = new Date(today);
@@ -74,9 +62,6 @@ function formattedDateRange(date_range, date) {
         const selection = date[0];
         startDate = selection.startDate;
         endDate = selection.endDate;
-
-        console.log("startDate : ", startDate);
-        console.log("endDate : ", endDate);
       } else {
         startDate = today;
         endDate = today;
@@ -101,10 +86,6 @@ function formattedDateRange(date_range, date) {
     endDate.getDate(),
   );
 
-  console.log("startDate : ", startDate);
-  console.log("endDate : ", endDate);
-
-  // Format function
   function formatDateMMDDYYYY(date) {
     const mm = (date.getMonth() + 1).toString().padStart(2, "0");
     const dd = date.getDate().toString().padStart(2, "0");
@@ -115,8 +96,9 @@ function formattedDateRange(date_range, date) {
   return `${formatDateMMDDYYYY(startDate)} - ${formatDateMMDDYYYY(endDate)}`;
 }
 
-function convertDateRangeFormat(dateRangeStr) {
-  const [start, end] = dateRangeStr.split(" - ");
+function convertDateRangeFormat(dateRange) {
+  if (!dateRange) return ""; 
+  const [start, end] = dateRange.split(" - ");
   const startFormatted = start.replace(/\//g, "-");
   const endFormatted = end.replace(/\//g, "-");
   return `${startFormatted} / ${endFormatted}`;
@@ -152,66 +134,70 @@ export default function AnalyticsPage() {
       setPopoverActive(false);
     }
 
-    if (
-      (value === "custom_range" && date && date[0] && date[0].startDate && date[0].endDate) ||
-      (value !== "custom_range")
-    ) {
-      if (shop) {
-        fetchData(value, formattedDateRange(value, date) );
-      }
-}
+    // if (
+    //   (value === "custom_range" && date && date[0] && date[0].startDate && date[0].endDate) ||
+    //   (value !== "custom_range")
+    // ) {
+    //   if (shop) {
+    //     fetchData(value, formattedDateRange(value, date) );
+    //   }
+    // }
   };
 
-  const handleDateRangeInput = (value) => {
-    setSelectedValue("custom_range");
-    setDateRange(value);
+ const handleDateRangeInput = (value) => {
+   setSelectedValue("custom_range");
+   setDateRange(value);
 
-    const [start, end] = value.split(" - ");
-    if (start && end) {
-      const [sm, sd, sy] = start.split("/");
-      const [em, ed, ey] = end.split("/");
-      const startDate = new Date(`${sy}-${sm}-${sd}`);
-      const endDate = new Date(`${ey}-${em}-${ed}`);
-      if (!isNaN(startDate) && !isNaN(endDate)) {
-        setRange([
-          {
-            startDate,
-            endDate,
-            key: "selection",
-          },
-        ]);
-      }
-    }
-  };
+   const [startStr, endStr] = value.split(" - ");
+   if (startStr && endStr) {
+     const [sd, sm, sy] = startStr.split("/"); // DD/MM/YYYY
+     const [ed, em, ey] = endStr.split("/");
 
-  const fetchMarket = async() => {
-      if(shop){
-        const res = await axios.get(
-          `http://localhost:8001/market/get-market?shop=${shop}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            }
-          }
-        );
-        const market = res.data.market.market
+     const start = new Date(`${sy}-${sm}-${sd}`);
+     const end = new Date(`${ey}-${em}-${ed}`);
+
+     if (!isNaN(start) && !isNaN(end)) {
+       setSelectedDates({
+         start,
+         end,
+       });
+
+       // Optionally update the displayed month/year
+       setDate({
+         month: start.getMonth(),
+         year: start.getFullYear(),
+       });
+     }
+   }
+ };
+
+
+  const today = new Date();
+
+  const [{ month, year }, setDate] = useState({
+    month: today.getMonth(),
+    year: today.getFullYear(),
+  });
+
+  const [selectedDates, setSelectedDates] = useState({
+    start: new Date(),
+    end: new Date(),
+  });
+
+  const handleMonthChange = useCallback(
+    (month, year) => setDate({ month, year }),
+    [],
+  );
+
+  console.log("selectedDates, ", selectedDates);
   
-        const marketOptions = market.map((data) => ({
-          label: `${countryOptions.find(opt => opt.value === data.country)?.label || data.country} (${languageOptions.find(opt => opt.value === data.language)?.label || data.language}) ${data.primary ? " (Primary)" : ""}`,
-          value: data._id
-        }));
-        setMarketOptions(marketOptions);
-        setMarket(marketOptions[0].value)
-      }
-  }
-
   const dateRanges = [
-  { label: "Last 7 Days", value: "last_7_days" },
-  { label: "Last 30 Days", value: "last_30_days" },
-  { label: "This Month", value: "this_month" },
-  { label: "Last Month", value: "last_month" },
-  { label: "Custom Range", value: "custom_range" },
-];
+    { label: "Last 7 Days", value: "last_7_days" },
+    { label: "Last 30 Days", value: "last_30_days" },
+    { label: "This Month", value: "this_month" },
+    { label: "Last Month", value: "last_month" },
+    { label: "Custom Range", value: "custom_range" },
+  ];
 
   useEffect(() => {
     if (!shop) {
@@ -220,81 +206,70 @@ export default function AnalyticsPage() {
         setShop(cookieShop);
       }
     }
-  }, [shop]);
+  }, []);
 
   useEffect(() => {
-    if(shop){
-      fetchData(selectedValue, null)
-      fetchMarket()
+    if (shop) {
+      fetchMarket();
     }
   }, [shop]);
+  useEffect(() => {
+    if (shop && market) {
+      fetchData(selectedValue, null);
+    }
+  }, [shop, market, selectedValue]);
 
   const fetchData = async(value, date) => {
-    (async () => {
-
-      if(value === 'custom_range'){
-        value = convertDateRangeFormat(date)  
+      if (value === 'custom_range') {
+        if (date && typeof date === "string" && date.includes(" - ")) {
+          value = convertDateRangeFormat(date);
+        } else {
+          return null;
+        }
       }
       try {
+        console.log("market : " , market);
+        
         const { data } = await axios.get(
           `http://localhost:8001/analytics/get-analytics?shop=${shop}&date_range=${value}&market_id=${market}`
         );
+        console.log("data.analyticsData : " , data.analyticsData);
+        
         setAnalyticsData(data.analyticsData);
       } catch (err) {
         console.error("Failed to fetch analytics data:", err);
       }
-    })();
+  }
+
+  const fetchMarket = async() => {
+      if(shop){
+        console.log("shop : " , shop);
+        
+        const res = await axios.get(
+          `http://localhost:8001/market/get-market?shop=${shop}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            }
+          }
+        );
+
+        if(res.status === 200){
+          const market = res.data.market.market
+          const sortedMarket = [...market].sort((a, b) => (b.primary ? 1 : 0) - (a.primary ? 1 : 0));
+          const marketOptions = sortedMarket.map((data) => ({
+            label: `${countryOptions.find(opt => opt.value === data.country)?.label || data.country} (${languageOptions.find(opt => opt.value === data.language)?.label || data.language})${data.primary ? " (Primary)" : ""}`,
+            value: data._id
+          }));
+          setMarketOptions(marketOptions);
+          setMarket(marketOptions[0].value)
+        }
+      }
   }
 
   return (
     <>
-      <style>
-        {`
-        .rdrStaticRanges,
-        .rdrDefinedRangesWrapper {
-          display: none !important;
-          width: 0 !important;
-          min-width: 0 !important;
-          max-width: 0 !important;
-          padding: 0 !important;
-          margin: 0 !important;
-        }
-      
-        .Polaris-Popover__Popover {
-          min-width: 900px !important;   /* Increase width */
-          width: 900px !important;
-          max-width: 98vw !important;
-
-          min-height: 600px !important;  /* Increase height */
-          height: 600px !important;
-          max-height: 90vh !important;
-
-          overflow: hidden !important;   /* Hide scrollbars and content overflow */
-          box-sizing: border-box;
-          left: 10% !important;          /* Shift to left if needed */
-          top: unset !important;         /* Remove top override if any */
-          bottom: unset !important;
-          transform: none !important;
-          z-index: 9999 !important;
-        }
-
-        .rdrDateRangePickerWrapper {
-          min-width: 0 !important;
-          width: 100% !important;
-          max-width: none !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          gap: 0 !important;
-        }
-        .rdrCalendarWrapper {
-          width: 100% !important;
-          min-width: 320px !important;
-          max-width: none !important;
-        }
-  `}
-      </style>
-
-      <AppProvider>
+      <AppProvider i18n={en}>
         <Page>
           <div className="p-4 space-y-6">
             <div className="flex items-end justify-between">
@@ -316,8 +291,8 @@ export default function AnalyticsPage() {
                       <Select
                         options={marketOptions}
                         value={market}
-                        onChange={(value) =>{
-                          setMarket(value)
+                        onChange={(value) => {
+                          setMarket(value);
                         }}
                       />
                     </div>
@@ -340,7 +315,9 @@ export default function AnalyticsPage() {
                       Total verification
                     </Text>
                     <p className="text-center text-teal-600 text-xl font-semibold mt-4">
-                      {analyticsData && analyticsData.total_verification ?  analyticsData.total_verification : 0}
+                      {analyticsData && analyticsData.total_verification
+                        ? analyticsData.total_verification
+                        : 0}
                     </p>
                   </Card>
                 </Box>
@@ -356,7 +333,9 @@ export default function AnalyticsPage() {
                       Verified
                     </Text>
                     <p className="text-center text-teal-600 text-xl font-semibold mt-4">
-                      {analyticsData && analyticsData.verified_count ?  analyticsData.verified_count : 0}
+                      {analyticsData && analyticsData.verified_count
+                        ? analyticsData.verified_count
+                        : 0}
                     </p>
                   </Card>
                 </Box>
@@ -372,7 +351,9 @@ export default function AnalyticsPage() {
                       Unverified
                     </Text>
                     <p className="text-center text-teal-600 text-xl font-semibold mt-4">
-                      {analyticsData && analyticsData.unverified_count ?  analyticsData.unverified_count : 0}
+                      {analyticsData && analyticsData.unverified_count
+                        ? analyticsData.unverified_count
+                        : 0}
                     </p>
                   </Card>
                 </Box>
@@ -382,105 +363,150 @@ export default function AnalyticsPage() {
             <div>
               <Card>
                 <div>
-                <div className="flex items-end justify-between">
-                  <Text variant="bodyMd" fontWeight="medium" alignment="center">
-                    Verification status statistics
-                  </Text>
-                  <div className="flex justify-end">
-                    <Popover
-                      active={popoverActive}
-                      activator={
-                        <TextField
-                          label=""
-                          value={dateRange}
-                          onChange={handleDateRangeInput}
-                          onFocus={togglePopover}
-                          autoComplete="off"
-                        />
-                      }
-                      onClose={() => setPopoverActive(false)}
-                      preferredPosition="below"
-                      fullHeight
+                  <div className="flex items-end justify-between">
+                    <Text
+                      variant="bodyMd"
+                      fontWeight="medium"
+                      alignment="center"
                     >
-                      <Popover.Pane fixed>
-                      <Box padding="4">
-                        {!customPickerOpen ? (
-                          <div className="space-y-2">
-                            {dateRanges.map(({ label, value }) => (
-                              <button
-                                key={value}
-                                className={`block w-full text-left px-4 py-1 rounded hover:bg-gray-200 hover:text-black ${
-                                   selectedValue === value ? "bg-blue-500 text-white" : ""
-                                }`}
-                                onClick={() => handleSelect(value)}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="flex">
-                            <div className="space-y-5 w-[810px]">
-                            {dateRanges.map(({ label, value }) => (
-                              <button
-                                key={value}
-                                className={`block w-full text-left px-4 py-1 rounded hover:bg-gray-200 hover:text-black ${
-                                   selectedValue === value ? "bg-blue-500 text-white" : ""
-                                }`}
-                                onClick={() => handleSelect(value)}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                          <div className="flex justify-end ml-0 w-full">
-                            <DateRangePicker
-                              ranges={range}
-                              staticRanges={[]}
-                              inputRanges={[]}
-                              onChange={item => {
-                                setRange([item.selection]);
-                                handleSelect('custom_range', [item.selection]);
-                              }}
-                            />
-                          </div>
-                          </div>
-                        )}
-                      </Box>
-                      </Popover.Pane>
-                    </Popover>
+                      Verification status statistics
+                    </Text>
+                    <div className="flex justify-end">
+                      <Popover
+                        active={popoverActive}
+                        activator={
+                          <TextField
+                            label=""
+                            value={dateRange}
+                            onChange={handleDateRangeInput}
+                            onFocus={() => {
+                              if (selectedValue === "custom_range") {
+                                togglePopover();
+                                setPopoverActive(true);
+                              } else {
+                                togglePopover();
+                              }
+                            }}
+                            autoComplete="off"
+                            fluidContent
+                          />
+                        }
+                        onClose={() => setPopoverActive(false)}
+                        preferredPosition="below"
+                        fluidContent
+                      >
+                        <Popover.Pane fixed>
+                        <Box padding="4">
+                          {!customPickerOpen ? (
+                            <div className="space-y-2">
+                              {dateRanges.map(({ label, value }) => (
+                                <button
+                                  key={value}
+                                  className={`block w-full text-left px-4 py-1 rounded hover:bg-gray-200 hover:text-black ${
+                                    selectedValue === value
+                                      ? "bg-blue-500 text-white"
+                                      : ""
+                                  }`}
+                                  onClick={() => handleSelect(value)}
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex flex-row gap-8 w-[700px] my-5 mr-5">
+                              <div className="space-y-4 min-w-[130px]">
+                                {dateRanges.map(({ label, value }) => (
+                                  <button
+                                    key={value}
+                                    className={`block w-full text-left px-4 py-1 rounded hover:bg-gray-200 hover:text-black ${
+                                      selectedValue === value
+                                        ? "bg-blue-500 text-white"
+                                        : ""
+                                    }`}
+                                    onClick={() => handleSelect(value)}
+                                  >
+                                    {label}
+                                  </button>
+                                ))}
+                              </div>
+                              <div className="flex justify-end ml-0 w-full">
+                                <DatePicker
+                                  month={month}
+                                  year={year}
+                                  onChange={(range) => {
+                                    setSelectedDates(range);
+                                    const startDate = range.start;
+                                    const endDate = range.end;
+
+                                    if (startDate && endDate && startDate.getTime() !== endDate.getTime()) {
+                                      handleSelect('custom_range', [{
+                                        startDate: startDate,
+                                        endDate: endDate,
+                                        key: 'selection'
+                                      }]);
+                                    }
+                                  }}
+                                  onMonthChange={handleMonthChange}
+                                  selected={selectedDates}
+                                  preferredPosition="below"
+                                  preferredAlignment="left"
+                                  multiMonth
+                                  allowRange
+                                  disableDatesAfter={new Date()}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </Box>
+                        </Popover.Pane>
+                      </Popover>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-5">
-                   {/* {mounted && ( */}
-                      <div style={{ width: "100%", height: 350 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart
-                            data={analyticsData && analyticsData.data}
-                            margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                              dataKey="date"
-                              angle={-45}
-                              textAnchor="end"
-                              dy={10}
-                              style={{ fontSize: '12px', fontWeight: '400', fill: '#666' }}
-                            />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend
-                              verticalAlign="top"
-                              align="center"
-                              style={{ marginTop: "5px" }}
-                            />
-                            <Line type="monotone" dataKey="Unverified" stroke="#f44336" strokeWidth={2.5} />
-                            <Line type="monotone" dataKey="Verified" stroke="#4caf50" strokeWidth={2.5}/>
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
+                  <div className="mt-5">
+                    {/* {mounted && ( */}
+                    <div style={{ width: "100%", height: 350 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={analyticsData && analyticsData.data}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey="date"
+                            angle={-45}
+                            textAnchor="end"
+                            dy={10}
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: "400",
+                              fill: "#666",
+                            }}
+                          />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend
+                            verticalAlign="top"
+                            align="center"
+                            style={{ marginTop: "5px" }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="Unverified"
+                            stroke="#f44336"
+                            strokeWidth={2.5}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="Verified"
+                            stroke="#4caf50"
+                            strokeWidth={2.5}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
                     {/* )} */}
-                </div>
+                  </div>
                 </div>
               </Card>
             </div>

@@ -88,4 +88,35 @@ const deleteMarket = async (req, res) => {
   }
 };
 
-module.exports = {addMarket , getMarket, deleteMarket}
+const setPrimaryMarket = async(req,res) => {
+    try {
+    const { shop } = req.query;
+    const { id } = req.body
+
+    const isUser = await User.findOne({ host: shop });
+    if (!isUser) {
+      return res.status(404).send({ messgae: "Shop Is Not Found." });
+    }
+
+    let market = await Market.findOne({ shop_id: isUser._id });
+    if (!market) {
+      return res.status(404).send({ messgae: "Market Is Not Found." });
+    }
+
+    market.market.forEach((entry) => {
+        if (entry._id.toString() === id.toString()) {
+            entry.primary = true;
+        } else {
+            entry.primary = false;
+        }
+        });
+    await market.save();
+
+    return res.status(200).send({ market, messgae: "Market Is Updated Successfully." });
+  } catch (error) {
+    console.error("Delete Market Error:", error);
+    return res.status(500).send({ messgae: "Internal Server Error", error: error.message });
+  }
+}
+
+module.exports = {addMarket , getMarket, deleteMarket, setPrimaryMarket}

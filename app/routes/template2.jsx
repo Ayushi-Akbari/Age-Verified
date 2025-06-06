@@ -158,8 +158,10 @@ const Template2 = forwardRef((props, ref) => {
                     backgroundColor: popUpBackground.background_color,
                     borderColor: popUpBackground.border_color,
                     opacity: popUpBackground.background_opacity,
-                    justifyContent: "center",
+                    justifyContent: "flex-start", 
                     alignItems: "center",
+                    overflow: "hidden",
+                    position: "relative",
                   }}
                 >
                   {popUpBackground.image_enabale && (
@@ -181,6 +183,8 @@ const Template2 = forwardRef((props, ref) => {
                               width: "100%",
                               height: "100%",
                               objectFit: "cover",
+                              borderTopLeftRadius: `${popUp.border_radius}px`,
+                              borderTopRightRadius: `${popUp.border_radius}px`, 
                             }}
                             alt="Popup background"
                           />
