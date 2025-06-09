@@ -571,7 +571,7 @@ export default function MarketsPage() {
                               </td>
                               <td className="px-6 py-2">{languageOptions.find(opt => opt.value === market.language)?.label || market.language}</td>
                               <td className="px-6 py-2 text-center">
-                                <Button size="medium" variant="primary"  onClick={() => { window.location.href = `/app/setting?id=${market._id}`}}>
+                                <Button size="medium" variant="primary" onClick={() => { window.location.href = `/app/setting?id=${market._id}`}}>
                                   Edit
                                 </Button>
                               </td>

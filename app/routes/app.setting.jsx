@@ -215,53 +215,62 @@ export default function Setting() {
   
   useEffect(() => {
     if (shop) {
-      fetchMarket()
+      fetchMarket();
       fetchData();
     }
   }, [shop]);
 
   useEffect(() => {
-    if (!hasChanges) return;
+  if (!hasChanges) return;
 
-    const saveBar = document.getElementById("my-save-bar");
-    saveBar?.show();
+  const saveBar = document.getElementById("my-save-bar");
+  saveBar?.show();
 
-    const saveBtn = document.getElementById("save-button");
-    const discardBtn = document.getElementById("discard-button");
+  const saveBtn = document.getElementById("save-button");
+  const discardBtn = document.getElementById("discard-button");
 
-    const handleSave = () => {
-      console.log("Saving");
-      addSetting();
+  const handleSave = async () => {
+    saveBtn?.setAttribute('loading', '');
+
+    const setting = await addSetting();
+    if (setting) {
       setHasChanges(false);
       saveBar?.hide();
-    };
+      saveBtn?.removeAttribute('loading');
+    }else{
+      setHasChanges(true);
+      saveBar?.hide();
+      saveBtn?.removeAttribute('loading');
+    }
+  };
 
-    const handleDiscard = async () => {
-      setLoading(true)
-      console.log("loading");
-      
-      const res = await removeSetting();
-      console.log("res : " , res);
-      
-      if (res) {
-        console.log("inside");
-        
-        setHasChanges(false);
-        setLoading(false)
-        saveBar?.hide();
-      }
-    };
+  const handleDiscard = async () => {
+    console.log("Discarding...");
+    discardBtn?.setAttribute('loading', '');
 
-    saveBtn?.addEventListener("click", handleSave);
-    discardBtn?.addEventListener("click", handleDiscard);
+    const res = await removeSetting();
+    console.log("res:", res);
 
-    return () => {
-      saveBtn?.removeEventListener("click", handleSave);
-      discardBtn?.removeEventListener("click", handleDiscard);
-    };
-  }, [hasChanges]);
+    if (res) {
+      setHasChanges(false);
+      saveBar?.hide();
+      discardBtn?.removeAttribute('loading');
+    }
+  };
+
+  saveBtn?.addEventListener("click", handleSave);
+  discardBtn?.addEventListener("click", handleDiscard);
+
+  return () => {
+    saveBtn?.removeEventListener("click", handleSave);
+    discardBtn?.removeEventListener("click", handleDiscard);
+  };
+}, [hasChanges]);
+
 
   useEffect(() => {
+    console.log("advanced in setting : " , state.advanced);
+    
     const url = window.location.href;
     const urlObj = new URL(url);
     const id = urlObj.searchParams.get('id');
@@ -273,6 +282,15 @@ export default function Setting() {
       }))
     } 
   },[])
+
+  useEffect(() => {
+    console.log("state.amrket : " , state.market);
+    
+    if (!state.market && shop) {
+      console.log("state.amrket  inside: " , state.market);
+      fetchMarket();
+    }
+  }, [state.market]);
 
   const weightOptions = [
     { label: "Thin", value: "100" },
@@ -347,7 +365,7 @@ export default function Setting() {
 
       return updated;
     });
-    setHasChanges(true);
+    setHasChanges(true);    
   };
 
   const handleErrorMessage = (section, key, value) => {
@@ -484,7 +502,7 @@ export default function Setting() {
 
       setState((prev) => ({
         ...prev,
-        market: prev.market !== '' ? prev.market : marketOptions[0]?.value,
+        market: prev.market !== "" ? prev.market : marketOptions[0]?.value,
       }));
 
       return true
@@ -493,10 +511,13 @@ export default function Setting() {
 
   const addSetting = async () => {
     console.log("inside setting : " );
+
+    if(state.market){
+      fetchMarket()
+    }
     
     const latestState = stateRef.current;
     const htmlContent = verificationRef.current?.getHtmlContent();
-
     const removeImages = (obj) => {
       const { image, ...rest } = obj;
       rest.imageFile = null;
@@ -558,10 +579,14 @@ export default function Setting() {
       formData,
     );
 
-    console.log("response : ", response);
     if (response.status === 200) {
-      fetchData();
+      const data = fetchData();
+      if(data.status === 200){
+        return true
+      }
+      return true
     }
+    return false
   };
 
   const removeSetting = async () => {
@@ -2629,9 +2654,11 @@ export default function Setting() {
                   <TextField
                     label="Custom css (Use this option to do a custom css where Age Verification doing anything)"
                     value={state.advanced.css}
-                    onChange={(value) =>
+                    onChange={(value) =>{
+                      console.log("value : " , value)
+                      
                       handleSectionChange("advanced", "css", value)
-                    }
+                    }}
                     multiline={4}
                     autoComplete="off"
                   />
@@ -2643,9 +2670,11 @@ export default function Setting() {
                   <TextField
                     label="Custom script (Use this option to do a custom script where Age Verification doing anything)"
                     value={state.advanced.script}
-                    onChange={(value) =>
+                    onChange={(value) =>{
+                      console.log("value : " , value)
+                      
                       handleSectionChange("advanced", "script", value)
-                    }
+                    }}
                     multiline={4}
                     autoComplete="off"
                   />
@@ -2666,9 +2695,9 @@ export default function Setting() {
               </button>
               <button
                 id="discard-button"
-                disabled={loading}
+                // disabled={loading}
               >
-                {loading ? "Discarding..." : "Discard"}
+                {/* {loading ? "Discarding..." : "Discard"} */}
               </button>
             </ui-save-bar>
 

@@ -60,6 +60,10 @@ const UserSchema = new mongoose.Schema({
   app_uninstall_time: {
     type: Date
   },
+  app_disabled: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const UserModel = mongoose.model("User", UserSchema);

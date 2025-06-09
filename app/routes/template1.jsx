@@ -6,6 +6,50 @@ const Template1 = forwardRef((props, ref) => {
   const previewRef = useRef(null);
 
   const { customization, title, description, acceptButton, rejectButton, popUp, popUpBackground, outerPopUpBackground, popUpLogo, policy, advanced, addSetting} = props.data
+useEffect(() => {
+  const prev = document.getElementById('custom-css-style');
+  if (prev) prev.remove();
+
+  if (advanced?.css) {
+    const cssWithImportant = advanced.css.replace(
+      /([:]\s*[^;{}]+)(;?)/g,
+      (match, value, semicolon) => {
+        if (value.includes('!important')) return match;
+        return `${value.trim()} !important${semicolon || ''}`;
+      }
+    );
+    
+    const styleElement = document.createElement('style');
+    styleElement.id = 'custom-css-style';
+    styleElement.textContent = cssWithImportant;
+    document.head.appendChild(styleElement);
+  }
+
+  return () => {
+    const prev = document.getElementById('custom-css-style');
+    if (prev) prev.remove();
+  };
+}, [advanced?.css]);
+
+
+
+ useEffect(() => {
+    const prev = document.getElementById('custom-js-script');
+    if (prev) prev.remove();
+
+    if (advanced?.script) {
+      const customJs = advanced.script;
+      const scriptElement = document.createElement('script');
+      scriptElement.id = 'custom-js-script';
+      scriptElement.textContent = customJs;
+      document.head.appendChild(scriptElement);
+    }
+    return () => {
+      const prev = document.getElementById('custom-js-script');
+      if (prev) prev.remove();
+    };
+  }, [advanced?.script]);
+
 
   useImperativeHandle(ref, () => ({
     getHtmlContent: () => {
@@ -343,8 +387,6 @@ const Template1 = forwardRef((props, ref) => {
                       >
                         {rejectButton.text}
                       </button>
-
-                      
                     </div>
                   </div>
 
@@ -354,6 +396,8 @@ const Template1 = forwardRef((props, ref) => {
                     style={{ marginTop: "1.25rem" }}
                   />
                   )}
+
+                  <div id="demo"></div>
                   
                 </div>
               </div>

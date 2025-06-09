@@ -1,4 +1,4 @@
-import { encrypt, decrypt } from "./encyption.server";
+import { encrypt, decrypt } from "./encryption.server";
 import axios from "axios";
 import { countryOptions, languageOptions } from "app/component/market";
 
@@ -335,9 +335,9 @@ export const addSetting = async (shop) => {
   formData.append("htmlContent", htmlContent);
   formData.append("type","index")
 
-  for (let pair of formData.entries()) {
-    console.log(`${pair[0]}:`, pair[1]);
-  }
+  // for (let pair of formData.entries()) {
+  //   console.log(`${pair[0]}:`, pair[1]);
+  // }
 
   const response = await axios.post(
     `http://localhost:8001/setting/add-setting?shop=${shop}`,
@@ -349,5 +349,69 @@ export const addSetting = async (shop) => {
   }
   return { msg: 'Successfully Add Setting Data', status: 200 };
 };
+
+export const appStatus = async(shop, access_token, themeId) => {
+  const assetUrl = `https://${shop}/admin/api/2025-04/themes/${themeId}/assets.json?asset[key]=config/settings_data.json`;
+  
+    const response1 = await fetch(assetUrl, {
+      method: 'GET',
+      headers: {
+        'X-Shopify-Access-Token': access_token,
+        'Content-Type': 'application/json',
+      },
+    });
+  
+    if (!response1.ok) {
+      return {
+        result: 'error',
+        msg: `Failed to fetch settings_data.json: ${response1.statusText}`,
+      };
+    }
+  
+    const assetData = await response1.json();   
+    const settingsDataRaw = assetData?.asset?.value;
+
+      let settingsJson;
+    try {
+      settingsJson = JSON.parse(settingsDataRaw);      
+    } catch (err) {
+      return {
+        result: 'error',
+        msg: 'Invalid JSON in settings_data.json',
+      };
+    }
+  
+    const blocks = settingsJson?.current?.blocks || {};    
+    const blockDetails = blocks["5625791456518310532"]
+  
+    let appStatus = '0';
+    if (blockDetails && !blockDetails.disabled) {
+      appStatus = '1';
+    }
+
+    console.log("app status : " , appStatus);
+    
+
+    const res = await axios.put(
+        `http://localhost:8001/user/update-app-status?shop=${shop}`, {appStatus},
+        {
+          headers: {
+            "Content-Type": "application/json",
+          }
+        }
+      );
+      
+      // console.log("res : " , res);
+      
+    
+      if (res.status !== 200) {
+        return { msg: res.error, status: 404 };
+      }
+
+      console.log("return after");
+      
+      
+    return { msg: res.data.data.app_disabled, status: 200 };
+}
 
 export default webhookSubscription;

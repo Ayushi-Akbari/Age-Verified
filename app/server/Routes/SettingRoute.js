@@ -11,4 +11,5 @@ router.post('/add-setting', upload.fields([
 
 router.get('/get-setting', getSettingData)
 
+
 module.exports = router

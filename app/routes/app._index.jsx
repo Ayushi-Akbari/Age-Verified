@@ -1,12 +1,17 @@
-import { useEffect, useState, useRef } from "react";
-import { useFetcher } from "@remix-run/react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import axios from "axios";
 import NavMenu from "app/component/navMenu";
-import webhookSubscription, {addSetting} from "./webhook";
-import { AppProvider, Card, Page, Box, Link, List, Button, ProgressBar, Spinner } from '@shopify/polaris';
+import webhookSubscription, {addSetting, appStatus} from "./webhook";
+import { AppProvider, Card, Page, Box, Link, List, Button, ProgressBar, Spinner, Banner, Collapsible } from '@shopify/polaris';
 import Cookies from 'js-cookie';
+import {
+  CheckSmallIcon
+} from '@shopify/polaris-icons';
 
 export const action = async ({ request }) => {
+  console.log("inside action");
+  
   const formData = await request.formData();
   const id_token = formData.get("id_token");
   const shop = formData.get("shop");
@@ -36,6 +41,8 @@ export const action = async ({ request }) => {
     return { msg: response.error, status: 404 };
   }
   const access_token = response.data.access_token;
+  console.log("access_token : " , access_token);
+  
 
   const query = `
   query ShopName {
@@ -95,8 +102,6 @@ export const action = async ({ request }) => {
 
   const json = await shopResponse.json();
   const userData = json.data;
-
-  // Shop detail store to database
   const data = {
     email: userData.shop.email,
     token_id: id_token,
@@ -149,21 +154,54 @@ export const action = async ({ request }) => {
     return { msg: 'Failed to save your settings.', status: 404 };
   }
 
-  return { data: res.data, access_token: access_token };
+  const themeId = data.theme_id.split("/").pop();
+
+  const status = await appStatus(shop, access_token, themeId)
+  console.log("status : ", status);
+  
+   if(status.status !== 200){
+    return { msg: 'Failed to save your settings.', status: 404 };
+  }
+
+  return { status: status.msg };
 };
 
 export default function Index() {
   const startTime = performance.now();
   const fetcher = useFetcher();
-
+  const [status, setStatus] = useState(null);
+  const [enableOpen, setEnableOpen] = useState(false);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [message, setMessage] = useState(null);
   const submitted = useRef(false);
+  const [clicked, setClicked] = useState(false);
+  const [reloadClicked, setReloadClicked] = useState(true) 
 
   const value = 65;
 
+  const toggleEnable = useCallback(() => {
+  setEnableOpen(prev => {
+    const newValue = !prev;
+    if (newValue === true) {
+      setCustomizeOpen(false);
+    }
+    return newValue;
+  });
+  }, []);
+
+  const toggleCustomize = useCallback(() => {
+    setCustomizeOpen(prev => {
+    const newValue = !prev;
+    if (newValue === true) {
+      setEnableOpen(false);
+    }
+    return newValue;
+  });
+  }, []);
+
+
   useEffect(() => {
     if (!submitted.current) {
-      submitted.current = true;
       (async () => {
         try {
           const idToken = await shopify.idToken();
@@ -202,7 +240,10 @@ export default function Index() {
             } else if (response.result === "declined-all") {
             }
           } else {
+            submitted.current = true;
             if (idToken && shop) {
+              console.log("id token and shop present");
+              
               fetcher.submit(
                 { id_token: idToken, shop },
                 { method: "post", action: "/app?index" },
@@ -224,6 +265,26 @@ export default function Index() {
     });
   }, []);
 
+  useEffect(() => {
+    if (fetcher.data) {
+      console.log("fecther.dat : " , fetcher.data);
+      setStatus(fetcher.data.status);
+      setReloadClicked(false)
+    }
+  }, [fetcher.data]);
+
+  
+  const handleClick = () => {
+    // setStatus(null)
+    if (clicked) {
+      setReloadClicked(true)
+      window.location.reload();
+    } else {
+      setClicked(true);
+      window.open("https://admin.shopify.com/store/my-app-s/themes/145544544424/editor?context=apps", "_blank");
+    }
+  };
+
   return (
     <AppProvider>
       <Page>
@@ -236,29 +297,30 @@ export default function Index() {
           </div>
 
           <div>
-            <Box>
-              <div className="shadow-md rounded-xl overflow-hidden">
-                <Card padding="0">
-                  <div className="bg-green-800 text-white font-custom font-medium text-[13px] p-2.5 ">
-                    AgeX is Enabled
-                  </div>
-
-                  <div className="px-4 py-3">
-                    <List>
-                      <List.Item>
-                        <div className="text-[13px] font-custom font-light text-gray-800">
-                          AgeX is Currently Enabled on Your Store.
-                        </div>
-                      </List.Item>
-                    </List>
-
-                    <div className="mt-3">
-                      <Button size="large">Disable App</Button>
+            <Banner
+              title={status !== true ? "AgeX is Enabled" : "AgeX is Not Activated for Your Theme"}
+              tone={status !== true ? "warning" : "success" }
+            >
+              <div className="py-3">
+                <List>
+                  <List.Item>
+                    <div className="text-[13px] font-custom font-light text-gray-800">
+                      {status === true ? "AgeX is Currently Disabled on Your Store." : "AgeX is Currently Enabled on Your Store"}
                     </div>
-                  </div>
-                </Card>
+                  </List.Item>
+                </List>
+
+                <div className="mt-3">
+                  <Button 
+                    size="large" 
+                    onClick={handleClick}
+                    // loading = {reloadClicked}
+                  >
+                    {status === true ? "Enable App" : status === false ? "Disable App" : reloadClicked ? <Spinner size="small" /> : "Reload" }
+                    </Button>
+                </div>
               </div>
-            </Box>
+            </Banner>
           </div>
 
           <Box>
@@ -266,31 +328,69 @@ export default function Index() {
               <div className="font-medium mb-3">Setup Guide</div>
               <div className="flex">
                 <div className="text-[12px] font-custom font-light text-black ">
-                  1 of 2 Tasks Completed{" "}
-                  <span className="font-semibold ml-3">100%</span>
+                  {status === true ? 1 : 2} of 2 Tasks Completed
+                  <span className="font-semibold ml-3">{status === true ? '50%' : '100%'}</span>
                 </div>
                 <div className="w-1/2 my-auto ml-3">
-                  <ProgressBar progress={value} size="small" />
+                  <ProgressBar progress={status === true ? 50 : 100} size="small" />
                 </div>
               </div>
-              <div className="px-3 py-1 font-custom font-light text-black">
-                <div className="flex items-center space-x-2 mt-6">
-                  <span className="font-bold">✓</span>
-                  <div className="text-[12px] ">
+              <div className=" py-1 font-custom font-light text-black">
+                <div className={`mt-5 p-2 border border-transparent hover:border-gray-100 hover:bg-gray-100 rounded-md transition-colors ${enableOpen && "bg-gray-100"}`}>
+                  <div
+                    onClick={toggleEnable}
+                    className={`flex text-[12px] cursor-pointer select-none ${enableOpen ? "font-semibold" : "font-custom"}`}
+                  >
+                    <span className="font-bold mr-1 text-green-600 flex items-center">
+                      {status && <CheckSmallIcon className="flex w-6 h-6" /> }
+                    </span>
+
                     Enable App
-                    <span className="bg-green-300 ml-2 py-[2px] px-[7px] rounded-xl text-[12px] ">
-                      on
+                    <span className={`${status === true ? 'bg-yellow-300' : 'bg-green-300'} ml-2 py-[2px] px-[7px] rounded-xl text-[12px] font-normal`}>
+                      {status === true ? "off" : "on"}
                     </span>
                   </div>
+                  <Collapsible
+                    open={enableOpen}
+                    id="enable-collapsible"
+                    expandOnPrint
+                  >
+                    <div className="text-[12px] cursor-pointer select-none py-2 px-5">
+                      By activating <Link url="#">this app embed</Link>, you are
+                      one step closer to enabling AgeX.
+                    </div>
+                  </Collapsible>
                 </div>
 
-                <div className="flex items-center space-x-2 mt-6">
-                  <span className="font-bold">✓</span>
-                  <div className="text-[12px] ">Customize Settings</div>
+                <div className={` mt-2 p-2 border border-transparent hover:border-gray-100 hover:bg-gray-100 rounded-md transition-colors ${customizeOpen && "bg-gray-100"}`}>
+                  <div
+                    onClick={toggleCustomize}
+                    className={`flex text-[12px] cursor-pointer select-none ${customizeOpen ? "font-semibold" : "font-custom"}`}
+                  >
+                    <span className="font-bold mr-1 text-green-600 flex items-center">
+                      {status && <CheckSmallIcon className="flex w-6 h-6" /> }
+                    </span>
+                    Customize Settings
+                  </div>
+                  <Collapsible
+                    open={customizeOpen}
+                    id="customize-collapsible"
+                    expandOnPrint
+                  >
+                    <div className="py-2 px-5">
+                      <div className="font-custom text-[12px] cursor-pointer select-none my-3">
+                      Select a template and alter the AgeX settings to better suit your needs.
+                    </div>
+                    <Button variant="primary" size="large" onClick={() => { window.location.href = `/app/setting`}}>Settings</Button>
+                    </div>
+                  </Collapsible>
                 </div>
 
-                <div className="flex items-center space-x-2 mt-6">
-                  <Link url="https://agex.tawk.help/category/getting-started" external>
+                <div className="flex items-center space-x-2 mt-6 ml-2">
+                  <Link
+                    url="https://agex.tawk.help/category/getting-started"
+                    external
+                  >
                     Read App Setup Tutorials
                   </Link>
                 </div>

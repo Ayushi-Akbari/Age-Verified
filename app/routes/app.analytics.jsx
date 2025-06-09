@@ -23,8 +23,6 @@ import {
 import Cookies from 'js-cookie'
 import {countryOptions, languageOptions} from "../component/market"
 
-const marketOptions = [{ label: "India (English) (Primary)", value: "india" }];
-
 function formattedDateRange(date_range, date) {
   const today = new Date();
   let startDate, endDate;
@@ -122,56 +120,7 @@ export default function AnalyticsPage() {
       key: "selection",
     },
   ]);
-  const togglePopover = () => setPopoverActive((open) => !open);
-
-  const handleSelect = (value, date) => {      
-      setSelectedValue(value);
-      setDateRange(formattedDateRange(value, date));
-    if (value === "custom_range") {
-      setCustomPickerOpen(true);
-    } else {
-      setCustomPickerOpen(false);
-      setPopoverActive(false);
-    }
-
-    // if (
-    //   (value === "custom_range" && date && date[0] && date[0].startDate && date[0].endDate) ||
-    //   (value !== "custom_range")
-    // ) {
-    //   if (shop) {
-    //     fetchData(value, formattedDateRange(value, date) );
-    //   }
-    // }
-  };
-
- const handleDateRangeInput = (value) => {
-   setSelectedValue("custom_range");
-   setDateRange(value);
-
-   const [startStr, endStr] = value.split(" - ");
-   if (startStr && endStr) {
-     const [sd, sm, sy] = startStr.split("/"); // DD/MM/YYYY
-     const [ed, em, ey] = endStr.split("/");
-
-     const start = new Date(`${sy}-${sm}-${sd}`);
-     const end = new Date(`${ey}-${em}-${ed}`);
-
-     if (!isNaN(start) && !isNaN(end)) {
-       setSelectedDates({
-         start,
-         end,
-       });
-
-       // Optionally update the displayed month/year
-       setDate({
-         month: start.getMonth(),
-         year: start.getFullYear(),
-       });
-     }
-   }
- };
-
-
+  
   const today = new Date();
 
   const [{ month, year }, setDate] = useState({
@@ -188,8 +137,6 @@ export default function AnalyticsPage() {
     (month, year) => setDate({ month, year }),
     [],
   );
-
-  console.log("selectedDates, ", selectedDates);
   
   const dateRanges = [
     { label: "Last 7 Days", value: "last_7_days" },
@@ -204,6 +151,21 @@ export default function AnalyticsPage() {
       const cookieShop = Cookies.get("shop");
       if (cookieShop) {
         setShop(cookieShop);
+      }else{
+        const url = new URL(window.location.href);
+        const shopName = url.searchParams.get("shop");
+        setShop(shopName);
+
+        if (shopName) {
+          Cookies.set('shop', shopName, { 
+            expires: 7, 
+            secure: true, 
+            sameSite: 'None' 
+          });
+
+          const cookie = Cookies.get('shop');
+          console.log("cookie:", cookie);
+        }
       }
     }
   }, []);
@@ -228,8 +190,6 @@ export default function AnalyticsPage() {
         }
       }
       try {
-        console.log("market : " , market);
-        
         const { data } = await axios.get(
           `http://localhost:8001/analytics/get-analytics?shop=${shop}&date_range=${value}&market_id=${market}`
         );
@@ -266,6 +226,54 @@ export default function AnalyticsPage() {
         }
       }
   }
+
+  const togglePopover = () => setPopoverActive((open) => !open);
+
+  const handleSelect = (value, date) => {      
+      setSelectedValue(value);
+      setDateRange(formattedDateRange(value, date));
+    if (value === "custom_range") {
+      setCustomPickerOpen(true);
+    } else {
+      setCustomPickerOpen(false);
+      setPopoverActive(false);
+    }
+
+    if (
+      (value === "custom_range" && date && date[0] && date[0].startDate && date[0].endDate) ||
+      (value !== "custom_range")
+    ) {
+      if (shop) {
+        fetchData(value, formattedDateRange(value, date) );
+      }
+    }
+  };
+
+  const handleDateRangeInput = (value) => {
+    setSelectedValue("custom_range");
+    setDateRange(value);
+
+    const [startStr, endStr] = value.split(" - ");
+    if (startStr && endStr) {
+      const [sd, sm, sy] = startStr.split("/");
+      const [ed, em, ey] = endStr.split("/");
+
+      const start = new Date(`${sy}-${sm}-${sd}`);
+      const end = new Date(`${ey}-${em}-${ed}`);
+
+      if (!isNaN(start) && !isNaN(end)) {
+        setSelectedDates({
+          start,
+          end,
+        });
+
+        setDate({
+          month: start.getMonth(),
+          year: start.getFullYear(),
+        });
+      }
+    }
+  };
 
   return (
     <>
@@ -383,6 +391,7 @@ export default function AnalyticsPage() {
                               if (selectedValue === "custom_range") {
                                 togglePopover();
                                 setPopoverActive(true);
+                                setCustomPickerOpen(true);
                               } else {
                                 togglePopover();
                               }
@@ -443,8 +452,9 @@ export default function AnalyticsPage() {
                                       handleSelect('custom_range', [{
                                         startDate: startDate,
                                         endDate: endDate,
-                                        key: 'selection'
                                       }]);
+                                      setCustomPickerOpen(false);
+                                      setPopoverActive(false);
                                     }
                                   }}
                                   onMonthChange={handleMonthChange}

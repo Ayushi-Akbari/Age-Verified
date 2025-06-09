@@ -11,6 +11,7 @@ export default function AppLayout() {
         <Link to="/app/analytics" prefetch="intent">Analytics</Link>
         <Link to="/app/market" prefetch="intent">Markets</Link>
         <Link to="/app/setting" prefetch="intent">Settings</Link>
+        <Link to="/app/status" prefetch="intent">Status</Link>
       </ui-nav-menu>
       {navigation.state === "loading" ? null : (
         <main>

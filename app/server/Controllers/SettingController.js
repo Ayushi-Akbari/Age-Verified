@@ -107,7 +107,6 @@ const addSettingData = async (req, res) => {
 
 const getSettingData = async (req, res) => {
   try {
-    console.log("req.query:", req.query);
     const { shop, market_id } = req.query;
 
     if (!shop) {

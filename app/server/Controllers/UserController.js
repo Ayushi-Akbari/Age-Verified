@@ -72,4 +72,37 @@ const getShopId = async (req,res) => {
     res.status(200).json({ msg: "App Setings Fetched Successfully." , data: user._id});
 }
 
-module.exports = {addShopData, getShopData, getShopId}
+const updateAppStatus = async (req,res) => {
+  const { shop } = req.query
+  console.log("req.body : " , req.body);
+  const { appStatus } = req.body
+
+  console.log("appStatus : " , appStatus);
+  
+
+   if (!shop) {
+      return res
+        .status(400)
+        .send({ message: "Missing 'shop' query parameter." });
+    }
+
+    const isUser = await User.findOne({ host: shop });
+
+    if (!isUser) {
+      return res.status(404).send({ message: "Shop not found." });
+    }
+
+    isUser.app_disabled = appStatus === '0' ? true : false
+    isUser.save()
+
+    const userDetail = await User.findOne({ host: shop });
+    
+    console.log("userDetail : " , userDetail);
+
+    return res.status(200).send({
+      message: "Setting data Updated successfully.",
+      data: userDetail,
+    });
+}
+
+module.exports = {addShopData, getShopData, getShopId, updateAppStatus}
