@@ -1,24 +1,83 @@
-document.addEventListener("DOMContentLoaded", async() => {
+document.addEventListener("DOMContentLoaded", main);
 
-  const ageVerified = checkAgeVerified("age_verified");
-  const popup = document.getElementById("popup-modal");
-
-  console.log('ageVerified value:', ageVerified, typeof ageVerified);
-
-  if (!ageVerified) {
-    console.log("inside false");
-    popup.style.display = "flex";
-  }else{
-    console.log("inside true");
-    popup.style.display = "none";
-  }
-  fetchData();
-
-  document.getElementById('age-verification-dynamic-content').addEventListener('click', async(event) => {
-    handleAgeVerification(event);
-  });
+let popup_show, age;
+let date, month, year;
+async function main() {
+  await fetchData();
   
+  const popup = document.getElementById("popup-modal");
+  console.log("popup_show : ", popup_show);
+
+    //   let ageVerified
+    // if(popup_show === true) {
+    //   console.log();
+      
+    //   ageVerified = sessionStorage.getItem('age_verified')
+    // }else{
+    //   ageVerified = Cookies.get('age_verified');
+    // }
+    // console.log( "ageVerified : ", ageVerified);
+    
+    // if (ageVerified !== true) {
+      popup.style.display = "flex";
+    // } else {
+    //   popup.style.display = "none";
+    // }
+  
+
+  // if (popup_show !== true) {
+  //   console.log("if");
+
+  //   const cookie = Cookies.get('age_verified');
+  //       console.log("cookie : ", cookie);
+  //   if (cookie !== undefined) {
+  //     console.log("inside");
+  //     Cookies.remove('age_verified', {
+  //       path: '/',
+  //       secure: location.protocol === 'https:',
+  //       sameSite: location.protocol === 'https:' ? 'None' : 'Lax'
+  //     });
+
+  //   }
+  //   sessionStorage.setItem('age_verified', "null");
+  // }else{
+  //   console.log("else");
+  //   console.log("sessionStorage.getItem('age_verified') : ", sessionStorage.getItem('age_verified'));
+    
+  //   if (sessionStorage.getItem('age_verified')) {
+  //     sessionStorage.removeItem('age_verified');
+  //   }
+  //   const cookie = Cookies.get('age_verified');
+  //   console.log("cookie : " , cookie);
+  //   if (cookie === undefined || cookie === "null") {
+  //     console.log("inside");
+  //     Cookies.set('age_verified', 'true', {
+  //       path: '/',
+  //       expires: 30,
+  //       secure: location.protocol === 'https:',  // only true on https
+  //       sameSite: location.protocol === 'https:' ? 'None' : 'Lax'
+  //     });
+
+  //   }
+  // }
+
+  const container = document.getElementById('age-verification-dynamic-content');
+
+container.addEventListener('click', (event) => {
+  if (event.target && (event.target.id === 'acceptButton' || event.target.id === 'rejectButton')) {
+    handleAgeVerification(event);
+  }
 });
+
+container.addEventListener('change', (event) => {
+  console.log("change : ");
+  
+  if (event.target && (event.target.id === 'monthSelect' || event.target.id === 'dateSelect' || event.target.id === 'yearSelect')) {
+    handleBirthDate(event)
+  }
+});
+
+}
 
 async function fetchData() {
   try {
@@ -29,36 +88,30 @@ async function fetchData() {
     if (!response.ok) throw new Error('Network response was not ok');
 
     const newData = await response.json();
-    // console.log("Fetched data:", newData);
+    const customizationRaw = newData?.data?.settings?.customization;
+    let customization = {};
+
+    try {
+      customization = JSON.parse(customizationRaw);
+      popup_show = customization?.popup_show
+      age = customization?.age
+    } catch (error) {
+      console.error("Failed to parse customization JSON:", error);
+    }
+
 
     const htmlContent = newData.data.html_content;
     const targetDiv = document.getElementById("age-verification-dynamic-content");
 
     if (targetDiv && htmlContent) {
-      console.log("inside target");
-      
       targetDiv.innerHTML = htmlContent;
-      // console.log("targetDiv.innerHTML = htmlContent; : ", targetDiv.innerHTML );
-      
+
     }
 
     return htmlContent;
   } catch (error) {
     console.error('Fetch failed:', error);
   }
-}
-
-function checkAgeVerified() {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; age_verified=`);
-  console.log("parts : " , parts);
-  
-  if (parts.length === 2) {
-    const cookieVal = parts.pop().split(';').shift();
-    if (cookieVal === "true") return true;
-    if (cookieVal === "false") return false;
-  }
-  return null;
 }
 
 async function handleAgeVerification(event) { 
@@ -119,5 +172,15 @@ async function handleAgeVerification(event) {
         }
       }
     }
+  }
+}
+
+async function handleBirthDate(){
+  if(event.target.id === 'dateSelect'){
+    date = event.target.value
+  }else if(event.target.id === 'monthSelect'){
+    month = event.target.value
+  }else if(event.target.id === 'yearSelect'){
+    year = event.target.value
   }
 }

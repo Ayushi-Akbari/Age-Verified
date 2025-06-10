@@ -413,3 +413,49 @@ useEffect(() => {
 export default Template1;
 
  
+// {customization.verify_method === "via-birthdate" && (
+//                     <div
+//                       style={{
+//                         display: "flex",
+//                         alignItems: "center",
+//                         marginTop: "8px",
+//                         padding: "5px",
+//                       }}
+//                     >
+//                       <Popover
+//                         active={popoverActive}
+//                         activator={
+//                           <input
+//                             type="text"
+//                             readOnly
+//                             value={customization.date_format === "european_date" ? "DD/MM/YYYY" : "MM/DD/YYYY" }
+//                             onClick={() => setPopoverActive(true)}
+//                             style={{
+//                               padding: "0.5rem 1rem",
+//                               fontSize: "14px",
+//                               width: "100%",
+//                               border: "1px solid #ccc",
+//                               borderRadius: "4px",
+//                               cursor: "pointer",
+//                             }}
+//                             placeholder={}
+//                           />
+//                         }
+//                         onClose={() => setPopoverActive(false)}
+//                         preferredPosition="below"
+//                       >
+//                         <Popover.Pane fixed>
+//                           <div className="p-5">
+//                             <DatePicker
+//                               month={month}
+//                               year={year}
+//                               onChange={setSelectedDates}
+//                               onMonthChange={handleMonthChange}
+//                               selected={selectedDates}
+//                               disableDatesAfter={new Date()}
+//                             />
+//                           </div>
+//                         </Popover.Pane>
+//                       </Popover>
+//                     </div>
+//                   )}

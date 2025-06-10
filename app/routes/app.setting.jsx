@@ -41,7 +41,7 @@ export default function Setting() {
       layout: "template1",
       age: "18",
       verify_method: "no-input",
-      date_fromat: "european_date",
+      date_format: "european_date",
       popup_show: false,
     },
     title: {
@@ -284,8 +284,6 @@ export default function Setting() {
   },[])
 
   useEffect(() => {
-    console.log("state.amrket : " , state.market);
-    
     if (!state.market && shop) {
       console.log("state.amrket  inside: " , state.market);
       fetchMarket();
@@ -500,20 +498,23 @@ export default function Setting() {
       }));
       setMarketOptions(marketOptions);
 
-      setState((prev) => ({
+      const primaryMarket = marketOptions[0]?.value;
+
+      setState(prev => ({
         ...prev,
-        market: prev.market !== "" ? prev.market : marketOptions[0]?.value,
+        market: prev.market !== "" ? prev.market : primaryMarket
       }));
 
-      return true
+      return primaryMarket;
     }
   }
 
   const addSetting = async () => {
     console.log("inside setting : " );
 
-    if(state.market){
-      fetchMarket()
+    let currentMarket = state.market;
+    if (!currentMarket) {
+      currentMarket = await fetchMarket(); // ← Use returned value
     }
     
     const latestState = stateRef.current;
@@ -565,7 +566,7 @@ export default function Setting() {
       "displayCriteria",
       JSON.stringify(latestState.displayCriteria),
     );
-    formData.append("market", latestState.market);
+    formData.append("market", latestState.market ? latestState.market: currentMarket );
     formData.append("monthlyAnalysis", latestState.monthlyAnalysis);
     formData.append("htmlContent", htmlContent);
     formData.append("type","setting")
@@ -619,13 +620,9 @@ export default function Setting() {
       const data = await axios.put(
         `http://localhost:8001/market/set-primary-market?shop=${shop}`, {id:state.market},
       );
-
-
       if(data.status === 200){
         fetchMarket()
       }
-      
-
       return true
     } catch (error) {
       console.error("Failed to fetch settings:", error);
@@ -872,14 +869,14 @@ export default function Setting() {
                         <RadioButton
                           label=""
                           checked={
-                            state.customization.date_fromat === "european_date"
+                            state.customization.date_format === "european_date"
                           }
                           id="european_date"
-                          name="date_fromat"
+                          name="date_format"
                           onChange={() =>
                             handleSectionChange(
                               "customization",
-                              "date_fromat",
+                              "date_format",
                               "european_date",
                             )
                           }
@@ -895,14 +892,14 @@ export default function Setting() {
                         <RadioButton
                           label=""
                           checked={
-                            state.customization.date_fromat === "us_date"
+                            state.customization.date_format === "us_date"
                           }
                           id="us_date"
-                          name="date_fromat"
+                          name="date_format"
                           onChange={() =>
                             handleSectionChange(
                               "customization",
-                              "date_fromat",
+                              "date_format",
                               "us_date",
                             )
                           }

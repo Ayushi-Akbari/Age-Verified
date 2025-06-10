@@ -95,13 +95,9 @@ const updateAppStatus = async (req,res) => {
     isUser.app_disabled = appStatus === '0' ? true : false
     isUser.save()
 
-    const userDetail = await User.findOne({ host: shop });
-    
-    console.log("userDetail : " , userDetail);
-
     return res.status(200).send({
       message: "Setting data Updated successfully.",
-      data: userDetail,
+      data: appStatus === '0' ? true : false,
     });
 }
 

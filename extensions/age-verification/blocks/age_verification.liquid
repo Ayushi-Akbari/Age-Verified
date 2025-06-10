@@ -1,4 +1,19 @@
-{% render 'ageVerification' %}
+{{ 'output.css' | asset_url | stylesheet_tag }}
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+{{ 'ageVerification.js' | asset_url | script_tag }}
+
+{% if true %}
+  <div data-my-app-embed data-store="{{ shop.permanent_domain }}"></div>
+{% endif %}
+
+<!-- Age Verification Modal -->
+
+<div id="popup-modal" style="position: fixed; inset: 0; z-index: 50; display: none; 
+    display: flex; align-items: center; justify-content: center; background-color: rgba(0, 0, 0, 0.5);">
+  <div id="age-verification-dynamic-content">
+    
+  </div>
+</div>
 
 {% schema %}
 
@@ -6,41 +21,7 @@
   "name": "Age Verification Section",
   "target": "body",
   "settings": [
-    {
-      "type": "text",
-      "id": "title",
-      "label": "Popup Title",
-      "default": "Age Verification"
-    },
-    {
-      "type": "text",
-      "id": "age_limit",
-      "label": "Minimum Age",
-      "default": "18"
-    },
-    {
-      "type": "textarea",
-      "id": "message",
-      "label": "Verification Message",
-      "default": "You must be [ age ] years old to access this website. Please verify your age."
-    },
-    {
-      "type": "text",
-      "id": "accept_message",
-      "label": "Accept Button Text",
-      "default": "Yes, I'm Over [ age ]"
-    },
-    {
-      "type": "text",
-      "id": "reject_message",
-      "label": "Reject Button Text",
-      "default": "No, I'm Under [ age ]"
-    },
-    {
-      "type": "image_picker",
-      "id": "popup_image",
-      "label": "Popup Image"
-    }
+
   ]
 }
 {% endschema %}
