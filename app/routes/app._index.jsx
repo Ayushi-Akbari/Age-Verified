@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import axios from "axios";
 import NavMenu from "app/component/navMenu";
-import webhookSubscription, {addSetting, appStatus} from "./webhook";
+import webhookSubscription, {addSetting, appStatus} from "../component/component";
 import { AppProvider, Card, Page, Box, Link, List, Button, ProgressBar, Spinner, Banner, Collapsible } from '@shopify/polaris';
 import Cookies from 'js-cookie';
 import {
@@ -131,7 +131,7 @@ export const action = async ({ request }) => {
       };
 
       const res = await axios.post(
-        "http://localhost:8001/user/add-user",
+        `${import.meta.env.VITE_DATABASE_URL}user/add-user`,
         data,
         {
           headers: {

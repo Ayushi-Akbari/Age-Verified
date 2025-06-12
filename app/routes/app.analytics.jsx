@@ -191,7 +191,7 @@ export default function AnalyticsPage() {
       }
       try {
         const { data } = await axios.get(
-          `http://localhost:8001/analytics/get-analytics?shop=${shop}&date_range=${value}&market_id=${market}`
+          `${import.meta.env.VITE_DATABASE_URL}analytics/get-analytics?shop=${shop}&date_range=${value}&market_id=${market}`
         );
         console.log("data.analyticsData : " , data.analyticsData);
         
@@ -206,7 +206,7 @@ export default function AnalyticsPage() {
         console.log("shop : " , shop);
         
         const res = await axios.get(
-          `http://localhost:8001/market/get-market?shop=${shop}`,
+          `${import.meta.env.VITE_DATABASE_URL}market/get-market?shop=${shop}`,
           {
             headers: {
               "Content-Type": "application/json",

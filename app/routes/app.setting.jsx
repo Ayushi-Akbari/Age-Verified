@@ -94,7 +94,7 @@ export default function Setting() {
       border_color: "#4e1818",
       background_opacity: "1",
       image_enabale: true,
-      image: `http://localhost:8001/image/background_image.png`,
+      image: `${import.meta.env.VITE_DATABASE_URL}image/background_image.png`,
       imageFile: "",
     },
     outerPopUpBackground: {
@@ -107,7 +107,7 @@ export default function Setting() {
     popUpLogo: {
       show_logo: true,
       logo_square: false,
-      image: `http://localhost:8001/image/logo.png`,
+      image: `${import.meta.env.VITE_DATABASE_URL}image/logo.png`,
       imageFile: "",
     },
     policy: {
@@ -385,11 +385,12 @@ export default function Setting() {
       console.warn("No shop parameter, skipping fetchData");
       return;
     }
+    console.log("import.meta.env.VITE_DATABASE_URL : ", import.meta.env.VITE_DATABASE_URL);
     
     const market = value || state.market;
     try {
       const { data } = await axios.get(
-        `http://localhost:8001/setting/get-setting?shop=${shop}&market_id=${market}`,
+        `${import.meta.env.VITE_DATABASE_URL}setting/get-setting?shop=${shop}&market_id=${market}`,
       );
       const settingData = data?.data?.settings;
 
@@ -482,7 +483,7 @@ export default function Setting() {
   const fetchMarket = async() => {
     if(shop){
       const res = await axios.get(
-        `http://localhost:8001/market/get-market?shop=${shop}`,
+        `${import.meta.env.VITE_DATABASE_URL}market/get-market?shop=${shop}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -514,7 +515,7 @@ export default function Setting() {
 
     let currentMarket = state.market;
     if (!currentMarket) {
-      currentMarket = await fetchMarket(); // ← Use returned value
+      currentMarket = await fetchMarket();
     }
     
     const latestState = stateRef.current;
@@ -525,6 +526,8 @@ export default function Setting() {
       return rest;
     };
     const formData = new FormData();
+
+    console.log("latestState : ", latestState.advanced);
 
     formData.append("popUpLogoImage", latestState.popUpLogo.imageFile);
     formData.append(
@@ -576,7 +579,7 @@ export default function Setting() {
     // }
 
     const response = await axios.post(
-      `http://localhost:8001/setting/add-setting?shop=${shop}`,
+      `${import.meta.env.VITE_DATABASE_URL}setting/add-setting?shop=${shop}`,
       formData,
     );
 
@@ -618,7 +621,7 @@ export default function Setting() {
   const setPrimaryMarket = async() => {
     try {
       const data = await axios.put(
-        `http://localhost:8001/market/set-primary-market?shop=${shop}`, {id:state.market},
+        `${import.meta.env.VITE_DATABASE_URL}market/set-primary-market?shop=${shop}`, {id:state.market},
       );
       if(data.status === 200){
         fetchMarket()
@@ -2650,11 +2653,10 @@ export default function Setting() {
                 <Box padding="4">
                   <TextField
                     label="Custom css (Use this option to do a custom css where Age Verification doing anything)"
-                    value={state.advanced.css}
+                    value={decodeURIComponent(escape(atob(state.advanced.css)))}
                     onChange={(value) =>{
-                      console.log("value : " , value)
-                      
-                      handleSectionChange("advanced", "css", value)
+                      const encodedCss = btoa(unescape(encodeURIComponent(value)));
+                      handleSectionChange("advanced", "css", encodedCss)
                     }}
                     multiline={4}
                     autoComplete="off"
@@ -2666,11 +2668,10 @@ export default function Setting() {
                 <Box padding="4">
                   <TextField
                     label="Custom script (Use this option to do a custom script where Age Verification doing anything)"
-                    value={state.advanced.script}
+                    value={atob(state.advanced.script)}
                     onChange={(value) =>{
-                      console.log("value : " , value)
-                      
-                      handleSectionChange("advanced", "script", value)
+                      const encodedScript = btoa(unescape(encodeURIComponent(value)));
+                      handleSectionChange("advanced", "script", encodedScript)
                     }}
                     multiline={4}
                     autoComplete="off"
@@ -2710,7 +2711,7 @@ export default function Setting() {
                 Save
               </Button>
             </div>
-            <div className="px-4 pb-8">
+            <div className="px-4 pb-8" key={state.customization.layout}>
               {state.customization.layout === "template1" ? (
                 <Template1 ref={verificationRef} data={data} />
               ) : state.customization.layout === "template2" ? (

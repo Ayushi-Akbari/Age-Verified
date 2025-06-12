@@ -435,7 +435,7 @@ export default function MarketsPage() {
     const shop = Cookies.get('shop')
     if(shop){
       const res = await axios.post(
-        `http://localhost:8001/market/add-market?shop=${shop}`,
+        `${import.meta.env.VITE_DATABASE_URL}market/add-market?shop=${shop}`,
         market,
         {
           headers: {
@@ -454,7 +454,7 @@ export default function MarketsPage() {
     const shop = Cookies.get('shop')
     if(shop){
       const res = await axios.get(
-        `http://localhost:8001/market/get-market?shop=${shop}`,
+        `${import.meta.env.VITE_DATABASE_URL}market/get-market?shop=${shop}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -469,7 +469,7 @@ export default function MarketsPage() {
     const shop = Cookies.get('shop')
     if(shop){
       const res = await axios.delete(
-        `http://localhost:8001/market/delete-market?shop=${shop}&id=${id}`,
+        `${import.meta.env.VITE_DATABASE_URL}market/delete-market?shop=${shop}&id=${id}`,
         {
           headers: {
             "Content-Type": "application/json",

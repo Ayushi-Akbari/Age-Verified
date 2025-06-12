@@ -1,6 +1,19 @@
 {{ 'output.css' | asset_url | stylesheet_tag }}
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+{{ 'datePicker.css' | asset_url | stylesheet_tag }}
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 {{ 'ageVerification.js' | asset_url | script_tag }}
+
+<script>
+  window.shopifyMarket = {
+    country: {{ localization.country.iso_code | json }},
+    language: {{ localization.language.iso_code | json }}
+  };
+</script>
 
 {% if true %}
   <div data-my-app-embed data-store="{{ shop.permanent_domain }}"></div>
@@ -8,7 +21,7 @@
 
 <!-- Age Verification Modal -->
 
-<div id="popup-modal" style="position: fixed; inset: 0; z-index: 50; display: none; 
+<div id="popup-model" style="position: fixed; inset: 0; z-index: 50; display: none; 
     display: flex; align-items: center; justify-content: center; background-color: rgba(0, 0, 0, 0.5);">
   <div id="age-verification-dynamic-content">
     

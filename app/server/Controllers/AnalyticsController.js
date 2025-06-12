@@ -17,7 +17,7 @@ const addAnalytics = async (req, res) => {
     const marketIdObj =
         market.market.find(m => m.country === country && m.language === language) ||
         market.market.find(m => m.primary);
-
+    
     const marketId = marketIdObj ? marketIdObj._id : null;
 
     if (verified === undefined ) {
@@ -44,22 +44,31 @@ const addAnalytics = async (req, res) => {
         });
     }else{
         const isMarket = AnalyticsData.market.find((market) => market.id.toString() === marketId.toString());
+        
 
         if(isMarket){
-            const existingEntry = AnalyticsData.market[type]?.find((entry) => {
-                const entryDate = new Date(entry.time.toDateString());
-                const currentDateOnly = new Date(currentTime.toDateString());
-            return entryDate.getTime() === currentDateOnly.getTime();
+            const existingEntry = isMarket[type]?.find((entry) => {
+                
+            const entryDate = new Date(entry.time);
+            const currentDate = new Date(currentTime);
+            
+            return (
+                entryDate.getFullYear() === currentDate.getFullYear() &&
+                entryDate.getMonth() === currentDate.getMonth() &&
+                entryDate.getDate() === currentDate.getDate()
+            );
             });
 
-            if(existingEntry){
-                existingEntry.count += 1;
-            }else{
-                isMarket[type].push({
-                    time: currentTime,
-                    count: 1,
-                });
-            }  
+
+            if (existingEntry) {
+            existingEntry.count += 1;
+            } else {
+            isMarket[type].push({
+                time: currentTime,
+                count: 1,
+            });
+            }
+  
         }else{
             const data = {
                 id: marketId,

@@ -107,7 +107,7 @@ const addSettingData = async (req, res) => {
 
 const getSettingData = async (req, res) => {
   try {
-    const { shop, market_id } = req.query;
+    const { shop, market_id, country, language } = req.query;
 
     if (!shop) {
       return res
@@ -130,6 +130,9 @@ const getSettingData = async (req, res) => {
     if (market_id) {
       const marketIdObj = market.market.find(m => m._id.toString() === market_id.toString());
       marketId = marketIdObj ? marketIdObj._id : null;
+    }else if(country && language){
+      const marketIdObj = market.market.find(m => m.country === country && m.language === language);
+      marketId = marketIdObj ? marketIdObj._id : null; 
     }
     if (!marketId) {
       const primaryMarket = market.market.find(m => m.primary === true);

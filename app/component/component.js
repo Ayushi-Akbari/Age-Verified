@@ -1,4 +1,4 @@
-import { encrypt, decrypt } from "./encryption.server";
+import { encrypt, decrypt } from "../routes/encryption.server";
 import axios from "axios";
 import { countryOptions, languageOptions } from "app/component/market";
 
@@ -208,7 +208,7 @@ const initialState = {
     border_color: "#4e1818",
     background_opacity: "1",
     image_enabale: true,
-    image: `http://localhost:8001/image/background_image.png`,
+    image: `${import.meta.env.VITE_DATABASE_URL}image/background_image.png`,
     imageFile: "",
   },
   outerPopUpBackground: {
@@ -221,7 +221,7 @@ const initialState = {
   popUpLogo: {
     show_logo: true,
     logo_square: false,
-    image: `http://localhost:8001/image/logo.png`,
+    image: `${import.meta.env.VITE_DATABASE_URL}image/logo.png`,
     imageFile: "",
   },
   policy: {
@@ -252,7 +252,7 @@ function resolveImagePath(relativeUrl) {
 const fetchMarket = async(shop) => { 
   if(shop){
     const res = await axios.get(
-      `http://localhost:8001/market/get-market?shop=${shop}`,
+      `${import.meta.env.VITE_DATABASE_URL}market/get-market?shop=${shop}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -340,7 +340,7 @@ export const addSetting = async (shop) => {
   // }
 
   const response = await axios.post(
-    `http://localhost:8001/setting/add-setting?shop=${shop}`,
+    `${import.meta.env.VITE_DATABASE_URL}setting/add-setting?shop=${shop}`,
     formData,
   );
 
@@ -393,7 +393,7 @@ export const appStatus = async(shop, access_token, themeId) => {
     
 
     const res = await axios.put(
-        `http://localhost:8001/user/update-app-status?shop=${shop}`, {appStatus},
+        `${import.meta.env.VITE_DATABASE_URL}user/update-app-status?shop=${shop}`, {appStatus},
         {
           headers: {
             "Content-Type": "application/json",
